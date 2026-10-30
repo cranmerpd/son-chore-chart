@@ -1,23 +1,17 @@
-# Son's Fun Chore Chart
+# Mission Control — Chore Chart
 
-An interactive daily chore chart for my son. Tracks daily and weekly chores and calculates earnings toward $5 per week based on completion percentage.
+Sleek interactive chore tracker for an 8-year-old. Dark theme, smooth animations, progress ring, streaks, and confetti on full daily completion.
+
+Live at: https://cranmerpd.github.io/son-chore-chart/ (after enabling Pages)
 
 ## Features
-- Daily view with morning and evening chores
-- Weekly chores
-- Check off chores (saved in browser)
-- Earnings calculator ($5/week based on % complete)
-- Navigate between days
-- Fun, kid-friendly design
+- Dark "mission control" aesthetic with neon accents
+- Animated checkmarks and hover states
+- Circular progress ring for weekly earnings ($5 target)
+- Day navigation
+- Streak counter
+- Confetti celebration when all 10 daily chores are done
+- All data stored locally in the browser
 
-## How to Use
-1. Open the app (enable GitHub Pages)
-2. Check off completed chores
-3. Watch the progress bar and earnings update!
-
-Data is stored in your browser's localStorage.
-
-## Deploy to GitHub Pages
-1. Go to repo Settings > Pages
-2. Source: Deploy from branch `main` / root
-3. Save, and your app will be at https://cranmerpd.github.io/son-chore-chart/
+## Deploy
+Settings → Pages → Deploy from branch `main` / root.
