@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Fun Chore Chart!</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎉 My Chore Chart 🎉</h1>
+      <p class="subtitle">Complete chores and earn $5 a week!</p>
+    </header>
+
+    <div class="earnings-card">
+      <h2>This Week's Earnings</h2>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p id="earnings-text" class="earnings-amount">$0.00 / $5.00</p>
+      <p id="completion-text">0% complete</p>
+    </div>
+
+    <div class="day-nav">
+      <button id="prev-day">◀</button>
+      <h2 id="current-day">Today</h2>
+      <button id="next-day">▶</button>
+    </div>
+
+    <section class="chore-section" id="morning-section">
+      <h3>🌅 Morning</h3>
+      <div id="morning-chores"></div>
+    </section>
+
+    <section class="chore-section" id="evening-section">
+      <h3>🌙 Evening</h3>
+      <div id="evening-chores"></div>
+    </section>
+
+    <section class="chore-section" id="weekly-section">
+      <h3>📅 Weekly Chores</h3>
+      <div id="weekly-chores"></div>
+    </section>
+
+    <div class="actions">
+      <button id="reset-week" class="reset-btn">Reset This Week (Parents)</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

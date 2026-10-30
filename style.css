@@ -1,0 +1,163 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+  color: #333;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2.2em;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  opacity: 0.9;
+  font-size: 1.1em;
+}
+
+.earnings-card {
+  background: #f8f9fa;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.progress-bar {
+  height: 30px;
+  background: #e9ecef;
+  border-radius: 15px;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  width: 0%;
+  transition: width 0.5s ease;
+  border-radius: 15px;
+}
+
+.earnings-amount {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #2e7d32;
+  margin: 10px 0;
+}
+
+.day-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff3e0;
+}
+
+.day-nav button {
+  background: #ff9800;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.day-nav button:hover {
+  transform: scale(1.1);
+}
+
+.chore-section {
+  padding: 15px 20px;
+}
+
+.chore-section h3 {
+  color: #5c6bc0;
+  margin-bottom: 10px;
+  font-size: 1.3em;
+}
+
+.chore-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin: 8px 0;
+  background: #f5f5f5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.1em;
+}
+
+.chore-item:hover {
+  background: #e3f2fd;
+  transform: translateX(5px);
+}
+
+.chore-item.completed {
+  background: #c8e6c9;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.chore-item input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.actions {
+  padding: 20px;
+  text-align: center;
+}
+
+.reset-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reset-btn:hover {
+  background: #d32f2f;
+}
+
+@media (max-width: 480px) {
+  .container {
+    margin: 0;
+    border-radius: 0;
+  }
+  header h1 {
+    font-size: 1.8em;
+  }
+}
