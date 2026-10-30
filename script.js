@@ -1,5 +1,4 @@
 const choreDefinitions = {
-  // Daily chores that appear every day
   daily: [
     { id: 'brush-teeth-m', name: 'Brush Teeth', section: 'morning' },
     { id: 'water-animals', name: 'Water Animals', section: 'morning' },
@@ -9,17 +8,14 @@ const choreDefinitions = {
     { id: 'feed-animal', name: 'Feed Animal', section: 'evening' },
     { id: 'clear-table', name: 'Clear Dinner Table', section: 'evening' }
   ],
-  // Weekdays only (Mon-Fri)
   weekdays: [
     { id: 'dirty-clothes', name: 'Dirty Clothes in Hamper', section: 'evening' },
     { id: 'toys-away', name: 'Toys Put Away', section: 'evening' },
     { id: 'brush-teeth-e', name: 'Brush Teeth', section: 'evening' }
   ],
-  // Specific days
   specific: [
-    { id: 'pick-up-yard', name: 'Pick Up Yard', section: 'weekly', days: [4] } // Thursday = 4
+    { id: 'pick-up-yard', name: 'Pick Up Yard', section: 'weekly', days: [4] }
   ],
-  // True weekly (any day)
   weekly: [
     { id: 'sort-laundry', name: 'Sort Laundry', section: 'weekly' },
     { id: 'clean-sink', name: 'Clean Bathroom Sink', section: 'weekly' },
@@ -27,8 +23,20 @@ const choreDefinitions = {
   ]
 };
 
+const badges = [
+  { id: 'first-day', name: 'First Contact', icon: '🚀', desc: 'Complete your first full day', check: (s) => s.fullDays >= 1 },
+  { id: 'streak-3', name: 'Operator', icon: '⚡', desc: '3-day streak', check: (s) => s.streak >= 3 },
+  { id: 'streak-7', name: 'Specialist', icon: '👑', desc: '7-day streak', check: (s) => s.streak >= 7 },
+  { id: 'streak-14', name: 'Commander', icon: '🎖️', desc: '14-day streak', check: (s) => s.streak >= 14 },
+  { id: 'streak-30', name: 'Legend', icon: '💎', desc: '30-day streak', check: (s) => s.streak >= 30 },
+  { id: 'first-week', name: 'Mission Complete', icon: '🏆', desc: 'Finish a full week', check: (s) => s.fullWeeks >= 1 },
+  { id: 'perfect-week', name: 'Flawless', icon: '✨', desc: '100% in a week', check: (s) => s.perfectWeeks >= 1 },
+  { id: 'ten-days', name: 'Veteran', icon: '🎖', desc: '10 full days', check: (s) => s.fullDays >= 10 },
+  { id: 'earner', name: 'Paymaster', icon: '💰', desc: 'Earn $25 total', check: (s) => s.totalEarned >= 25 }
+];
+
 let currentDate = new Date();
-let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {} };
+let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {}, unlockedBadges: [] };
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
@@ -46,7 +54,7 @@ function getWeekStart(date) {
 }
 
 function getDayOfWeek(date) {
-  return date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  return date.getDay();
 }
 
 function isWeekday(date) {
@@ -57,45 +65,69 @@ function isWeekday(date) {
 function getChoresForDate(date) {
   const chores = { morning: [], evening: [], weekly: [] };
   const dow = getDayOfWeek(date);
-
-  // Always-daily
   choreDefinitions.daily.forEach(c => chores[c.section].push(c));
-
-  // Weekdays only
   if (isWeekday(date)) {
     choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
   }
-
-  // Specific-day chores
   choreDefinitions.specific.forEach(c => {
-    if (c.days.includes(dow)) {
-      chores[c.section].push(c);
-    }
+    if (c.days.includes(dow)) chores[c.section].push(c);
   });
-
-  // Weekly always available
   choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
-
   return chores;
 }
 
-function getTotalPossibleForWeek(weekStart) {
+function getWeekStats(weekStart) {
   let total = 0;
+  let completed = 0;
+  let fullDays = 0;
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
+    const key = getDateKey(d);
+    const dayData = data.days[key] || {};
     const dayChores = getChoresForDate(d);
-    total += dayChores.morning.length + dayChores.evening.length;
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = Object.values(dayData).filter(Boolean).length;
+    total += required;
+    completed += done;
+    if (required > 0 && done >= required) fullDays++;
   }
-  // Weekly chores count once
   total += choreDefinitions.weekly.length + choreDefinitions.specific.length;
-  return total;
+  completed += Object.values(data.weekly).filter(Boolean).length;
+  return { total, completed, fullDays, percent: total > 0 ? (completed / total) * 100 : 0 };
+}
+
+function getAllTimeStats() {
+  let fullDays = 0;
+  let totalEarned = 0;
+  let fullWeeks = 0;
+  let perfectWeeks = 0;
+  const seenWeeks = new Set();
+
+  Object.keys(data.days).forEach(key => {
+    const d = new Date(key + 'T12:00:00');
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = Object.values(data.days[key] || {}).filter(Boolean).length;
+    if (required > 0 && done >= required) fullDays++;
+
+    const ws = getWeekStart(d).toISOString().split('T')[0];
+    if (!seenWeeks.has(ws)) {
+      seenWeeks.add(ws);
+      const stats = getWeekStats(getWeekStart(d));
+      if (stats.percent >= 100) perfectWeeks++;
+      if (stats.fullDays >= 5) fullWeeks++;
+      totalEarned += (stats.percent / 100) * 5;
+    }
+  });
+
+  return { fullDays, fullWeeks, perfectWeeks, totalEarned, streak: calculateStreak() };
 }
 
 function calculateStreak() {
   let streak = 0;
   const today = new Date();
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = getDateKey(d);
@@ -103,13 +135,121 @@ function calculateStreak() {
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
     const completed = Object.values(dayData).filter(Boolean).length;
-    if (required > 0 && completed >= required) {
-      streak++;
-    } else if (i > 0) {
-      break;
-    }
+    if (required > 0 && completed >= required) streak++;
+    else if (i > 0) break;
   }
   return streak;
+}
+
+function checkBadges() {
+  const stats = getAllTimeStats();
+  const newlyUnlocked = [];
+  badges.forEach(b => {
+    if (!data.unlockedBadges.includes(b.id) && b.check(stats)) {
+      data.unlockedBadges.push(b.id);
+      newlyUnlocked.push(b);
+    }
+  });
+  if (newlyUnlocked.length) {
+    saveData();
+    showBadgeUnlock(newlyUnlocked[0]);
+  }
+  document.getElementById('badge-count').textContent = data.unlockedBadges.length;
+  return stats;
+}
+
+function showBadgeUnlock(badge) {
+  document.getElementById('unlock-icon').textContent = badge.icon;
+  document.getElementById('unlock-name').textContent = badge.name;
+  document.getElementById('unlock-desc').textContent = badge.desc;
+  const el = document.getElementById('badge-unlock');
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2500);
+}
+
+function renderBadgeGrid() {
+  const grid = document.getElementById('badge-grid');
+  grid.innerHTML = '';
+  badges.forEach(b => {
+    const unlocked = data.unlockedBadges.includes(b.id);
+    const card = document.createElement('div');
+    card.className = `badge-card${unlocked ? ' unlocked' : ''}`;
+    card.innerHTML = `
+      <div class="icon">${b.icon}</div>
+      <div class="name">${b.name}</div>
+      <div class="desc">${b.desc}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  const weekStart = getWeekStart(currentDate);
+  const todayKey = getDateKey(new Date());
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = getDateKey(d);
+    const dayData = data.days[key] || {};
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = Object.values(dayData).filter(Boolean).length;
+    const pct = required > 0 ? Math.round((done / required) * 100) : 0;
+
+    const pill = document.createElement('div');
+    pill.className = 'day-pill';
+    if (key === todayKey) pill.classList.add('today');
+    if (pct === 100) pill.classList.add('complete');
+    else if (pct > 0) {
+      pill.classList.add('partial');
+      pill.style.setProperty('--fill', pct / 100);
+    }
+    pill.innerHTML = `
+      <span class="dow">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
+      <span class="pct">${pct}%</span>
+    `;
+    pill.addEventListener('click', () => {
+      currentDate = new Date(d);
+      renderAll();
+      updateStats();
+    });
+    grid.appendChild(pill);
+  }
+
+  const end = new Date(weekStart);
+  end.setDate(weekStart.getDate() + 6);
+  document.getElementById('week-range').textContent =
+    weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' +
+    end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function updateTrend() {
+  const thisWeek = getWeekStats(getWeekStart(currentDate));
+  const lastWeekStart = new Date(getWeekStart(currentDate));
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeek = getWeekStats(lastWeekStart);
+
+  const diff = thisWeek.completed - lastWeek.completed;
+  const arrow = document.getElementById('trend-arrow');
+  const text = document.getElementById('trend-text');
+
+  arrow.className = 'trend-arrow';
+  if (diff > 0) {
+    arrow.textContent = '↑';
+    arrow.classList.add('up');
+    text.textContent = `+${diff} vs last week`;
+  } else if (diff < 0) {
+    arrow.textContent = '↓';
+    arrow.classList.add('down');
+    text.textContent = `${diff} vs last week`;
+  } else {
+    arrow.textContent = '→';
+    arrow.classList.add('same');
+    text.textContent = 'same as last week';
+  }
 }
 
 function renderList(containerId, list, isWeekly = false) {
@@ -145,6 +285,7 @@ function renderList(containerId, list, isWeekly = false) {
       renderAll();
       updateStats();
       checkDayComplete();
+      checkBadges();
     });
     container.appendChild(item);
   });
@@ -160,23 +301,14 @@ function renderAll() {
   const dayDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   document.getElementById('day-name').textContent = dayName;
   document.getElementById('day-date').textContent = dayDate;
+
+  renderWeekGrid();
 }
 
 function updateStats() {
   const weekStart = getWeekStart(currentDate);
-  const totalPossible = getTotalPossibleForWeek(weekStart);
-  let completed = 0;
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const key = getDateKey(d);
-    const dayData = data.days[key] || {};
-    completed += Object.values(dayData).filter(Boolean).length;
-  }
-  completed += Object.values(data.weekly).filter(Boolean).length;
-
-  const percent = totalPossible > 0 ? (completed / totalPossible) * 100 : 0;
+  const stats = getWeekStats(weekStart);
+  const percent = stats.percent;
   const earned = (percent / 100) * 5;
 
   const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
@@ -186,7 +318,6 @@ function updateStats() {
   document.getElementById('mini-fill').style.width = percent + '%';
   document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% of weekly target`;
 
-  // Today percent based on chores actually assigned today
   const todayChores = getChoresForDate(currentDate);
   const todayRequired = todayChores.morning.length + todayChores.evening.length;
   const todayKey = getDateKey(currentDate);
@@ -196,6 +327,7 @@ function updateStats() {
   document.getElementById('today-percent').textContent = todayPct + '%';
 
   document.getElementById('streak').textContent = calculateStreak();
+  updateTrend();
 }
 
 function checkDayComplete() {
@@ -284,7 +416,19 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   }
 });
 
-// Add SVG gradient for the ring
+document.getElementById('badges-btn').addEventListener('click', () => {
+  renderBadgeGrid();
+  document.getElementById('badge-modal').classList.remove('hidden');
+});
+
+document.getElementById('close-badges').addEventListener('click', () => {
+  document.getElementById('badge-modal').classList.add('hidden');
+});
+
+document.getElementById('badge-unlock').addEventListener('click', () => {
+  document.getElementById('badge-unlock').classList.add('hidden');
+});
+
 const svg = document.querySelector('.progress-ring');
 const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
 defs.innerHTML = `
@@ -295,6 +439,6 @@ defs.innerHTML = `
 `;
 svg.appendChild(defs);
 
-// Init
 renderAll();
 updateStats();
+checkBadges();

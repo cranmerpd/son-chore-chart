@@ -29,6 +29,10 @@
           <span class="stat-label">Today</span>
           <span id="today-percent" class="stat-value">0%</span>
         </div>
+        <div class="stat clickable" id="badges-btn" title="Achievements">
+          <span class="stat-label">Badges</span>
+          <span id="badge-count" class="stat-value">0</span>
+        </div>
       </div>
     </header>
 
@@ -45,10 +49,22 @@
       </div>
       <div class="earnings-meta">
         <p id="week-status">Week in progress</p>
+        <div class="trend-row">
+          <span id="trend-arrow" class="trend-arrow">→</span>
+          <span id="trend-text">vs last week</span>
+        </div>
         <div class="mini-bar">
           <div id="mini-fill" class="mini-fill"></div>
         </div>
       </div>
+    </div>
+
+    <div class="week-overview">
+      <div class="overview-header">
+        <span>This Week</span>
+        <span id="week-range" class="week-range"></span>
+      </div>
+      <div id="week-grid" class="week-grid"></div>
     </div>
 
     <div class="day-nav">
@@ -86,6 +102,24 @@
     <div class="celebration-content">
       <div class="check-burst">✓</div>
       <p>Day Complete</p>
+    </div>
+  </div>
+
+  <div id="badge-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Achievements</h2>
+        <button id="close-badges" class="close-btn">×</button>
+      </div>
+      <div id="badge-grid" class="badge-grid"></div>
+    </div>
+  </div>
+
+  <div id="badge-unlock" class="badge-unlock hidden">
+    <div class="unlock-content">
+      <div class="unlock-icon" id="unlock-icon">🏅</div>
+      <p id="unlock-name">Badge Unlocked</p>
+      <p id="unlock-desc" class="unlock-desc"></p>
     </div>
   </div>
 
