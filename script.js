@@ -1,28 +1,34 @@
-const chores = {
-  morning: [
-    { id: 'brush-teeth-m', name: 'Brush Teeth' },
-    { id: 'water-animals', name: 'Water Animals' }
+const choreDefinitions = {
+  // Daily chores that appear every day
+  daily: [
+    { id: 'brush-teeth-m', name: 'Brush Teeth', section: 'morning' },
+    { id: 'water-animals', name: 'Water Animals', section: 'morning' },
+    { id: 'walk-dog', name: 'Walk the Dog', section: 'evening' },
+    { id: 'get-mail', name: 'Get Mail', section: 'evening' },
+    { id: 'unpack-bookbag', name: 'Unpack Bookbag', section: 'evening' },
+    { id: 'feed-animal', name: 'Feed Animal', section: 'evening' },
+    { id: 'clear-table', name: 'Clear Dinner Table', section: 'evening' }
   ],
-  evening: [
-    { id: 'walk-dog', name: 'Walk the Dog' },
-    { id: 'get-mail', name: 'Get Mail' },
-    { id: 'unpack-bookbag', name: 'Unpack Bookbag' },
-    { id: 'feed-animal', name: 'Feed Animal' },
-    { id: 'clear-table', name: 'Clear Dinner Table' },
-    { id: 'dirty-clothes', name: 'Dirty Clothes in Hamper' },
-    { id: 'toys-away', name: 'Toys Put Away' },
-    { id: 'brush-teeth-e', name: 'Brush Teeth' }
+  // Weekdays only (Mon-Fri)
+  weekdays: [
+    { id: 'dirty-clothes', name: 'Dirty Clothes in Hamper', section: 'evening' },
+    { id: 'toys-away', name: 'Toys Put Away', section: 'evening' },
+    { id: 'brush-teeth-e', name: 'Brush Teeth', section: 'evening' }
   ],
+  // Specific days
+  specific: [
+    { id: 'pick-up-yard', name: 'Pick Up Yard', section: 'weekly', days: [4] } // Thursday = 4
+  ],
+  // True weekly (any day)
   weekly: [
-    { id: 'sort-laundry', name: 'Sort Laundry' },
-    { id: 'clean-sink', name: 'Clean Bathroom Sink' },
-    { id: 'pick-up-yard', name: 'Pick Up Yard' },
-    { id: 'get-trash', name: 'Get Trash Together' }
+    { id: 'sort-laundry', name: 'Sort Laundry', section: 'weekly' },
+    { id: 'clean-sink', name: 'Clean Bathroom Sink', section: 'weekly' },
+    { id: 'get-trash', name: 'Get Trash Together', section: 'weekly' }
   ]
 };
 
 let currentDate = new Date();
-let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {}, streaks: {} };
+let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {} };
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
@@ -39,9 +45,51 @@ function getWeekStart(date) {
   return d;
 }
 
-function isToday(date) {
-  const today = new Date();
-  return date.toDateString() === today.toDateString();
+function getDayOfWeek(date) {
+  return date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+}
+
+function isWeekday(date) {
+  const day = getDayOfWeek(date);
+  return day >= 1 && day <= 5;
+}
+
+function getChoresForDate(date) {
+  const chores = { morning: [], evening: [], weekly: [] };
+  const dow = getDayOfWeek(date);
+
+  // Always-daily
+  choreDefinitions.daily.forEach(c => chores[c.section].push(c));
+
+  // Weekdays only
+  if (isWeekday(date)) {
+    choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
+  }
+
+  // Specific-day chores
+  choreDefinitions.specific.forEach(c => {
+    if (c.days.includes(dow)) {
+      chores[c.section].push(c);
+    }
+  });
+
+  // Weekly always available
+  choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
+
+  return chores;
+}
+
+function getTotalPossibleForWeek(weekStart) {
+  let total = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dayChores = getChoresForDate(d);
+    total += dayChores.morning.length + dayChores.evening.length;
+  }
+  // Weekly chores count once
+  total += choreDefinitions.weekly.length + choreDefinitions.specific.length;
+  return total;
 }
 
 function calculateStreak() {
@@ -52,8 +100,10 @@ function calculateStreak() {
     d.setDate(today.getDate() - i);
     const key = getDateKey(d);
     const dayData = data.days[key] || {};
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
     const completed = Object.values(dayData).filter(Boolean).length;
-    if (completed >= 8) { // most of the day done
+    if (required > 0 && completed >= required) {
       streak++;
     } else if (i > 0) {
       break;
@@ -67,6 +117,11 @@ function renderList(containerId, list, isWeekly = false) {
   container.innerHTML = '';
   const dateKey = getDateKey(currentDate);
   const dayData = data.days[dateKey] || {};
+
+  if (list.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">No chores for this section today.</p>';
+    return;
+  }
 
   list.forEach(chore => {
     const checked = isWeekly ? !!data.weekly[chore.id] : !!dayData[chore.id];
@@ -96,9 +151,10 @@ function renderList(containerId, list, isWeekly = false) {
 }
 
 function renderAll() {
-  renderList('morning-list', chores.morning);
-  renderList('evening-list', chores.evening);
-  renderList('weekly-list', chores.weekly, true);
+  const dayChores = getChoresForDate(currentDate);
+  renderList('morning-list', dayChores.morning);
+  renderList('evening-list', dayChores.evening);
+  renderList('weekly-list', dayChores.weekly, true);
 
   const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
   const dayDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -108,7 +164,7 @@ function renderAll() {
 
 function updateStats() {
   const weekStart = getWeekStart(currentDate);
-  let totalPossible = 0;
+  const totalPossible = getTotalPossibleForWeek(weekStart);
   let completed = 0;
 
   for (let i = 0; i < 7; i++) {
@@ -116,16 +172,13 @@ function updateStats() {
     d.setDate(weekStart.getDate() + i);
     const key = getDateKey(d);
     const dayData = data.days[key] || {};
-    totalPossible += 10;
     completed += Object.values(dayData).filter(Boolean).length;
   }
-  totalPossible += 4;
   completed += Object.values(data.weekly).filter(Boolean).length;
 
   const percent = totalPossible > 0 ? (completed / totalPossible) * 100 : 0;
   const earned = (percent / 100) * 5;
 
-  // Ring
   const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
   document.getElementById('ring-progress').style.strokeDashoffset = offset;
 
@@ -133,23 +186,25 @@ function updateStats() {
   document.getElementById('mini-fill').style.width = percent + '%';
   document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% of weekly target`;
 
-  // Today percent
+  // Today percent based on chores actually assigned today
+  const todayChores = getChoresForDate(currentDate);
+  const todayRequired = todayChores.morning.length + todayChores.evening.length;
   const todayKey = getDateKey(currentDate);
   const todayData = data.days[todayKey] || {};
   const todayDone = Object.values(todayData).filter(Boolean).length;
-  const todayPct = Math.round((todayDone / 10) * 100);
+  const todayPct = todayRequired > 0 ? Math.round((todayDone / todayRequired) * 100) : 0;
   document.getElementById('today-percent').textContent = todayPct + '%';
 
-  // Streak
   document.getElementById('streak').textContent = calculateStreak();
 }
 
 function checkDayComplete() {
-  if (!isToday(currentDate)) return;
   const dateKey = getDateKey(currentDate);
   const dayData = data.days[dateKey] || {};
+  const dayChores = getChoresForDate(currentDate);
+  const required = dayChores.morning.length + dayChores.evening.length;
   const done = Object.values(dayData).filter(Boolean).length;
-  if (done === 10) {
+  if (required > 0 && done === required) {
     showCelebration();
   }
 }
@@ -181,7 +236,7 @@ function spawnConfetti() {
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p, i) => {
+    particles.forEach((p) => {
       p.x += p.vx;
       p.y += p.vy;
       p.vy += 0.15;
