@@ -24,15 +24,34 @@ const choreDefinitions = {
 };
 
 const badges = [
+  { id: 'first-check', name: 'Initiated', icon: '🟢', desc: 'Check off your first chore', check: (s) => s.totalChecks >= 1 },
   { id: 'first-day', name: 'First Contact', icon: '🚀', desc: 'Complete your first full day', check: (s) => s.fullDays >= 1 },
+  { id: 'five-days', name: 'Cadet', icon: '⭐', desc: '5 full days', check: (s) => s.fullDays >= 5 },
+  { id: 'ten-days', name: 'Veteran', icon: '🎖️', desc: '10 full days', check: (s) => s.fullDays >= 10 },
+  { id: 'twenty-days', name: 'Elite', icon: '👑', desc: '20 full days', check: (s) => s.fullDays >= 20 },
+  { id: 'fifty-days', name: 'Legend', icon: '💎', desc: '50 full days', check: (s) => s.fullDays >= 50 },
   { id: 'streak-3', name: 'Operator', icon: '⚡', desc: '3-day streak', check: (s) => s.streak >= 3 },
-  { id: 'streak-7', name: 'Specialist', icon: '👑', desc: '7-day streak', check: (s) => s.streak >= 7 },
-  { id: 'streak-14', name: 'Commander', icon: '🎖️', desc: '14-day streak', check: (s) => s.streak >= 14 },
-  { id: 'streak-30', name: 'Legend', icon: '💎', desc: '30-day streak', check: (s) => s.streak >= 30 },
-  { id: 'first-week', name: 'Mission Complete', icon: '🏆', desc: 'Finish a full week', check: (s) => s.fullWeeks >= 1 },
+  { id: 'streak-5', name: 'Steady', icon: '🔥', desc: '5-day streak', check: (s) => s.streak >= 5 },
+  { id: 'streak-7', name: 'Specialist', icon: '🎖', desc: '7-day streak', check: (s) => s.streak >= 7 },
+  { id: 'streak-14', name: 'Commander', icon: '🛡️', desc: '14-day streak', check: (s) => s.streak >= 14 },
+  { id: 'streak-21', name: 'Iron Will', icon: '⚔️', desc: '21-day streak', check: (s) => s.streak >= 21 },
+  { id: 'streak-30', name: 'Unstoppable', icon: '💎', desc: '30-day streak', check: (s) => s.streak >= 30 },
+  { id: 'streak-60', name: 'Mythic', icon: '🔮', desc: '60-day streak', check: (s) => s.streak >= 60 },
+  { id: 'first-week', name: 'Mission Complete', icon: '🏆', desc: 'Finish a solid week', check: (s) => s.fullWeeks >= 1 },
   { id: 'perfect-week', name: 'Flawless', icon: '✨', desc: '100% in a week', check: (s) => s.perfectWeeks >= 1 },
-  { id: 'ten-days', name: 'Veteran', icon: '🎖', desc: '10 full days', check: (s) => s.fullDays >= 10 },
-  { id: 'earner', name: 'Paymaster', icon: '💰', desc: 'Earn $25 total', check: (s) => s.totalEarned >= 25 }
+  { id: 'two-perfect', name: 'Double Perfect', icon: '💎', desc: 'Two perfect weeks', check: (s) => s.perfectWeeks >= 2 },
+  { id: 'four-weeks', name: 'Monthly Master', icon: '📅', desc: '4 full weeks', check: (s) => s.fullWeeks >= 4 },
+  { id: 'earner-5', name: 'First Payday', icon: '💵', desc: 'Earn $5 total', check: (s) => s.totalEarned >= 5 },
+  { id: 'earner-25', name: 'Paymaster', icon: '💰', desc: 'Earn $25 total', check: (s) => s.totalEarned >= 25 },
+  { id: 'earner-50', name: 'Banker', icon: '🏦', desc: 'Earn $50 total', check: (s) => s.totalEarned >= 50 },
+  { id: 'earner-100', name: 'Tycoon', icon: '💸', desc: 'Earn $100 total', check: (s) => s.totalEarned >= 100 },
+  { id: 'hundred-checks', name: 'Centurion', icon: '🚢', desc: '100 total chores', check: (s) => s.totalChecks >= 100 },
+  { id: 'two-fifty-checks', name: 'Workhorse', icon: '🐴', desc: '250 total chores', check: (s) => s.totalChecks >= 250 },
+  { id: 'five-hundred-checks', name: 'Machine', icon: '🤖', desc: '500 total chores', check: (s) => s.totalChecks >= 500 },
+  { id: 'weekend-warrior', name: 'Weekend Warrior', icon: '🏕️', desc: 'Complete a full weekend', check: (s) => s.fullWeekends >= 1 },
+  { id: 'yard-master', name: 'Groundskeeper', icon: '🌳', desc: 'Pick up the yard 4 times', check: (s) => s.yardCount >= 4 },
+  { id: 'dog-walker', name: 'Pack Leader', icon: '🐕', desc: 'Walk the dog 14 times', check: (s) => s.dogWalks >= 14 },
+  { id: 'teeth-pro', name: 'Dental Pro', icon: '🦷', desc: 'Brush teeth 30 times', check: (s) => s.teethCount >= 30 }
 ];
 
 let currentDate = new Date();
@@ -102,14 +121,32 @@ function getAllTimeStats() {
   let totalEarned = 0;
   let fullWeeks = 0;
   let perfectWeeks = 0;
+  let totalChecks = 0;
+  let fullWeekends = 0;
+  let yardCount = 0;
+  let dogWalks = 0;
+  let teethCount = 0;
   const seenWeeks = new Set();
+  const weekendKeys = new Set();
 
   Object.keys(data.days).forEach(key => {
     const d = new Date(key + 'T12:00:00');
+    const dayData = data.days[key] || {};
+    const checks = Object.values(dayData).filter(Boolean).length;
+    totalChecks += checks;
+
+    if (dayData['walk-dog']) dogWalks++;
+    if (dayData['brush-teeth-m'] || dayData['brush-teeth-e']) teethCount++;
+    if (dayData['pick-up-yard']) yardCount++;
+
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
-    const done = Object.values(data.days[key] || {}).filter(Boolean).length;
-    if (required > 0 && done >= required) fullDays++;
+    const done = checks;
+    if (required > 0 && done >= required) {
+      fullDays++;
+      const dow = getDayOfWeek(d);
+      if (dow === 0 || dow === 6) weekendKeys.add(key);
+    }
 
     const ws = getWeekStart(d).toISOString().split('T')[0];
     if (!seenWeeks.has(ws)) {
@@ -121,13 +158,27 @@ function getAllTimeStats() {
     }
   });
 
-  return { fullDays, fullWeeks, perfectWeeks, totalEarned, streak: calculateStreak() };
+  // Rough weekend count
+  fullWeekends = Math.floor(weekendKeys.size / 2);
+
+  return {
+    fullDays,
+    fullWeeks,
+    perfectWeeks,
+    totalEarned,
+    totalChecks,
+    fullWeekends,
+    yardCount,
+    dogWalks,
+    teethCount,
+    streak: calculateStreak()
+  };
 }
 
 function calculateStreak() {
   let streak = 0;
   const today = new Date();
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 120; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = getDateKey(d);
@@ -169,6 +220,7 @@ function showBadgeUnlock(badge) {
 
 function renderBadgeGrid() {
   const grid = document.getElementById('badge-grid');
+  if (!grid) return;
   grid.innerHTML = '';
   badges.forEach(b => {
     const unlocked = data.unlockedBadges.includes(b.id);
@@ -389,6 +441,17 @@ function saveData() {
   localStorage.setItem('choreData', JSON.stringify(data));
 }
 
+function openBadgeModal() {
+  renderBadgeGrid();
+  const modal = document.getElementById('badge-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeBadgeModal() {
+  const modal = document.getElementById('badge-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 document.getElementById('prev-day').addEventListener('click', () => {
   currentDate.setDate(currentDate.getDate() - 1);
   renderAll();
@@ -416,16 +479,24 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   }
 });
 
-document.getElementById('badges-btn').addEventListener('click', () => {
-  renderBadgeGrid();
-  document.getElementById('badge-modal').classList.remove('hidden');
-});
+// Robust modal listeners
+const badgesBtn = document.getElementById('badges-btn');
+if (badgesBtn) {
+  badgesBtn.addEventListener('click', openBadgeModal);
+  badgesBtn.style.cursor = 'pointer';
+}
 
-document.getElementById('close-badges').addEventListener('click', () => {
-  document.getElementById('badge-modal').classList.add('hidden');
-});
+const closeBtn = document.getElementById('close-badges');
+if (closeBtn) closeBtn.addEventListener('click', closeBadgeModal);
 
-document.getElementById('badge-unlock').addEventListener('click', () => {
+const badgeModal = document.getElementById('badge-modal');
+if (badgeModal) {
+  badgeModal.addEventListener('click', (e) => {
+    if (e.target === badgeModal) closeBadgeModal();
+  });
+}
+
+document.getElementById('badge-unlock')?.addEventListener('click', () => {
   document.getElementById('badge-unlock').classList.add('hidden');
 });
 
