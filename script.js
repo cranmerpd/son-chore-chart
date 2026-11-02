@@ -107,6 +107,7 @@ document.getElementById('mobile-logout')?.addEventListener('click', () => signOu
 const collapseToggle = document.getElementById('collapse-toggle');
 const dashboardPanel = document.getElementById('dashboard-panel');
 const collapseLabel = document.getElementById('collapse-label');
+const earningsMeta = document.getElementById('earnings-meta');
 let collapsed = localStorage.getItem('dashboardCollapsed') === 'true';
 
 function applyCollapse() {
@@ -114,10 +115,12 @@ function applyCollapse() {
     dashboardPanel.classList.add('collapsed');
     collapseToggle.classList.add('collapsed');
     collapseLabel.textContent = 'Show Dashboard';
+    earningsMeta.classList.add('hidden');
   } else {
     dashboardPanel.classList.remove('collapsed');
     collapseToggle.classList.remove('collapsed');
     collapseLabel.textContent = 'Hide Dashboard';
+    earningsMeta.classList.remove('hidden');
   }
 }
 applyCollapse();
