@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Settings — Mission Control</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app" style="max-width: 640px;">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <div>
+          <h1>Settings</h1>
+          <p class="tagline">Family Management</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <a href="index.html" class="stat clickable" style="text-decoration: none;">
+          <span class="stat-label">Back</span>
+          <span class="stat-value">←</span>
+        </a>
+        <div class="stat clickable" id="logout-btn">
+          <span class="stat-label">Out</span>
+          <span class="stat-value">→</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="login-required" class="login-screen" style="position: relative; background: transparent;">
+      <div class="login-card">
+        <p>Sign in as a parent to manage the family.</p>
+        <a href="index.html" class="primary-btn" style="display: inline-block; text-align: center; margin-top: 16px; text-decoration: none;">Go to Login</a>
+      </div>
+    </div>
+
+    <div id="settings-content" style="display: none;">
+      <section class="section">
+        <h2 class="section-title">Family Members</h2>
+        <div id="members-list" class="chore-list"></div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Add Member</h2>
+        <form id="add-member-form" class="settings-form">
+          <input type="text" id="member-username" placeholder="Username" required>
+          <input type="password" id="member-password" placeholder="Password" required>
+          <select id="member-role">
+            <option value="child">Child</option>
+            <option value="parent">Parent</option>
+          </select>
+          <button type="submit" class="primary-btn">Add Member</button>
+        </form>
+        <p id="member-error" class="auth-error"></p>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Chores</h2>
+        <div id="chore-settings-list" class="chore-list"></div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Add Chore</h2>
+        <form id="add-chore-form" class="settings-form">
+          <input type="text" id="new-chore-name" placeholder="Chore name" required>
+          <select id="new-chore-section">
+            <option value="morning">Morning</option>
+            <option value="evening">Evening</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <select id="new-chore-frequency">
+            <option value="daily">Daily</option>
+            <option value="weekdays">Weekdays</option>
+            <option value="weekly">Weekly</option>
+            <option value="specific">Specific days</option>
+          </select>
+          <select id="new-chore-assign">
+            <option value="all">Everyone</option>
+          </select>
+          <button type="submit" class="primary-btn">Add Chore</button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>

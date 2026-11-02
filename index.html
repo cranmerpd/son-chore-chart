@@ -56,10 +56,10 @@
           <span class="stat-label">Badges</span>
           <span id="badge-count" class="stat-value">0</span>
         </div>
-        <div class="stat clickable" id="settings-btn" title="Settings" style="display: none;">
+        <a href="settings.html" class="stat clickable" id="settings-link" style="display: none; text-decoration: none;">
           <span class="stat-label">Settings</span>
           <span class="stat-value">⚙</span>
-        </div>
+        </a>
         <div class="stat clickable" id="logout-btn" title="Sign out">
           <span class="stat-label">Out</span>
           <span class="stat-value">→</span>
@@ -137,54 +137,6 @@
     <footer class="footer">
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
-  </div>
-
-  <div id="settings-modal" class="modal hidden">
-    <div class="modal-content" style="max-width: 480px;">
-      <div class="modal-header">
-        <h2>Family Settings</h2>
-        <button id="close-settings" class="close-btn">×</button>
-      </div>
-      <div class="settings-body">
-        <h3>Family Members</h3>
-        <div id="members-list"></div>
-
-        <h3 style="margin-top: 20px;">Add Member</h3>
-        <form id="add-member-form">
-          <input type="text" id="member-username" placeholder="Username" required>
-          <input type="password" id="member-password" placeholder="Password" required>
-          <select id="member-role">
-            <option value="child">Child</option>
-            <option value="parent">Parent</option>
-          </select>
-          <button type="submit" class="primary-btn">Add Member</button>
-        </form>
-        <p id="member-error" class="auth-error"></p>
-
-        <h3 style="margin-top: 28px;">Chores</h3>
-        <div id="chore-settings-list"></div>
-
-        <h3 style="margin-top: 20px;">Add Chore</h3>
-        <form id="add-chore-form">
-          <input type="text" id="new-chore-name" placeholder="Chore name" required>
-          <select id="new-chore-section">
-            <option value="morning">Morning</option>
-            <option value="evening">Evening</option>
-            <option value="weekly">Weekly</option>
-          </select>
-          <select id="new-chore-frequency">
-            <option value="daily">Daily</option>
-            <option value="weekdays">Weekdays</option>
-            <option value="weekly">Weekly</option>
-            <option value="specific">Specific days</option>
-          </select>
-          <select id="new-chore-assign">
-            <option value="all">Everyone</option>
-          </select>
-          <button type="submit" class="primary-btn">Add Chore</button>
-        </form>
-      </div>
-    </div>
   </div>
 
   <script type="module" src="script.js"></script>
