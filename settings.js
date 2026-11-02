@@ -73,20 +73,16 @@ function renderMembers() {
         <strong>${m.username}</strong>
         <div class="chore-meta">${m.role} • Allowance: ${allowance}</div>
       </div>
-      ${m.role === 'child' ? `<button class="small-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}">Set Allowance</button>` : ''}
+      ${m.role === 'child' ? `<button class="small-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}">Set</button>` : ''}
     `;
     list.appendChild(div);
   });
 
   list.querySelectorAll('.edit-allowance').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const current = btn.dataset.allowance || '5';
-      const val = prompt('Weekly allowance for this child ($)', current);
-      if (val === null) return;
-      const num = parseFloat(val);
-      if (isNaN(num) || num < 0) return;
-      await updateDoc(doc(db, 'users', btn.dataset.uid), { weeklyAllowance: num });
-      loadMembers();
+    btn.addEventListener('click', () => {
+      document.getElementById('allowance-uid').value = btn.dataset.uid;
+      document.getElementById('allowance-amount').value = btn.dataset.allowance || '5';
+      document.getElementById('allowance-modal').classList.remove('hidden');
     });
   });
 }
@@ -101,6 +97,21 @@ function updateAssignDropdown() {
     sel.appendChild(opt);
   });
 }
+
+// Allowance Modal
+const allowanceModal = document.getElementById('allowance-modal');
+document.getElementById('close-allowance').addEventListener('click', () => allowanceModal.classList.add('hidden'));
+allowanceModal.addEventListener('click', (e) => { if (e.target === allowanceModal) allowanceModal.classList.add('hidden'); });
+
+document.getElementById('allowance-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const uid = document.getElementById('allowance-uid').value;
+  const num = parseFloat(document.getElementById('allowance-amount').value);
+  if (!uid || isNaN(num) || num < 0) return;
+  await updateDoc(doc(db, 'users', uid), { weeklyAllowance: num });
+  allowanceModal.classList.add('hidden');
+  loadMembers();
+});
 
 // Add Member Modal
 const addMemberModal = document.getElementById('add-member-modal');
@@ -175,9 +186,9 @@ async function renderChores() {
         <div class="chore-meta">${chore.section} • ${chore.frequency}${daysText} • ${assigned}</div>
       </div>
       <div class="row-actions">
-        <button class="small-btn toggle-active" data-id="${docSnap.id}" data-active="${active}">${active ? 'Deactivate' : 'Activate'}</button>
+        <button class="small-btn toggle-active" data-id="${docSnap.id}" data-active="${active}">${active ? 'Off' : 'On'}</button>
         <button class="small-btn edit-chore" data-id="${docSnap.id}">Edit</button>
-        <button class="small-btn danger delete-chore" data-id="${docSnap.id}">Delete</button>
+        <button class="small-btn danger delete-chore" data-id="${docSnap.id}">Del</button>
       </div>
     `;
     list.appendChild(div);
@@ -265,8 +276,8 @@ async function renderBadges() {
         <div class="chore-meta">${b.desc || ''} • ${b.type} ≥ ${b.threshold}</div>
       </div>
       <div class="row-actions">
-        <button class="small-btn toggle-badge" data-id="${docSnap.id}" data-active="${active}">${active ? 'Deactivate' : 'Activate'}</button>
-        <button class="small-btn danger delete-badge" data-id="${docSnap.id}">Delete</button>
+        <button class="small-btn toggle-badge" data-id="${docSnap.id}" data-active="${active}">${active ? 'Off' : 'On'}</button>
+        <button class="small-btn danger delete-badge" data-id="${docSnap.id}">Del</button>
       </div>
     `;
     list.appendChild(div);
