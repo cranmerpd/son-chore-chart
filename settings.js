@@ -61,19 +61,19 @@ function renderMembers() {
   const list = document.getElementById('members-list');
   list.innerHTML = '';
   if (familyMembers.length === 0) {
-    list.innerHTML = '<p style="color: var(--text-dim);">No members yet.</p>';
+    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No members yet.</p>';
     return;
   }
   familyMembers.forEach(m => {
     const div = document.createElement('div');
-    div.className = 'member-row';
-    const allowance = m.weeklyAllowance != null ? `$${m.weeklyAllowance}` : 'Not set';
+    div.className = 'row';
+    const allowance = m.weeklyAllowance != null ? `$${m.weeklyAllowance}/wk` : '';
     div.innerHTML = `
-      <div>
-        <strong>${m.username}</strong>
-        <div class="chore-meta">${m.role} • Allowance: ${allowance}</div>
+      <div class="row-info">
+        <div class="row-title">${m.username}</div>
+        <div class="row-meta">${m.role}${allowance ? ' • ' + allowance : ''}</div>
       </div>
-      ${m.role === 'child' ? `<button class="small-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}">Set</button>` : ''}
+      ${m.role === 'child' ? `<div class="row-actions"><button class="icon-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}" title="Set allowance">$</button></div>` : ''}
     `;
     list.appendChild(div);
   });
@@ -169,26 +169,24 @@ async function renderChores() {
   list.innerHTML = '';
   const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
   if (snap.empty) {
-    list.innerHTML = '<p style="color: var(--text-dim);">No chores yet.</p>';
+    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No chores yet.</p>';
     return;
   }
   snap.forEach(docSnap => {
     const chore = docSnap.data();
     const active = chore.active !== false;
-    const assigned = chore.assignedTo === 'all' ? 'Everyone' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || 'Unknown');
-    const daysText = chore.frequency === 'specific' && chore.days ? ' (' + chore.days.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ') + ')' : '';
+    const assigned = chore.assignedTo === 'all' ? 'All' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || '?');
     const div = document.createElement('div');
-    div.className = 'chore-row';
-    if (!active) div.style.opacity = '0.5';
+    div.className = 'row' + (active ? '' : ' inactive');
     div.innerHTML = `
-      <div class="chore-info">
-        <strong>${chore.name}${!active ? ' (inactive)' : ''}</strong>
-        <div class="chore-meta">${chore.section} • ${chore.frequency}${daysText} • ${assigned}</div>
+      <div class="row-info">
+        <div class="row-title">${chore.name}</div>
+        <div class="row-meta">${chore.section} • ${chore.frequency} • ${assigned}</div>
       </div>
       <div class="row-actions">
-        <button class="small-btn toggle-active" data-id="${docSnap.id}" data-active="${active}">${active ? 'Off' : 'On'}</button>
-        <button class="small-btn edit-chore" data-id="${docSnap.id}">Edit</button>
-        <button class="small-btn danger delete-chore" data-id="${docSnap.id}">Del</button>
+        <button class="icon-btn toggle-active" data-id="${docSnap.id}" data-active="${active}" title="${active ? 'Deactivate' : 'Activate'}">${active ? '●' : '○'}</button>
+        <button class="icon-btn edit-chore" data-id="${docSnap.id}" title="Edit">✎</button>
+        <button class="icon-btn danger delete-chore" data-id="${docSnap.id}" title="Delete">✕</button>
       </div>
     `;
     list.appendChild(div);
@@ -255,29 +253,36 @@ choreForm.addEventListener('submit', async (e) => {
 });
 
 // Badges
+const badgeModal = document.getElementById('badge-modal');
+document.getElementById('open-add-badge').addEventListener('click', () => {
+  document.getElementById('add-badge-form').reset();
+  badgeModal.classList.remove('hidden');
+});
+document.getElementById('close-badge-modal').addEventListener('click', () => badgeModal.classList.add('hidden'));
+badgeModal.addEventListener('click', (e) => { if (e.target === badgeModal) badgeModal.classList.add('hidden'); });
+
 async function renderBadges() {
   if (!userData.familyId) return;
   const list = document.getElementById('badges-list');
   list.innerHTML = '';
   const snap = await getDocs(collection(db, 'families', userData.familyId, 'badges'));
   if (snap.empty) {
-    list.innerHTML = '<p style="color: var(--text-dim);">No badges yet.</p>';
+    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No badges yet.</p>';
     return;
   }
   snap.forEach(docSnap => {
     const b = docSnap.data();
     const active = b.active !== false;
     const div = document.createElement('div');
-    div.className = 'chore-row';
-    if (!active) div.style.opacity = '0.5';
+    div.className = 'row' + (active ? '' : ' inactive');
     div.innerHTML = `
-      <div class="chore-info">
-        <strong>${b.icon || ''} ${b.name}${!active ? ' (inactive)' : ''}</strong>
-        <div class="chore-meta">${b.desc || ''} • ${b.type} ≥ ${b.threshold}</div>
+      <div class="row-info">
+        <div class="row-title">${b.icon || ''} ${b.name}</div>
+        <div class="row-meta">${b.type} ≥ ${b.threshold}</div>
       </div>
       <div class="row-actions">
-        <button class="small-btn toggle-badge" data-id="${docSnap.id}" data-active="${active}">${active ? 'Off' : 'On'}</button>
-        <button class="small-btn danger delete-badge" data-id="${docSnap.id}">Del</button>
+        <button class="icon-btn toggle-badge" data-id="${docSnap.id}" data-active="${active}" title="${active ? 'Deactivate' : 'Activate'}">${active ? '●' : '○'}</button>
+        <button class="icon-btn danger delete-badge" data-id="${docSnap.id}" title="Delete">✕</button>
       </div>
     `;
     list.appendChild(div);
@@ -312,8 +317,6 @@ document.getElementById('add-badge-form').addEventListener('submit', async (e) =
   await addDoc(collection(db, 'families', userData.familyId, 'badges'), {
     name, icon, desc, type, threshold, active: true
   });
-  document.getElementById('badge-name').value = '';
-  document.getElementById('badge-icon').value = '';
-  document.getElementById('badge-desc').value = '';
+  badgeModal.classList.add('hidden');
   renderBadges();
 });

@@ -9,34 +9,39 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    .settings-page { max-width: 960px; margin: 0 auto; padding: 24px 20px 40px; }
-    .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; animation: fadeIn 0.4s ease; }
-    .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 16px; }
-    .member-row, .chore-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.3s ease; }
-    .member-row:last-child, .chore-row:last-child { border-bottom: none; }
-    .chore-info { flex: 1; min-width: 0; }
-    .chore-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
-    .row-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .small-btn { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
-    .small-btn:hover { border-color: var(--accent); }
-    .small-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
+    .settings-page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 40px; }
+    .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .grid { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .panel h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin: 0; }
+    .list { max-height: 420px; overflow-y: auto; }
+    .list::-webkit-scrollbar { width: 6px; }
+    .list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+    .row:last-child { border-bottom: none; }
+    .row-info { flex: 1; min-width: 0; }
+    .row-title { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
+    .row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .icon-btn { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: grid; place-items: center; transition: all 0.15s; }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .add-btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #0b0f19; border: none; padding: 5px 12px; border-radius: 6px; font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
     .modal-overlay.hidden { display: none; }
-    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; animation: fadeIn 0.25s ease; }
-    .modal-box h3 { margin-bottom: 16px; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; }
+    .modal-box h3 { margin-bottom: 16px; font-size: 1.1rem; }
     .form-row { display: flex; flex-direction: column; gap: 10px; }
-    .form-row input, .form-row select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; transition: border-color 0.2s; }
+    .form-row input, .form-row select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; }
     .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--accent); }
-    .day-checks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-    .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
-    @media (max-width: 640px) {
-      .settings-page { padding: 16px 12px 32px; }
-      .row-actions { flex-wrap: wrap; }
-      .small-btn { padding: 4px 8px; }
-    }
+    .form-row input[type="number"] { -moz-appearance: textfield; }
+    .form-row input[type="number"]::-webkit-outer-spin-button,
+    .form-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .day-checks { display: flex; gap: 8px; flex-wrap: wrap; }
+    .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 3px; }
+    .inactive { opacity: 0.45; }
   </style>
 </head>
 <body>
@@ -67,46 +72,34 @@
     </div>
 
     <div id="settings-content" style="display: none;">
-      <div class="two-col">
+      <div class="grid">
         <div class="panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h2 style="margin: 0;">Family Members</h2>
-            <button id="open-add-member" class="primary-btn" style="padding: 6px 14px; font-size: 0.85rem; margin: 0;">+ Add</button>
+          <div class="panel-header">
+            <h2>Members</h2>
+            <button id="open-add-member" class="add-btn">+ Add</button>
           </div>
-          <div id="members-list"></div>
+          <div id="members-list" class="list"></div>
         </div>
 
         <div class="panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h2 style="margin: 0;">Chores</h2>
-            <button id="open-add-chore" class="primary-btn" style="padding: 6px 14px; font-size: 0.85rem; margin: 0;">+ Add</button>
+          <div class="panel-header">
+            <h2>Chores</h2>
+            <button id="open-add-chore" class="add-btn">+ Add</button>
           </div>
-          <div id="chore-settings-list"></div>
+          <div id="chore-settings-list" class="list"></div>
         </div>
-      </div>
 
-      <div class="panel" style="margin-top: 24px;">
-        <h2>Badges</h2>
-        <div id="badges-list"></div>
-        <form id="add-badge-form" class="form-row" style="margin-top: 16px;">
-          <input type="text" id="badge-name" placeholder="Badge name" required>
-          <input type="text" id="badge-icon" placeholder="Icon (emoji)">
-          <input type="text" id="badge-desc" placeholder="Description">
-          <select id="badge-type">
-            <option value="totalChecks">Total chores</option>
-            <option value="fullDays">Full days</option>
-            <option value="streak">Streak</option>
-            <option value="fullWeeks">Full weeks</option>
-            <option value="perfectWeeks">Perfect weeks</option>
-            <option value="totalEarned">Total earned ($)</option>
-          </select>
-          <input type="number" id="badge-threshold" placeholder="Threshold" min="1" required>
-          <button type="submit" class="primary-btn">Add Badge</button>
-        </form>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Badges</h2>
+            <button id="open-add-badge" class="add-btn">+ Add</button>
+          </div>
+          <div id="badges-list" class="list"></div>
+        </div>
       </div>
     </div>
 
-    <p class="version">v1.2</p>
+    <p class="version">v1.3</p>
   </div>
 
   <!-- Add Member Modal -->
@@ -141,7 +134,7 @@
     </div>
   </div>
 
-  <!-- Add/Edit Chore Modal -->
+  <!-- Chore Modal -->
   <div id="chore-modal" class="modal-overlay hidden">
     <div class="modal-box">
       <h3 id="chore-modal-title">Add Chore</h3>
@@ -160,13 +153,13 @@
           <option value="specific">Specific days</option>
         </select>
         <div id="day-selector" class="day-checks" style="display: none;">
-          <label><input type="checkbox" value="0"> Sun</label>
-          <label><input type="checkbox" value="1"> Mon</label>
-          <label><input type="checkbox" value="2"> Tue</label>
-          <label><input type="checkbox" value="3"> Wed</label>
-          <label><input type="checkbox" value="4"> Thu</label>
-          <label><input type="checkbox" value="5"> Fri</label>
-          <label><input type="checkbox" value="6"> Sat</label>
+          <label><input type="checkbox" value="0"> Su</label>
+          <label><input type="checkbox" value="1"> Mo</label>
+          <label><input type="checkbox" value="2"> Tu</label>
+          <label><input type="checkbox" value="3"> We</label>
+          <label><input type="checkbox" value="4"> Th</label>
+          <label><input type="checkbox" value="5"> Fr</label>
+          <label><input type="checkbox" value="6"> Sa</label>
         </div>
         <select id="chore-assign">
           <option value="all">Everyone</option>
@@ -174,6 +167,29 @@
         <button type="submit" class="primary-btn">Save Chore</button>
       </form>
       <button id="close-chore-modal" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Badge Modal -->
+  <div id="badge-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Add Badge</h3>
+      <form id="add-badge-form" class="form-row">
+        <input type="text" id="badge-name" placeholder="Badge name" required>
+        <input type="text" id="badge-icon" placeholder="Icon (emoji)">
+        <input type="text" id="badge-desc" placeholder="Description">
+        <select id="badge-type">
+          <option value="totalChecks">Total chores</option>
+          <option value="fullDays">Full days</option>
+          <option value="streak">Streak</option>
+          <option value="fullWeeks">Full weeks</option>
+          <option value="perfectWeeks">Perfect weeks</option>
+          <option value="totalEarned">Total earned ($)</option>
+        </select>
+        <input type="number" id="badge-threshold" placeholder="Threshold" min="1" required>
+        <button type="submit" class="primary-btn">Add Badge</button>
+      </form>
+      <button id="close-badge-modal" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
     </div>
   </div>
 
