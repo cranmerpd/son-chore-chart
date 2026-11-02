@@ -52,7 +52,6 @@ const DEFAULT_BADGES = [
   { name: 'First Payday', icon: '💵', desc: 'Earn first allowance', type: 'totalEarned', threshold: 5, active: true }
 ];
 
-// ---------- Auth ----------
 let isRegistering = false;
 const loginScreen = document.getElementById('login-screen');
 const mainApp = document.getElementById('main-app');
@@ -84,23 +83,10 @@ authForm.addEventListener('submit', async (e) => {
     if (isRegistering) {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const familyRef = doc(collection(db, 'families'));
-      await setDoc(familyRef, {
-        days: {},
-        weekly: {},
-        unlockedBadges: [],
-        totalXP: 0
-      });
-      for (const chore of DEFAULT_CHORES) {
-        await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
-      }
-      for (const badge of DEFAULT_BADGES) {
-        await addDoc(collection(db, 'families', familyRef.id, 'badges'), badge);
-      }
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        username,
-        role: 'parent',
-        familyId: familyRef.id
-      });
+      await setDoc(familyRef, { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 });
+      for (const chore of DEFAULT_CHORES) await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
+      for (const badge of DEFAULT_BADGES) await addDoc(collection(db, 'families', familyRef.id, 'badges'), badge);
+      await setDoc(doc(db, 'users', cred.user.uid), { username, role: 'parent', familyId: familyRef.id });
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
@@ -115,8 +101,8 @@ authForm.addEventListener('submit', async (e) => {
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth));
 
-// ---------- Shared Family Data ----------
 const levels = [
   { level: 1, xp: 0, title: 'Recruit' },
   { level: 2, xp: 50, title: 'Trainee' },
@@ -133,8 +119,6 @@ const levels = [
 ];
 
 const XP_PER_CHORE = 10;
-const XP_FULL_DAY_BONUS = 25;
-
 let currentDate = new Date();
 let userData = { role: 'parent', username: '', familyId: null, weeklyAllowance: 5 };
 let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
@@ -203,19 +187,11 @@ function getChoresForDate(date) {
   return result;
 }
 
-function isVerified(entry) {
-  return entry && entry.checked && entry.verified;
-}
-
-function getVerifiedCount(dayData) {
-  if (!dayData) return 0;
-  return Object.values(dayData).filter(isVerified).length;
-}
+function isVerified(entry) { return entry && entry.checked && entry.verified; }
+function getVerifiedCount(dayData) { if (!dayData) return 0; return Object.values(dayData).filter(isVerified).length; }
 
 function saveFamily() {
-  if (userData.familyId) {
-    setDoc(doc(db, 'families', userData.familyId), familyData, { merge: true });
-  }
+  if (userData.familyId) setDoc(doc(db, 'families', userData.familyId), familyData, { merge: true });
 }
 
 function awardXP(amount) {
@@ -308,7 +284,10 @@ function checkBadges() {
     }
   });
   if (newlyUnlocked.length) { saveFamily(); showBadgeUnlock(newlyUnlocked[0]); }
-  document.getElementById('badge-count').textContent = (familyData.unlockedBadges || []).length;
+  const count = (familyData.unlockedBadges || []).length;
+  document.getElementById('badge-count').textContent = count;
+  document.getElementById('badge-count-strip').textContent = count;
+  document.getElementById('mobile-badge-count').textContent = count;
 }
 
 function showBadgeUnlock(badge) {
@@ -343,7 +322,6 @@ function renderList(containerId, list, isWeekly = false) {
     if (entry.verified) statusHtml = '<span class="status verified">✓ Verified</span>';
     else if (entry.checked) statusHtml = '<span class="status pending">Pending</span>';
 
-    // Parent sees Approve on pending items
     const showApprove = userData.role === 'parent' && entry.checked && !entry.verified;
 
     item.innerHTML = `
@@ -354,7 +332,6 @@ function renderList(containerId, list, isWeekly = false) {
     `;
 
     item.addEventListener('click', (e) => {
-      // Parent approve
       if (e.target.classList.contains('approve-btn')) {
         e.stopPropagation();
         entry.verified = true;
@@ -374,15 +351,12 @@ function renderList(containerId, list, isWeekly = false) {
         return;
       }
 
-      // Parent can check/uncheck freely (including on behalf of child)
-      // Child can only check (sets pending) or uncheck if not yet verified
       if (userData.role === 'child') {
-        if (entry.verified) return; // child cannot uncheck verified
+        if (entry.verified) return;
         entry.checked = !entry.checked;
         entry.verified = false;
         entry.checkedBy = auth.currentUser.uid;
       } else {
-        // Parent: toggle checked. If unchecking, also clear verified.
         entry.checked = !entry.checked;
         if (!entry.checked) entry.verified = false;
         entry.checkedBy = auth.currentUser.uid;
@@ -455,24 +429,21 @@ function updateStats() {
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
   if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
+  const isParent = userData.role === 'parent';
   const settingsLink = document.getElementById('settings-link');
-  if (settingsLink) settingsLink.style.display = userData.role === 'parent' ? 'block' : 'none';
+  if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
+  const mobileSettings = document.getElementById('mobile-settings');
+  if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
   const resetBtn = document.getElementById('reset-btn');
-  if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
+  if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
   checkBadges();
 }
 
 async function loadFamily() {
-  if (!userData.familyId) {
-    renderAll();
-    updateStats();
-    return;
-  }
+  if (!userData.familyId) { renderAll(); updateStats(); return; }
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
-  if (snap.exists()) {
-    familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
-  }
+  if (snap.exists()) familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   await loadChores();
   await loadBadges();
   if (unsubscribe) unsubscribe();
@@ -492,10 +463,13 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {
       userData = userSnap.data();
+      const isParent = userData.role === 'parent';
       const settingsLink = document.getElementById('settings-link');
-      if (settingsLink) settingsLink.style.display = userData.role === 'parent' ? 'block' : 'none';
+      if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
+      const mobileSettings = document.getElementById('mobile-settings');
+      if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
       const resetBtn = document.getElementById('reset-btn');
-      if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
+      if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
       loginScreen.style.display = 'none';
       mainApp.style.display = 'block';
       currentDate = new Date();
@@ -508,16 +482,8 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-document.getElementById('prev-day')?.addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() - 1);
-  renderAll();
-  updateStats();
-});
-document.getElementById('next-day')?.addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() + 1);
-  renderAll();
-  updateStats();
-});
+document.getElementById('prev-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() - 1); renderAll(); updateStats(); });
+document.getElementById('next-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() + 1); renderAll(); updateStats(); });
 document.getElementById('reset-btn')?.addEventListener('click', () => {
   if (userData.role !== 'parent') return;
   if (confirm('Reset all progress for this week?')) {

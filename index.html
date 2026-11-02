@@ -43,29 +43,35 @@
           <p class="tagline" id="user-role-tag">Daily Ops</p>
         </div>
       </div>
-      <div class="header-stats">
-        <div class="stat">
-          <span class="stat-label">Level</span>
-          <span id="level-value" class="stat-value">1</span>
+      <div class="header-actions">
+        <div class="nav-pill desktop-only" id="badges-btn" title="Achievements">
+          <span>🏅</span>
+          <span class="pill-value" id="badge-count">0</span>
         </div>
-        <div class="stat">
-          <span class="stat-label">Streak</span>
-          <span id="streak" class="stat-value">0</span>
-        </div>
-        <div class="stat clickable" id="badges-btn" title="Achievements">
-          <span class="stat-label">Badges</span>
-          <span id="badge-count" class="stat-value">0</span>
-        </div>
-        <a href="settings.html" class="stat clickable" id="settings-link" style="display: none; text-decoration: none;">
-          <span class="stat-label">Settings</span>
-          <span class="stat-value">⚙</span>
+        <a href="settings.html" class="nav-pill desktop-only" id="settings-link" style="display: none;">
+          <span>⚙</span>
+          <span>Settings</span>
         </a>
-        <div class="stat clickable" id="logout-btn" title="Sign out">
-          <span class="stat-label">Out</span>
-          <span class="stat-value">→</span>
+        <div class="nav-pill icon-only" id="logout-btn" title="Sign out">
+          <span>→</span>
         </div>
       </div>
     </header>
+
+    <div class="stats-strip">
+      <div class="stat-card">
+        <div class="label">Level</div>
+        <div class="value" id="level-value">1</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Streak</div>
+        <div class="value" id="streak">0</div>
+      </div>
+      <div class="stat-card clickable" id="badges-btn-strip">
+        <div class="label">Badges</div>
+        <div class="value" id="badge-count-strip">0</div>
+      </div>
+    </div>
 
     <div class="level-panel">
       <div class="level-info">
@@ -138,8 +144,28 @@
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
 
-    <p class="version">v1.3</p>
+    <p class="version">v1.4</p>
   </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="active">
+      <span class="nav-icon">📋</span>
+      <span>Chart</span>
+    </a>
+    <button id="mobile-badges">
+      <span class="nav-icon">🏅</span>
+      <span id="mobile-badge-count">0</span>
+    </button>
+    <a href="settings.html" id="mobile-settings" style="display: none;">
+      <span class="nav-icon">⚙</span>
+      <span>Settings</span>
+    </a>
+    <button id="mobile-logout">
+      <span class="nav-icon">→</span>
+      <span>Out</span>
+    </button>
+  </nav>
 
   <div id="badge-unlock" class="badge-unlock hidden">
     <div class="unlock-content">
