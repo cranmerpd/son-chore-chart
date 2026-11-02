@@ -62,7 +62,6 @@ const toggleAuth = document.getElementById('toggle-auth');
 const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
 
-// Hide login until auth resolves
 loginScreen.style.display = 'none';
 
 toggleAuth.addEventListener('click', () => {
@@ -89,8 +88,7 @@ authForm.addEventListener('submit', async (e) => {
         days: {},
         weekly: {},
         unlockedBadges: [],
-        totalXP: 0,
-        weeklyAllowance: 5
+        totalXP: 0
       });
       for (const chore of DEFAULT_CHORES) {
         await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
@@ -138,8 +136,8 @@ const XP_PER_CHORE = 10;
 const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
-let userData = { role: 'parent', username: '', familyId: null };
-let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5 };
+let userData = { role: 'parent', username: '', familyId: null, weeklyAllowance: 5 };
+let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
 let choresList = [];
 let badgesList = [];
 let unsubscribe = null;
@@ -275,7 +273,7 @@ function calculateStreak() {
 function getAllTimeStats() {
   let fullDays = 0, totalEarned = 0, fullWeeks = 0, perfectWeeks = 0, totalChecks = 0;
   const seenWeeks = new Set();
-  const allowance = familyData.weeklyAllowance || 5;
+  const allowance = userData.weeklyAllowance || 5;
   Object.keys(familyData.days || {}).forEach(key => {
     const d = new Date(key + 'T12:00:00');
     const dayData = familyData.days[key] || {};
@@ -345,6 +343,7 @@ function renderList(containerId, list, isWeekly = false) {
     if (entry.verified) statusHtml = '<span class="status verified">✓ Verified</span>';
     else if (entry.checked) statusHtml = '<span class="status pending">Pending</span>';
 
+    // Parent sees Approve on pending items
     const showApprove = userData.role === 'parent' && entry.checked && !entry.verified;
 
     item.innerHTML = `
@@ -355,6 +354,7 @@ function renderList(containerId, list, isWeekly = false) {
     `;
 
     item.addEventListener('click', (e) => {
+      // Parent approve
       if (e.target.classList.contains('approve-btn')) {
         e.stopPropagation();
         entry.verified = true;
@@ -374,10 +374,20 @@ function renderList(containerId, list, isWeekly = false) {
         return;
       }
 
-      if (userData.role === 'child' && entry.verified) return;
-      entry.checked = !entry.checked;
-      if (!entry.checked) entry.verified = false;
-      entry.checkedBy = auth.currentUser.uid;
+      // Parent can check/uncheck freely (including on behalf of child)
+      // Child can only check (sets pending) or uncheck if not yet verified
+      if (userData.role === 'child') {
+        if (entry.verified) return; // child cannot uncheck verified
+        entry.checked = !entry.checked;
+        entry.verified = false;
+        entry.checkedBy = auth.currentUser.uid;
+      } else {
+        // Parent: toggle checked. If unchecking, also clear verified.
+        entry.checked = !entry.checked;
+        if (!entry.checked) entry.verified = false;
+        entry.checkedBy = auth.currentUser.uid;
+      }
+
       if (isWeekly) {
         if (!familyData.weekly) familyData.weekly = {};
         familyData.weekly[chore.id] = entry;
@@ -434,11 +444,11 @@ function updateStats() {
   const weekStart = getWeekStart(currentDate);
   const stats = getWeekStats(weekStart);
   const percent = stats.percent;
-  const allowance = familyData.weeklyAllowance || 5;
+  const allowance = userData.weeklyAllowance || 5;
   const earned = (percent / 100) * allowance;
   document.getElementById('ring-progress').style.strokeDashoffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
   document.getElementById('earned-amount').textContent = `$${earned.toFixed(2)}`;
-  document.getElementById('earned-label')?.textContent = `of $${allowance.toFixed(2)}`;
+  document.getElementById('earned-label').textContent = `of $${allowance.toFixed(2)}`;
   document.getElementById('mini-fill').style.width = percent + '%';
   document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% verified`;
   document.getElementById('streak').textContent = calculateStreak();
@@ -461,14 +471,14 @@ async function loadFamily() {
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
   if (snap.exists()) {
-    familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5, ...snap.data() };
+    familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   }
   await loadChores();
   await loadBadges();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
     if (docSnap.exists()) {
-      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5, ...docSnap.data() };
+      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
       renderAll();
       updateStats();
     }

@@ -32,8 +32,6 @@
     .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--accent); }
     .day-checks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
     .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
-    .allowance-row { display: flex; gap: 8px; align-items: center; }
-    .allowance-row input { flex: 1; }
   </style>
 </head>
 <body>
@@ -64,15 +62,6 @@
     </div>
 
     <div id="settings-content" style="display: none;">
-      <div class="panel" style="margin-bottom: 24px;">
-        <h2>Weekly Allowance</h2>
-        <div class="allowance-row">
-          <input type="number" id="weekly-allowance" min="0" step="0.50" value="5" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; max-width: 120px;">
-          <button id="save-allowance" class="primary-btn" style="margin: 0; padding: 10px 16px;">Save</button>
-        </div>
-        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px;">This amount is used for the earnings calculator on the chart.</p>
-      </div>
-
       <div class="two-col">
         <div class="panel">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">

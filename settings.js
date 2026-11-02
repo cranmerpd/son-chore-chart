@@ -24,7 +24,6 @@ const loginRequired = document.getElementById('login-required');
 const settingsContent = document.getElementById('settings-content');
 let userData = null;
 let familyMembers = [];
-let familyData = {};
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
@@ -43,9 +42,6 @@ onAuthStateChanged(auth, async (user) => {
   userData = snap.data();
   loginRequired.style.display = 'none';
   settingsContent.style.display = 'block';
-  const famSnap = await getDoc(doc(db, 'families', userData.familyId));
-  if (famSnap.exists()) familyData = famSnap.data();
-  document.getElementById('weekly-allowance').value = familyData.weeklyAllowance || 5;
   await loadMembers();
   await renderChores();
   await renderBadges();
@@ -71,8 +67,27 @@ function renderMembers() {
   familyMembers.forEach(m => {
     const div = document.createElement('div');
     div.className = 'member-row';
-    div.innerHTML = `<div><strong>${m.username}</strong><div class="chore-meta">${m.role}</div></div>`;
+    const allowance = m.weeklyAllowance != null ? `$${m.weeklyAllowance}` : 'Not set';
+    div.innerHTML = `
+      <div>
+        <strong>${m.username}</strong>
+        <div class="chore-meta">${m.role} • Allowance: ${allowance}</div>
+      </div>
+      ${m.role === 'child' ? `<button class="small-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}">Set Allowance</button>` : ''}
+    `;
     list.appendChild(div);
+  });
+
+  list.querySelectorAll('.edit-allowance').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const current = btn.dataset.allowance || '5';
+      const val = prompt('Weekly allowance for this child ($)', current);
+      if (val === null) return;
+      const num = parseFloat(val);
+      if (isNaN(num) || num < 0) return;
+      await updateDoc(doc(db, 'users', btn.dataset.uid), { weeklyAllowance: num });
+      loadMembers();
+    });
   });
 }
 
@@ -86,13 +101,6 @@ function updateAssignDropdown() {
     sel.appendChild(opt);
   });
 }
-
-document.getElementById('save-allowance').addEventListener('click', async () => {
-  const val = parseFloat(document.getElementById('weekly-allowance').value);
-  if (isNaN(val) || val < 0) return;
-  await updateDoc(doc(db, 'families', userData.familyId), { weeklyAllowance: val });
-  alert('Allowance saved');
-});
 
 // Add Member Modal
 const addMemberModal = document.getElementById('add-member-modal');
@@ -114,7 +122,8 @@ document.getElementById('add-member-form').addEventListener('submit', async (e) 
     await setDoc(doc(db, 'users', cred.user.uid), {
       username,
       role,
-      familyId: userData.familyId
+      familyId: userData.familyId,
+      weeklyAllowance: role === 'child' ? 5 : null
     });
     alert(`${role} account created for ${username}. You will be signed out — sign back in.`);
     await signOut(auth);
