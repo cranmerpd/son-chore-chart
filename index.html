@@ -24,10 +24,6 @@
       <form id="auth-form">
         <input type="text" id="username" placeholder="Username" required autocomplete="username" autocapitalize="none">
         <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
-        <div class="role-select" id="role-select" style="display: none;">
-          <button type="button" class="role-btn active" data-role="parent">Parent</button>
-          <button type="button" class="role-btn" data-role="child">Child</button>
-        </div>
         <button type="submit" id="auth-submit" class="primary-btn">Sign In</button>
       </form>
       <p class="auth-toggle">
@@ -59,6 +55,10 @@
         <div class="stat clickable" id="badges-btn" title="Achievements">
           <span class="stat-label">Badges</span>
           <span id="badge-count" class="stat-value">0</span>
+        </div>
+        <div class="stat clickable" id="settings-btn" title="Settings" style="display: none;">
+          <span class="stat-label">Settings</span>
+          <span class="stat-value">⚙</span>
         </div>
         <div class="stat clickable" id="logout-btn" title="Sign out">
           <span class="stat-label">Out</span>
@@ -137,6 +137,26 @@
     <footer class="footer">
       <button id="reset-btn" class="ghost-btn">Reset Week</button>
     </footer>
+  </div>
+
+  <!-- Settings Modal (Parent only) -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="close-settings" class="close-btn">×</button>
+      </div>
+      <div class="settings-body">
+        <h3>Children</h3>
+        <div id="children-list"></div>
+        <form id="add-child-form">
+          <input type="text" id="child-username" placeholder="Child username" required>
+          <input type="password" id="child-password" placeholder="Child password" required>
+          <button type="submit" class="primary-btn">Add Child</button>
+        </form>
+        <p id="child-error" class="auth-error"></p>
+      </div>
+    </div>
   </div>
 
   <div id="celebration" class="celebration hidden">

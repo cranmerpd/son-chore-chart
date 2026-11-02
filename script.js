@@ -15,7 +15,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ---------- Auth helpers ----------
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
   return clean + '@son-chore-chart.firebaseapp.com';
@@ -23,7 +22,6 @@ function usernameToEmail(username) {
 
 // ---------- Auth UI ----------
 let isRegistering = false;
-let selectedRole = 'parent';
 const loginScreen = document.getElementById('login-screen');
 const mainApp = document.getElementById('main-app');
 const authForm = document.getElementById('auth-form');
@@ -31,22 +29,12 @@ const authSubmit = document.getElementById('auth-submit');
 const toggleAuth = document.getElementById('toggle-auth');
 const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
-const roleSelect = document.getElementById('role-select');
-
-roleSelect.querySelectorAll('.role-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    roleSelect.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedRole = btn.dataset.role;
-  });
-});
 
 toggleAuth.addEventListener('click', () => {
   isRegistering = !isRegistering;
-  authSubmit.textContent = isRegistering ? 'Create Account' : 'Sign In';
+  authSubmit.textContent = isRegistering ? 'Create Parent Account' : 'Sign In';
   authMessage.textContent = isRegistering ? 'Already have an account?' : "Don't have an account?";
   toggleAuth.textContent = isRegistering ? 'Sign in' : 'Create one';
-  roleSelect.style.display = isRegistering ? 'flex' : 'none';
   authError.textContent = '';
 });
 
@@ -60,7 +48,6 @@ authForm.addEventListener('submit', async (e) => {
   authSubmit.disabled = true;
   try {
     if (isRegistering) {
-      // Only allow parent self-registration for now
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', cred.user.uid), {
         username: username,
@@ -68,7 +55,8 @@ authForm.addEventListener('submit', async (e) => {
         days: {},
         weekly: {},
         unlockedBadges: [],
-        totalXP: 0
+        totalXP: 0,
+        children: []
       });
     } else {
       await signInWithEmailAndPassword(auth, email, password);
@@ -84,6 +72,71 @@ authForm.addEventListener('submit', async (e) => {
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+// ---------- Settings (Parent) ----------
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const closeSettings = document.getElementById('close-settings');
+const addChildForm = document.getElementById('add-child-form');
+const childrenList = document.getElementById('children-list');
+const childError = document.getElementById('child-error');
+
+settingsBtn.addEventListener('click', () => {
+  renderChildrenList();
+  settingsModal.classList.remove('hidden');
+});
+closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) settingsModal.classList.add('hidden');
+});
+
+function renderChildrenList() {
+  childrenList.innerHTML = '';
+  const kids = data.children || [];
+  if (kids.length === 0) {
+    childrenList.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">No children added yet.</p>';
+    return;
+  }
+  kids.forEach(child => {
+    const div = document.createElement('div');
+    div.className = 'child-item';
+    div.innerHTML = `<span>${child.username}</span>`;
+    childrenList.appendChild(div);
+  });
+}
+
+addChildForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('child-username').value.trim();
+  const password = document.getElementById('child-password').value;
+  if (!username || !password) return;
+  childError.textContent = '';
+  try {
+    const email = usernameToEmail(username);
+    // Create the child auth user (this will temporarily sign the parent out)
+    const childCred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', childCred.user.uid), {
+      username: username,
+      role: 'child',
+      parentId: auth.currentUser?.uid || '',
+      days: {},
+      weekly: {},
+      unlockedBadges: [],
+      totalXP: 0
+    });
+    // Store reference on parent
+    if (!data.children) data.children = [];
+    data.children.push({ username, uid: childCred.user.uid });
+    saveData();
+    // Sign parent back in
+    const parentEmail = usernameToEmail(data.username);
+    // Note: we don't have the parent password stored, so user will need to sign in again
+    alert('Child account created. Please sign in again as the parent.');
+    await signOut(auth);
+  } catch (err) {
+    childError.textContent = err.message.replace('Firebase: ', '');
+  }
+});
 
 // ---------- App Data ----------
 const choreDefinitions = {
@@ -161,7 +214,7 @@ const XP_PER_CHORE = 10;
 const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
-let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '' };
+let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', children: [] };
 let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -409,6 +462,10 @@ function updateStats() {
     const name = data.username ? data.username + ' • ' : '';
     roleTag.textContent = name + (data.role === 'child' ? 'Child' : 'Parent');
   }
+  // Show/hide settings based on role
+  settingsBtn.style.display = data.role === 'parent' ? 'block' : 'none';
+  // Child view: hide reset for now (can expand later)
+  document.getElementById('reset-btn').style.display = data.role === 'parent' ? 'inline-block' : 'none';
 }
 
 function checkDayComplete() {
@@ -453,7 +510,7 @@ function saveData() {
 async function loadUserData(user) {
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (snap.exists()) {
-    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', ...snap.data() };
+    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', children: [], ...snap.data() };
   } else {
     const local = JSON.parse(localStorage.getItem('choreData') || 'null');
     if (local) data = { ...data, ...local };
@@ -462,7 +519,7 @@ async function loadUserData(user) {
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
     if (docSnap.exists()) {
-      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', ...docSnap.data() };
+      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', children: [], ...docSnap.data() };
       renderAll(); updateStats(); checkBadges();
     }
   });

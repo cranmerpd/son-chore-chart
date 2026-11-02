@@ -32,7 +32,6 @@ body {
   z-index: 0;
 }
 
-/* Login */
 .login-screen {
   position: fixed;
   inset: 0;
@@ -53,13 +52,13 @@ body {
   box-shadow: var(--shadow);
 }
 
-#auth-form {
+#auth-form, #add-child-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-#auth-form input {
+#auth-form input, #add-child-form input {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -69,33 +68,9 @@ body {
   font-size: 1rem;
 }
 
-#auth-form input:focus {
+#auth-form input:focus, #add-child-form input:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-.role-select {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0;
-}
-
-.role-btn {
-  flex: 1;
-  padding: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-dim);
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.role-btn.active {
-  background: rgba(0,229,255,0.15);
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .primary-btn {
@@ -141,7 +116,6 @@ body {
   min-height: 1.2em;
 }
 
-/* Main app */
 .app {
   position: relative;
   z-index: 1;
@@ -714,6 +688,34 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
+}
+
+.settings-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.settings-body h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+#children-list {
+  margin-bottom: 16px;
+}
+
+.child-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
 }
 
 .badge-grid {
