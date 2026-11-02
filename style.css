@@ -95,7 +95,7 @@ body {
   z-index: 1;
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px 20px 90px;
+  padding: 20px 20px 100px;
 }
 
 /* Header */
@@ -175,19 +175,11 @@ body {
   transition: all 0.2s;
 }
 .collapse-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.collapse-toggle .chevron {
-  transition: transform 0.3s ease;
-}
-.collapse-toggle.collapsed .chevron {
-  transform: rotate(180deg);
-}
+.collapse-toggle .chevron { transition: transform 0.3s ease; }
+.collapse-toggle.collapsed .chevron { transform: rotate(180deg); }
 
 /* Stats strip */
-.stats-strip {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
+.stats-strip { display: flex; gap: 12px; margin-bottom: 12px; }
 .stat-card {
   flex: 1;
   background: var(--surface);
@@ -257,7 +249,7 @@ body {
 .day-pill .dow { font-weight: 600; color: var(--text-dim); }
 .day-pill .pct { font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
 
-/* Compact row: ring + day nav side by side */
+/* Compact row */
 .compact-row {
   display: flex;
   gap: 12px;
@@ -269,12 +261,12 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 12px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
+  justify-content: center;
+  gap: 0;
+  flex: 0 0 auto;
   transition: all 0.4s ease;
 }
 .ring-container { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
@@ -293,28 +285,10 @@ body {
 .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .earned { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 600; color: var(--success); }
 .earned-label { font-size: 0.6rem; color: var(--text-dim); }
+
 .earnings-meta {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  transition: max-width 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
-  max-width: 200px;
-  opacity: 1;
+  display: none;
 }
-.earnings-meta.hidden {
-  max-width: 0;
-  opacity: 0;
-  margin: 0;
-  padding: 0;
-}
-#week-status { font-size: 0.8rem; margin-bottom: 4px; color: var(--text-dim); white-space: nowrap; }
-.trend-row { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 0.75rem; white-space: nowrap; }
-.trend-arrow { font-size: 0.9rem; font-weight: 600; }
-.trend-arrow.up { color: var(--success); }
-.trend-arrow.down { color: var(--danger); }
-.trend-arrow.same { color: var(--text-dim); }
-.mini-bar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
-.mini-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); border-radius: 2px; transition: width 0.6s ease; }
 
 .day-nav {
   display: flex;
@@ -324,9 +298,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 8px 12px;
-  min-width: 180px;
-  flex-shrink: 0;
-  transition: all 0.4s ease;
+  flex: 1;
+  min-width: 0;
 }
 .nav-btn {
   width: 32px; height: 32px;
@@ -460,46 +433,50 @@ body {
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: rgba(20, 26, 43, 0.95);
-  backdrop-filter: blur(12px);
+  background: #101624;
   border-top: 1px solid var(--border);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
   z-index: 100;
   justify-content: space-around;
-  align-items: center;
+  align-items: stretch;
 }
 .bottom-nav a, .bottom-nav button {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  justify-content: center;
+  gap: 2px;
   background: none;
   border: none;
   color: var(--text-dim);
   font-family: inherit;
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-decoration: none;
   cursor: pointer;
-  padding: 6px 16px;
-  border-radius: 8px;
-  transition: all 0.15s;
+  padding: 8px 0;
+  transition: color 0.15s;
 }
 .bottom-nav a.active, .bottom-nav button.active {
   color: var(--accent);
-  background: rgba(0, 229, 255, 0.1);
 }
-.bottom-nav .nav-icon { font-size: 1.15rem; }
+.bottom-nav .nav-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
 
 @media (max-width: 640px) {
-  .app { padding: 12px 12px 100px; }
+  .app { padding: 12px 12px 90px; }
   .header-actions .nav-pill.desktop-only { display: none; }
   .stats-strip { display: none; }
   .bottom-nav { display: flex; }
   .header { padding-bottom: 10px; }
   .logo h1 { font-size: 1.1rem; }
-  .compact-row { flex-direction: column; }
-  .earnings-panel { justify-content: center; }
-  .day-nav { min-width: auto; }
+  .compact-row { gap: 8px; }
+  .ring-container { width: 80px; height: 80px; }
+  .earned { font-size: 1rem; }
+  .day-nav { padding: 6px 8px; }
+  #day-name { font-size: 0.9rem; }
 }
