@@ -18,7 +18,7 @@
         <span class="logo-icon">⚡</span>
         <div>
           <h1>Mission Control</h1>
-          <p class="tagline">Sign in to sync progress</p>
+          <p class="tagline">Family Chore Tracker</p>
         </div>
       </div>
       <form id="auth-form">
@@ -28,7 +28,7 @@
       </form>
       <p class="auth-toggle">
         <span id="auth-message">Don't have an account?</span>
-        <button type="button" id="toggle-auth" class="link-btn">Create one</button>
+        <button type="button" id="toggle-auth" class="link-btn">Create parent account</button>
       </p>
       <p id="auth-error" class="auth-error"></p>
     </div>
@@ -40,7 +40,7 @@
         <span class="logo-icon">⚡</span>
         <div>
           <h1>Mission Control</h1>
-          <p class="tagline" id="user-role-tag">Daily Ops • Earnings Tracker</p>
+          <p class="tagline" id="user-role-tag">Daily Ops</p>
         </div>
       </div>
       <div class="header-stats">
@@ -135,26 +135,29 @@
     </main>
 
     <footer class="footer">
-      <button id="reset-btn" class="ghost-btn">Reset Week</button>
+      <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
   </div>
 
-  <!-- Settings Modal (Parent only) -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Settings</h2>
+        <h2>Family Settings</h2>
         <button id="close-settings" class="close-btn">×</button>
       </div>
       <div class="settings-body">
-        <h3>Children</h3>
-        <div id="children-list"></div>
-        <form id="add-child-form">
-          <input type="text" id="child-username" placeholder="Child username" required>
-          <input type="password" id="child-password" placeholder="Child password" required>
-          <button type="submit" class="primary-btn">Add Child</button>
+        <h3>Add Family Member</h3>
+        <form id="add-member-form">
+          <input type="text" id="member-username" placeholder="Username" required>
+          <input type="password" id="member-password" placeholder="Password" required>
+          <select id="member-role">
+            <option value="child">Child</option>
+            <option value="parent">Parent</option>
+          </select>
+          <button type="submit" class="primary-btn">Add Member</button>
         </form>
-        <p id="child-error" class="auth-error"></p>
+        <p id="member-error" class="auth-error"></p>
+        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 12px;">Adding a member will sign you out. Sign back in afterward.</p>
       </div>
     </div>
   </div>
