@@ -92,8 +92,21 @@ addMemberForm.addEventListener('submit', async (e) => {
   const username = document.getElementById('member-username').value.trim();
   const password = document.getElementById('member-password').value;
   const role = document.getElementById('member-role').value;
-  if (!username || !password || !userData.familyId) return;
   memberError.textContent = '';
+
+  if (!username || !password) {
+    memberError.textContent = 'Username and password required';
+    return;
+  }
+  if (!userData.familyId) {
+    memberError.textContent = 'No family found. Sign out and create a new parent account.';
+    return;
+  }
+
+  const btn = addMemberForm.querySelector('button');
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
   try {
     const email = usernameToEmail(username);
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -102,11 +115,18 @@ addMemberForm.addEventListener('submit', async (e) => {
       role,
       familyId: userData.familyId
     });
-    alert(`${role === 'child' ? 'Child' : 'Parent'} account created. Please sign back in.`);
+    alert(`${role === 'child' ? 'Child' : 'Parent'} account created for ${username}. You will be signed out — sign back in.`);
     await signOut(auth);
   } catch (err) {
-    memberError.textContent = err.message.replace('Firebase: ', '');
+    console.error(err);
+    let msg = err.message.replace('Firebase: ', '');
+    if (err.code === 'auth/email-already-in-use') msg = 'Username already taken';
+    if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters';
+    if (err.code === 'auth/invalid-email') msg = 'Invalid username (use letters/numbers only)';
+    memberError.textContent = msg;
   }
+  btn.disabled = false;
+  btn.textContent = 'Add Member';
 });
 
 // ---------- Shared Family Data ----------
@@ -486,7 +506,6 @@ function updateStats() {
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
   if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
-  // Always show settings for parent
   if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
   const resetBtn = document.getElementById('reset-btn');
   if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
@@ -544,7 +563,6 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {
       userData = userSnap.data();
-      // Show settings immediately for parent
       if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
