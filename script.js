@@ -79,7 +79,36 @@ const choreDefinitions = {
   ]
 };
 
-const badges = [ /* ... same badge list as before ... */ ]; // (kept short here for brevity; full list is in the pushed file)
+const badges = [
+  { id: 'first-check', name: 'Initiated', icon: '🟢', desc: 'Check off your first chore', check: (s) => s.totalChecks >= 1 },
+  { id: 'first-day', name: 'First Contact', icon: '🚀', desc: 'Complete your first full day', check: (s) => s.fullDays >= 1 },
+  { id: 'five-days', name: 'Cadet', icon: '⭐', desc: '5 full days', check: (s) => s.fullDays >= 5 },
+  { id: 'ten-days', name: 'Veteran', icon: '🎖️', desc: '10 full days', check: (s) => s.fullDays >= 10 },
+  { id: 'twenty-days', name: 'Elite', icon: '👑', desc: '20 full days', check: (s) => s.fullDays >= 20 },
+  { id: 'fifty-days', name: 'Legend', icon: '💎', desc: '50 full days', check: (s) => s.fullDays >= 50 },
+  { id: 'streak-3', name: 'Operator', icon: '⚡', desc: '3-day streak', check: (s) => s.streak >= 3 },
+  { id: 'streak-5', name: 'Steady', icon: '🔥', desc: '5-day streak', check: (s) => s.streak >= 5 },
+  { id: 'streak-7', name: 'Specialist', icon: '🎖', desc: '7-day streak', check: (s) => s.streak >= 7 },
+  { id: 'streak-14', name: 'Commander', icon: '🛡️', desc: '14-day streak', check: (s) => s.streak >= 14 },
+  { id: 'streak-21', name: 'Iron Will', icon: '⚔️', desc: '21-day streak', check: (s) => s.streak >= 21 },
+  { id: 'streak-30', name: 'Unstoppable', icon: '💎', desc: '30-day streak', check: (s) => s.streak >= 30 },
+  { id: 'streak-60', name: 'Mythic', icon: '🔮', desc: '60-day streak', check: (s) => s.streak >= 60 },
+  { id: 'first-week', name: 'Mission Complete', icon: '🏆', desc: 'Finish a solid week', check: (s) => s.fullWeeks >= 1 },
+  { id: 'perfect-week', name: 'Flawless', icon: '✨', desc: '100% in a week', check: (s) => s.perfectWeeks >= 1 },
+  { id: 'two-perfect', name: 'Double Perfect', icon: '💎', desc: 'Two perfect weeks', check: (s) => s.perfectWeeks >= 2 },
+  { id: 'four-weeks', name: 'Monthly Master', icon: '📅', desc: '4 full weeks', check: (s) => s.fullWeeks >= 4 },
+  { id: 'earner-5', name: 'First Payday', icon: '💵', desc: 'Earn $5 total', check: (s) => s.totalEarned >= 5 },
+  { id: 'earner-25', name: 'Paymaster', icon: '💰', desc: 'Earn $25 total', check: (s) => s.totalEarned >= 25 },
+  { id: 'earner-50', name: 'Banker', icon: '🏦', desc: 'Earn $50 total', check: (s) => s.totalEarned >= 50 },
+  { id: 'earner-100', name: 'Tycoon', icon: '💸', desc: 'Earn $100 total', check: (s) => s.totalEarned >= 100 },
+  { id: 'hundred-checks', name: 'Centurion', icon: '🚢', desc: '100 total chores', check: (s) => s.totalChecks >= 100 },
+  { id: 'two-fifty-checks', name: 'Workhorse', icon: '🐴', desc: '250 total chores', check: (s) => s.totalChecks >= 250 },
+  { id: 'five-hundred-checks', name: 'Machine', icon: '🤖', desc: '500 total chores', check: (s) => s.totalChecks >= 500 },
+  { id: 'weekend-warrior', name: 'Weekend Warrior', icon: '🏕️', desc: 'Complete a full weekend', check: (s) => s.fullWeekends >= 1 },
+  { id: 'yard-master', name: 'Groundskeeper', icon: '🌳', desc: 'Pick up the yard 4 times', check: (s) => s.yardCount >= 4 },
+  { id: 'dog-walker', name: 'Pack Leader', icon: '🐕', desc: 'Walk the dog 14 times', check: (s) => s.dogWalks >= 14 },
+  { id: 'teeth-pro', name: 'Dental Pro', icon: '🦷', desc: 'Brush teeth 30 times', check: (s) => s.teethCount >= 30 }
+];
 
 const levels = [
   { level: 1, xp: 0, title: 'Recruit' },
@@ -105,7 +134,437 @@ let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
-// ---------- Firestore sync ----------
+function getDateKey(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getDayOfWeek(date) {
+  return date.getDay();
+}
+
+function isWeekday(date) {
+  const day = getDayOfWeek(date);
+  return day >= 1 && day <= 5;
+}
+
+function getChoresForDate(date) {
+  const chores = { morning: [], evening: [], weekly: [] };
+  const dow = getDayOfWeek(date);
+  choreDefinitions.daily.forEach(c => chores[c.section].push(c));
+  if (isWeekday(date)) {
+    choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
+  }
+  choreDefinitions.specific.forEach(c => {
+    if (c.days.includes(dow)) chores[c.section].push(c);
+  });
+  choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
+  return chores;
+}
+
+function getLevelInfo(xp) {
+  let current = levels[0];
+  let next = levels[1] || levels[0];
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (xp >= levels[i].xp) {
+      current = levels[i];
+      next = levels[i + 1] || levels[i];
+      break;
+    }
+  }
+  const progress = next.xp > current.xp ? (xp - current.xp) / (next.xp - current.xp) : 1;
+  return { ...current, next, progress: Math.min(1, Math.max(0, progress)), xpIntoLevel: xp - current.xp, xpNeeded: next.xp - current.xp };
+}
+
+function awardXP(amount) {
+  data.totalXP = (data.totalXP || 0) + amount;
+  saveData();
+  updateLevelDisplay();
+}
+
+function updateLevelDisplay() {
+  const info = getLevelInfo(data.totalXP || 0);
+  const levelEl = document.getElementById('level-value');
+  const titleEl = document.getElementById('level-title');
+  const xpBar = document.getElementById('xp-fill');
+  const xpText = document.getElementById('xp-text');
+  if (levelEl) levelEl.textContent = info.level;
+  if (titleEl) titleEl.textContent = info.title;
+  if (xpBar) xpBar.style.width = (info.progress * 100) + '%';
+  if (xpText) xpText.textContent = `${info.xpIntoLevel} / ${info.xpNeeded} XP`;
+}
+
+function getWeekStats(weekStart) {
+  let total = 0;
+  let completed = 0;
+  let fullDays = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = getDateKey(d);
+    const dayData = data.days[key] || {};
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = Object.values(dayData).filter(Boolean).length;
+    total += required;
+    completed += done;
+    if (required > 0 && done >= required) fullDays++;
+  }
+  total += choreDefinitions.weekly.length + choreDefinitions.specific.length;
+  completed += Object.values(data.weekly).filter(Boolean).length;
+  return { total, completed, fullDays, percent: total > 0 ? (completed / total) * 100 : 0 };
+}
+
+function getAllTimeStats() {
+  let fullDays = 0;
+  let totalEarned = 0;
+  let fullWeeks = 0;
+  let perfectWeeks = 0;
+  let totalChecks = 0;
+  let fullWeekends = 0;
+  let yardCount = 0;
+  let dogWalks = 0;
+  let teethCount = 0;
+  const seenWeeks = new Set();
+  const weekendKeys = new Set();
+
+  Object.keys(data.days).forEach(key => {
+    const d = new Date(key + 'T12:00:00');
+    const dayData = data.days[key] || {};
+    const checks = Object.values(dayData).filter(Boolean).length;
+    totalChecks += checks;
+
+    if (dayData['walk-dog']) dogWalks++;
+    if (dayData['brush-teeth-m'] || dayData['brush-teeth-e']) teethCount++;
+    if (dayData['pick-up-yard']) yardCount++;
+
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = checks;
+    if (required > 0 && done >= required) {
+      fullDays++;
+      const dow = getDayOfWeek(d);
+      if (dow === 0 || dow === 6) weekendKeys.add(key);
+    }
+
+    const ws = getWeekStart(d).toISOString().split('T')[0];
+    if (!seenWeeks.has(ws)) {
+      seenWeeks.add(ws);
+      const stats = getWeekStats(getWeekStart(d));
+      if (stats.percent >= 100) perfectWeeks++;
+      if (stats.fullDays >= 5) fullWeeks++;
+      totalEarned += (stats.percent / 100) * 5;
+    }
+  });
+
+  fullWeekends = Math.floor(weekendKeys.size / 2);
+
+  return {
+    fullDays,
+    fullWeeks,
+    perfectWeeks,
+    totalEarned,
+    totalChecks,
+    fullWeekends,
+    yardCount,
+    dogWalks,
+    teethCount,
+    streak: calculateStreak()
+  };
+}
+
+function calculateStreak() {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 120; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = getDateKey(d);
+    const dayData = data.days[key] || {};
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const completed = Object.values(dayData).filter(Boolean).length;
+    if (required > 0 && completed >= required) streak++;
+    else if (i > 0) break;
+  }
+  return streak;
+}
+
+function checkBadges() {
+  const stats = getAllTimeStats();
+  const newlyUnlocked = [];
+  badges.forEach(b => {
+    if (!data.unlockedBadges.includes(b.id) && b.check(stats)) {
+      data.unlockedBadges.push(b.id);
+      newlyUnlocked.push(b);
+    }
+  });
+  if (newlyUnlocked.length) {
+    saveData();
+    showBadgeUnlock(newlyUnlocked[0]);
+  }
+  const countEl = document.getElementById('badge-count');
+  if (countEl) countEl.textContent = data.unlockedBadges.length;
+  return stats;
+}
+
+function showBadgeUnlock(badge) {
+  document.getElementById('unlock-icon').textContent = badge.icon;
+  document.getElementById('unlock-name').textContent = badge.name;
+  document.getElementById('unlock-desc').textContent = badge.desc;
+  const el = document.getElementById('badge-unlock');
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2500);
+}
+
+function renderBadgeGrid() {
+  const grid = document.getElementById('badge-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  badges.forEach(b => {
+    const unlocked = data.unlockedBadges.includes(b.id);
+    const card = document.createElement('div');
+    card.className = `badge-card${unlocked ? ' unlocked' : ''}`;
+    card.innerHTML = `
+      <div class="icon">${b.icon}</div>
+      <div class="name">${b.name}</div>
+      <div class="desc">${b.desc}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  const weekStart = getWeekStart(currentDate);
+  const todayKey = getDateKey(new Date());
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = getDateKey(d);
+    const dayData = data.days[key] || {};
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    const done = Object.values(dayData).filter(Boolean).length;
+    const pct = required > 0 ? Math.round((done / required) * 100) : 0;
+
+    const pill = document.createElement('div');
+    pill.className = 'day-pill';
+    if (key === todayKey) pill.classList.add('today');
+    if (pct === 100) pill.classList.add('complete');
+    else if (pct > 0) {
+      pill.classList.add('partial');
+      pill.style.setProperty('--fill', pct / 100);
+    }
+    pill.innerHTML = `
+      <span class="dow">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
+      <span class="pct">${pct}%</span>
+    `;
+    pill.addEventListener('click', () => {
+      currentDate = new Date(d);
+      renderAll();
+      updateStats();
+    });
+    grid.appendChild(pill);
+  }
+
+  const end = new Date(weekStart);
+  end.setDate(weekStart.getDate() + 6);
+  document.getElementById('week-range').textContent =
+    weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' +
+    end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function updateTrend() {
+  const thisWeek = getWeekStats(getWeekStart(currentDate));
+  const lastWeekStart = new Date(getWeekStart(currentDate));
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeek = getWeekStats(lastWeekStart);
+
+  const diff = thisWeek.completed - lastWeek.completed;
+  const arrow = document.getElementById('trend-arrow');
+  const text = document.getElementById('trend-text');
+
+  arrow.className = 'trend-arrow';
+  if (diff > 0) {
+    arrow.textContent = '↑';
+    arrow.classList.add('up');
+    text.textContent = `+${diff} vs last week`;
+  } else if (diff < 0) {
+    arrow.textContent = '↓';
+    arrow.classList.add('down');
+    text.textContent = `${diff} vs last week`;
+  } else {
+    arrow.textContent = '→';
+    arrow.classList.add('same');
+    text.textContent = 'same as last week';
+  }
+}
+
+function renderList(containerId, list, isWeekly = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const dateKey = getDateKey(currentDate);
+  const dayData = data.days[dateKey] || {};
+
+  if (list.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">No chores for this section today.</p>';
+    return;
+  }
+
+  list.forEach(chore => {
+    const checked = isWeekly ? !!data.weekly[chore.id] : !!dayData[chore.id];
+    const item = document.createElement('div');
+    item.className = `chore-item${checked ? ' completed' : ''}`;
+    item.innerHTML = `
+      <div class="checkbox">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <span class="chore-name">${chore.name}</span>
+    `;
+    item.addEventListener('click', () => {
+      const wasChecked = checked;
+      const newState = !checked;
+      if (isWeekly) {
+        data.weekly[chore.id] = newState;
+      } else {
+        if (!data.days[dateKey]) data.days[dateKey] = {};
+        data.days[dateKey][chore.id] = newState;
+      }
+
+      if (newState && !wasChecked) {
+        awardXP(XP_PER_CHORE);
+        const dayChores = getChoresForDate(currentDate);
+        const required = dayChores.morning.length + dayChores.evening.length;
+        const done = Object.values(data.days[dateKey] || {}).filter(Boolean).length;
+        if (required > 0 && done === required) {
+          awardXP(XP_FULL_DAY_BONUS);
+        }
+      }
+
+      saveData();
+      renderAll();
+      updateStats();
+      checkDayComplete();
+      checkBadges();
+    });
+    container.appendChild(item);
+  });
+}
+
+function renderAll() {
+  const dayChores = getChoresForDate(currentDate);
+  renderList('morning-list', dayChores.morning);
+  renderList('evening-list', dayChores.evening);
+  renderList('weekly-list', dayChores.weekly, true);
+
+  const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dayDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  document.getElementById('day-name').textContent = dayName;
+  document.getElementById('day-date').textContent = dayDate;
+
+  renderWeekGrid();
+}
+
+function updateStats() {
+  const weekStart = getWeekStart(currentDate);
+  const stats = getWeekStats(weekStart);
+  const percent = stats.percent;
+  const earned = (percent / 100) * 5;
+
+  const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
+  document.getElementById('ring-progress').style.strokeDashoffset = offset;
+
+  document.getElementById('earned-amount').textContent = `$${earned.toFixed(2)}`;
+  document.getElementById('mini-fill').style.width = percent + '%';
+  document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% of weekly target`;
+
+  const todayChores = getChoresForDate(currentDate);
+  const todayRequired = todayChores.morning.length + todayChores.evening.length;
+  const todayKey = getDateKey(currentDate);
+  const todayData = data.days[todayKey] || {};
+  const todayDone = Object.values(todayData).filter(Boolean).length;
+  const todayPct = todayRequired > 0 ? Math.round((todayDone / todayRequired) * 100) : 0;
+  document.getElementById('today-percent').textContent = todayPct + '%';
+
+  document.getElementById('streak').textContent = calculateStreak();
+  updateTrend();
+  updateLevelDisplay();
+}
+
+function checkDayComplete() {
+  const dateKey = getDateKey(currentDate);
+  const dayData = data.days[dateKey] || {};
+  const dayChores = getChoresForDate(currentDate);
+  const required = dayChores.morning.length + dayChores.evening.length;
+  const done = Object.values(dayData).filter(Boolean).length;
+  if (required > 0 && done === required) {
+    showCelebration();
+  }
+}
+
+function showCelebration() {
+  const el = document.getElementById('celebration');
+  el.classList.remove('hidden');
+  spawnConfetti();
+  setTimeout(() => el.classList.add('hidden'), 2200);
+}
+
+function spawnConfetti() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height / 2 + (Math.random() - 0.5) * 200,
+      vx: (Math.random() - 0.5) * 12,
+      vy: Math.random() * -8 - 2,
+      life: 60 + Math.random() * 40,
+      color: ['#00e5ff', '#7c4dff', '#00e676', '#ffab00'][Math.floor(Math.random() * 4)]
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.15;
+      p.life--;
+      if (p.life > 0) {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 80;
+        ctx.fillRect(p.x, p.y, 6, 6);
+      }
+    });
+    if (particles.some(p => p.life > 0)) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
+}
+
+function saveData() {
+  const user = auth.currentUser;
+  if (user) {
+    setDoc(userDoc(user.uid), data, { merge: true });
+  }
+  localStorage.setItem('choreData', JSON.stringify(data));
+}
+
 function userDoc(uid) {
   return doc(db, 'users', uid);
 }
@@ -115,12 +574,10 @@ async function loadUserData(user) {
   if (snap.exists()) {
     data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   } else {
-    // First login — migrate any localStorage data
     const local = JSON.parse(localStorage.getItem('choreData') || 'null');
     if (local) data = { ...data, ...local };
     await setDoc(userDoc(user.uid), data);
   }
-  // Real-time listener
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(userDoc(user.uid), (docSnap) => {
     if (docSnap.exists()) {
@@ -135,15 +592,6 @@ async function loadUserData(user) {
   checkBadges();
 }
 
-function saveData() {
-  const user = auth.currentUser;
-  if (user) {
-    setDoc(userDoc(user.uid), data, { merge: true });
-  }
-  // Keep local backup
-  localStorage.setItem('choreData', JSON.stringify(data));
-}
-
 onAuthStateChanged(auth, (user) => {
   if (user) {
     loginScreen.style.display = 'none';
@@ -156,45 +604,72 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ---------- Rest of the app logic (chores, XP, badges, UI) ----------
-// (Full implementations of getDateKey, getChoresForDate, awardXP, updateLevelDisplay,
-//  getWeekStats, getAllTimeStats, calculateStreak, checkBadges, renderBadgeGrid,
-//  renderWeekGrid, updateTrend, renderList, renderAll, updateStats, checkDayComplete,
-//  showCelebration, spawnConfetti, openBadgeModal, etc. are included in the actual push.)
+function openBadgeModal() {
+  renderBadgeGrid();
+  const modal = document.getElementById('badge-modal');
+  if (modal) modal.classList.remove('hidden');
+}
 
-// Event listeners for day nav, reset, badges, etc. remain the same.
+function closeBadgeModal() {
+  const modal = document.getElementById('badge-modal');
+  if (modal) modal.classList.add('hidden');
+}
 
-function init() {
-  // Attach remaining listeners and initial render once authenticated
-  document.getElementById('prev-day')?.addEventListener('click', () => {
-    currentDate.setDate(currentDate.getDate() - 1);
-    renderAll(); updateStats();
-  });
-  document.getElementById('next-day')?.addEventListener('click', () => {
-    currentDate.setDate(currentDate.getDate() + 1);
-    renderAll(); updateStats();
-  });
-  document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Reset all progress for this week?')) {
-      const weekStart = getWeekStart(currentDate);
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(weekStart);
-        d.setDate(weekStart.getDate() + i);
-        delete data.days[getDateKey(d)];
-      }
-      data.weekly = {};
-      saveData();
-      renderAll(); updateStats();
+document.getElementById('prev-day')?.addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() - 1);
+  renderAll();
+  updateStats();
+});
+
+document.getElementById('next-day')?.addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() + 1);
+  renderAll();
+  updateStats();
+});
+
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+  if (confirm('Reset all progress for this week?')) {
+    const weekStart = getWeekStart(currentDate);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      delete data.days[getDateKey(d)];
     }
-  });
-  document.getElementById('badges-btn')?.addEventListener('click', openBadgeModal);
-  document.getElementById('close-badges')?.addEventListener('click', closeBadgeModal);
-  document.getElementById('badge-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'badge-modal') closeBadgeModal();
+    data.weekly = {};
+    saveData();
+    renderAll();
+    updateStats();
+  }
+});
+
+const badgesBtn = document.getElementById('badges-btn');
+if (badgesBtn) {
+  badgesBtn.addEventListener('click', openBadgeModal);
+  badgesBtn.style.cursor = 'pointer';
+}
+
+const closeBtn = document.getElementById('close-badges');
+if (closeBtn) closeBtn.addEventListener('click', closeBadgeModal);
+
+const badgeModal = document.getElementById('badge-modal');
+if (badgeModal) {
+  badgeModal.addEventListener('click', (e) => {
+    if (e.target === badgeModal) closeBadgeModal();
   });
 }
 
-init();
+document.getElementById('badge-unlock')?.addEventListener('click', () => {
+  document.getElementById('badge-unlock').classList.add('hidden');
+});
 
-// Note: The full script.js pushed contains the complete chore/XP/badge logic
-// integrated with the Firebase load/save above. This summary shows the structure.
+const svg = document.querySelector('.progress-ring');
+if (svg) {
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = `
+    <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#00e676" />
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+}
