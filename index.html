@@ -11,7 +11,31 @@
 </head>
 <body>
   <canvas id="particle-canvas"></canvas>
-  <div class="app">
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="logo" style="justify-content: center; margin-bottom: 24px;">
+        <span class="logo-icon">⚡</span>
+        <div>
+          <h1>Mission Control</h1>
+          <p class="tagline">Sign in to sync progress</p>
+        </div>
+      </div>
+      <form id="auth-form">
+        <input type="email" id="email" placeholder="Email" required autocomplete="email">
+        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit" id="auth-submit" class="primary-btn">Sign In</button>
+      </form>
+      <p class="auth-toggle">
+        <span id="auth-message">Don't have an account?</span>
+        <button type="button" id="toggle-auth" class="link-btn">Create one</button>
+      </p>
+      <p id="auth-error" class="auth-error"></p>
+    </div>
+  </div>
+
+  <div class="app" id="main-app" style="display: none;">
     <header class="header">
       <div class="logo">
         <span class="logo-icon">⚡</span>
@@ -32,6 +56,10 @@
         <div class="stat clickable" id="badges-btn" title="Achievements">
           <span class="stat-label">Badges</span>
           <span id="badge-count" class="stat-value">0</span>
+        </div>
+        <div class="stat clickable" id="logout-btn" title="Sign out">
+          <span class="stat-label">Out</span>
+          <span class="stat-value">→</span>
         </div>
       </div>
     </header>
@@ -133,6 +161,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
