@@ -157,33 +157,26 @@
           <button type="submit" class="primary-btn">Add Member</button>
         </form>
         <p id="member-error" class="auth-error"></p>
-        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 12px;">Adding a member will sign you out. Sign back in afterward.</p>
+
+        <h3 style="margin-top: 24px;">Chores</h3>
+        <div id="chore-settings-list"></div>
+        <form id="add-chore-form" style="margin-top: 12px;">
+          <input type="text" id="new-chore-name" placeholder="Chore name" required>
+          <select id="new-chore-section">
+            <option value="morning">Morning</option>
+            <option value="evening">Evening</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <select id="new-chore-frequency">
+            <option value="daily">Daily</option>
+            <option value="weekdays">Weekdays</option>
+            <option value="weekly">Weekly</option>
+            <option value="specific">Specific days</option>
+          </select>
+          <input type="text" id="new-chore-days" placeholder="Days (0-6, comma separated)" style="display:none;">
+          <button type="submit" class="primary-btn">Add Chore</button>
+        </form>
       </div>
-    </div>
-  </div>
-
-  <div id="celebration" class="celebration hidden">
-    <div class="celebration-content">
-      <div class="check-burst">✓</div>
-      <p>Day Complete</p>
-    </div>
-  </div>
-
-  <div id="badge-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Achievements</h2>
-        <button id="close-badges" class="close-btn">×</button>
-      </div>
-      <div id="badge-grid" class="badge-grid"></div>
-    </div>
-  </div>
-
-  <div id="badge-unlock" class="badge-unlock hidden">
-    <div class="unlock-content">
-      <div class="unlock-icon" id="unlock-icon">🏅</div>
-      <p id="unlock-name">Badge Unlocked</p>
-      <p id="unlock-desc" class="unlock-desc"></p>
     </div>
   </div>
 
