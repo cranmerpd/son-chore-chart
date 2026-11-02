@@ -58,28 +58,43 @@
       </div>
     </header>
 
-    <div class="stats-strip">
-      <div class="stat-card">
-        <div class="label">Level</div>
-        <div class="value" id="level-value">1</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Streak</div>
-        <div class="value" id="streak">0</div>
-      </div>
-      <div class="stat-card clickable" id="badges-btn-strip">
-        <div class="label">Badges</div>
-        <div class="value" id="badge-count-strip">0</div>
-      </div>
-    </div>
+    <button id="collapse-toggle" class="collapse-toggle">
+      <span class="chevron">▲</span>
+      <span id="collapse-label">Hide Dashboard</span>
+    </button>
 
-    <div class="level-panel">
-      <div class="level-info">
-        <span id="level-title" class="level-title">Recruit</span>
-        <span id="xp-text" class="xp-text">0 / 50 XP</span>
+    <div id="dashboard-panel" class="dashboard-collapsible">
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="label">Level</div>
+          <div class="value" id="level-value">1</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Streak</div>
+          <div class="value" id="streak">0</div>
+        </div>
+        <div class="stat-card clickable" id="badges-btn-strip">
+          <div class="label">Badges</div>
+          <div class="value" id="badge-count-strip">0</div>
+        </div>
       </div>
-      <div class="xp-bar">
-        <div id="xp-fill" class="xp-fill"></div>
+
+      <div class="level-panel">
+        <div class="level-info">
+          <span id="level-title" class="level-title">Recruit</span>
+          <span id="xp-text" class="xp-text">0 / 50 XP</span>
+        </div>
+        <div class="xp-bar">
+          <div id="xp-fill" class="xp-fill"></div>
+        </div>
+      </div>
+
+      <div class="week-overview">
+        <div class="overview-header">
+          <span>This Week</span>
+          <span id="week-range" class="week-range"></span>
+        </div>
+        <div id="week-grid" class="week-grid"></div>
       </div>
     </div>
 
@@ -104,14 +119,6 @@
           <div id="mini-fill" class="mini-fill"></div>
         </div>
       </div>
-    </div>
-
-    <div class="week-overview">
-      <div class="overview-header">
-        <span>This Week</span>
-        <span id="week-range" class="week-range"></span>
-      </div>
-      <div id="week-grid" class="week-grid"></div>
     </div>
 
     <div class="day-nav">
@@ -144,7 +151,7 @@
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
 
-    <p class="version">v1.4</p>
+    <p class="version">v1.5</p>
   </div>
 
   <!-- Mobile bottom nav -->

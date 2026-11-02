@@ -103,6 +103,31 @@ authForm.addEventListener('submit', async (e) => {
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth));
 
+// Collapse toggle
+const collapseToggle = document.getElementById('collapse-toggle');
+const dashboardPanel = document.getElementById('dashboard-panel');
+const collapseLabel = document.getElementById('collapse-label');
+let collapsed = localStorage.getItem('dashboardCollapsed') === 'true';
+
+function applyCollapse() {
+  if (collapsed) {
+    dashboardPanel.classList.add('collapsed');
+    collapseToggle.classList.add('collapsed');
+    collapseLabel.textContent = 'Show Dashboard';
+  } else {
+    dashboardPanel.classList.remove('collapsed');
+    collapseToggle.classList.remove('collapsed');
+    collapseLabel.textContent = 'Hide Dashboard';
+  }
+}
+applyCollapse();
+
+collapseToggle.addEventListener('click', () => {
+  collapsed = !collapsed;
+  localStorage.setItem('dashboardCollapsed', collapsed);
+  applyCollapse();
+});
+
 const levels = [
   { level: 1, xp: 0, title: 'Recruit' },
   { level: 2, xp: 50, title: 'Trainee' },
