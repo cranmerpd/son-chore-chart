@@ -54,8 +54,26 @@ const badges = [
   { id: 'teeth-pro', name: 'Dental Pro', icon: '🦷', desc: 'Brush teeth 30 times', check: (s) => s.teethCount >= 30 }
 ];
 
+const levels = [
+  { level: 1, xp: 0, title: 'Recruit' },
+  { level: 2, xp: 50, title: 'Trainee' },
+  { level: 3, xp: 150, title: 'Operator' },
+  { level: 4, xp: 300, title: 'Specialist' },
+  { level: 5, xp: 500, title: 'Agent' },
+  { level: 6, xp: 800, title: 'Veteran' },
+  { level: 7, xp: 1200, title: 'Elite' },
+  { level: 8, xp: 1700, title: 'Commander' },
+  { level: 9, xp: 2300, title: 'Director' },
+  { level: 10, xp: 3000, title: 'Legend' },
+  { level: 11, xp: 4000, title: 'Mythic' },
+  { level: 12, xp: 5200, title: 'Apex' }
+];
+
+const XP_PER_CHORE = 10;
+const XP_FULL_DAY_BONUS = 25;
+
 let currentDate = new Date();
-let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {}, unlockedBadges: [] };
+let data = JSON.parse(localStorage.getItem('choreData')) || { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
@@ -93,6 +111,38 @@ function getChoresForDate(date) {
   });
   choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
   return chores;
+}
+
+function getLevelInfo(xp) {
+  let current = levels[0];
+  let next = levels[1] || levels[0];
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (xp >= levels[i].xp) {
+      current = levels[i];
+      next = levels[i + 1] || levels[i];
+      break;
+    }
+  }
+  const progress = next.xp > current.xp ? (xp - current.xp) / (next.xp - current.xp) : 1;
+  return { ...current, next, progress: Math.min(1, Math.max(0, progress)), xpIntoLevel: xp - current.xp, xpNeeded: next.xp - current.xp };
+}
+
+function awardXP(amount) {
+  data.totalXP = (data.totalXP || 0) + amount;
+  saveData();
+  updateLevelDisplay();
+}
+
+function updateLevelDisplay() {
+  const info = getLevelInfo(data.totalXP || 0);
+  const levelEl = document.getElementById('level-value');
+  const titleEl = document.getElementById('level-title');
+  const xpBar = document.getElementById('xp-fill');
+  const xpText = document.getElementById('xp-text');
+  if (levelEl) levelEl.textContent = info.level;
+  if (titleEl) titleEl.textContent = info.title;
+  if (xpBar) xpBar.style.width = (info.progress * 100) + '%';
+  if (xpText) xpText.textContent = `${info.xpIntoLevel} / ${info.xpNeeded} XP`;
 }
 
 function getWeekStats(weekStart) {
@@ -158,7 +208,6 @@ function getAllTimeStats() {
     }
   });
 
-  // Rough weekend count
   fullWeekends = Math.floor(weekendKeys.size / 2);
 
   return {
@@ -205,7 +254,8 @@ function checkBadges() {
     saveData();
     showBadgeUnlock(newlyUnlocked[0]);
   }
-  document.getElementById('badge-count').textContent = data.unlockedBadges.length;
+  const countEl = document.getElementById('badge-count');
+  if (countEl) countEl.textContent = data.unlockedBadges.length;
   return stats;
 }
 
@@ -326,6 +376,7 @@ function renderList(containerId, list, isWeekly = false) {
       <span class="chore-name">${chore.name}</span>
     `;
     item.addEventListener('click', () => {
+      const wasChecked = checked;
       const newState = !checked;
       if (isWeekly) {
         data.weekly[chore.id] = newState;
@@ -333,6 +384,19 @@ function renderList(containerId, list, isWeekly = false) {
         if (!data.days[dateKey]) data.days[dateKey] = {};
         data.days[dateKey][chore.id] = newState;
       }
+
+      // Award XP only on check (not uncheck)
+      if (newState && !wasChecked) {
+        awardXP(XP_PER_CHORE);
+        // Check for full day bonus
+        const dayChores = getChoresForDate(currentDate);
+        const required = dayChores.morning.length + dayChores.evening.length;
+        const done = Object.values(data.days[dateKey] || {}).filter(Boolean).length;
+        if (required > 0 && done === required) {
+          awardXP(XP_FULL_DAY_BONUS);
+        }
+      }
+
       saveData();
       renderAll();
       updateStats();
@@ -380,6 +444,7 @@ function updateStats() {
 
   document.getElementById('streak').textContent = calculateStreak();
   updateTrend();
+  updateLevelDisplay();
 }
 
 function checkDayComplete() {
@@ -452,19 +517,19 @@ function closeBadgeModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-document.getElementById('prev-day').addEventListener('click', () => {
+document.getElementById('prev-day')?.addEventListener('click', () => {
   currentDate.setDate(currentDate.getDate() - 1);
   renderAll();
   updateStats();
 });
 
-document.getElementById('next-day').addEventListener('click', () => {
+document.getElementById('next-day')?.addEventListener('click', () => {
   currentDate.setDate(currentDate.getDate() + 1);
   renderAll();
   updateStats();
 });
 
-document.getElementById('reset-btn').addEventListener('click', () => {
+document.getElementById('reset-btn')?.addEventListener('click', () => {
   if (confirm('Reset all progress for this week?')) {
     const weekStart = getWeekStart(currentDate);
     for (let i = 0; i < 7; i++) {
@@ -479,7 +544,6 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   }
 });
 
-// Robust modal listeners
 const badgesBtn = document.getElementById('badges-btn');
 if (badgesBtn) {
   badgesBtn.addEventListener('click', openBadgeModal);
@@ -501,15 +565,18 @@ document.getElementById('badge-unlock')?.addEventListener('click', () => {
 });
 
 const svg = document.querySelector('.progress-ring');
-const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-defs.innerHTML = `
-  <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" stop-color="#00e5ff" />
-    <stop offset="100%" stop-color="#00e676" />
-  </linearGradient>
-`;
-svg.appendChild(defs);
+if (svg) {
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = `
+    <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#00e676" />
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+}
 
 renderAll();
 updateStats();
 checkBadges();
+updateLevelDisplay();
