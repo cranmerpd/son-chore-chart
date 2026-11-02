@@ -140,13 +140,16 @@
   </div>
 
   <div id="settings-modal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 480px;">
       <div class="modal-header">
         <h2>Family Settings</h2>
         <button id="close-settings" class="close-btn">×</button>
       </div>
       <div class="settings-body">
-        <h3>Add Family Member</h3>
+        <h3>Family Members</h3>
+        <div id="members-list"></div>
+
+        <h3 style="margin-top: 20px;">Add Member</h3>
         <form id="add-member-form">
           <input type="text" id="member-username" placeholder="Username" required>
           <input type="password" id="member-password" placeholder="Password" required>
@@ -158,9 +161,11 @@
         </form>
         <p id="member-error" class="auth-error"></p>
 
-        <h3 style="margin-top: 24px;">Chores</h3>
+        <h3 style="margin-top: 28px;">Chores</h3>
         <div id="chore-settings-list"></div>
-        <form id="add-chore-form" style="margin-top: 12px;">
+
+        <h3 style="margin-top: 20px;">Add Chore</h3>
+        <form id="add-chore-form">
           <input type="text" id="new-chore-name" placeholder="Chore name" required>
           <select id="new-chore-section">
             <option value="morning">Morning</option>
@@ -173,7 +178,9 @@
             <option value="weekly">Weekly</option>
             <option value="specific">Specific days</option>
           </select>
-          <input type="text" id="new-chore-days" placeholder="Days (0-6, comma separated)" style="display:none;">
+          <select id="new-chore-assign">
+            <option value="all">Everyone</option>
+          </select>
           <button type="submit" class="primary-btn">Add Chore</button>
         </form>
       </div>

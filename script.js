@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -21,20 +21,20 @@ function usernameToEmail(username) {
 }
 
 const DEFAULT_CHORES = [
-  { name: 'Brush Teeth', section: 'morning', frequency: 'daily' },
-  { name: 'Water Animals', section: 'morning', frequency: 'daily' },
-  { name: 'Walk the Dog', section: 'evening', frequency: 'daily' },
-  { name: 'Get Mail', section: 'evening', frequency: 'daily' },
-  { name: 'Unpack Bookbag', section: 'evening', frequency: 'daily' },
-  { name: 'Feed Animal', section: 'evening', frequency: 'daily' },
-  { name: 'Clear Dinner Table', section: 'evening', frequency: 'daily' },
-  { name: 'Dirty Clothes in Hamper', section: 'evening', frequency: 'weekdays' },
-  { name: 'Toys Put Away', section: 'evening', frequency: 'weekdays' },
-  { name: 'Brush Teeth', section: 'evening', frequency: 'weekdays' },
-  { name: 'Pick Up Yard', section: 'weekly', frequency: 'specific', days: [4] },
-  { name: 'Sort Laundry', section: 'weekly', frequency: 'weekly' },
-  { name: 'Clean Bathroom Sink', section: 'weekly', frequency: 'weekly' },
-  { name: 'Get Trash Together', section: 'weekly', frequency: 'weekly' }
+  { name: 'Brush Teeth', section: 'morning', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Water Animals', section: 'morning', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Walk the Dog', section: 'evening', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Get Mail', section: 'evening', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Unpack Bookbag', section: 'evening', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Feed Animal', section: 'evening', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Clear Dinner Table', section: 'evening', frequency: 'daily', assignedTo: 'all' },
+  { name: 'Dirty Clothes in Hamper', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
+  { name: 'Toys Put Away', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
+  { name: 'Brush Teeth', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
+  { name: 'Pick Up Yard', section: 'weekly', frequency: 'specific', days: [4], assignedTo: 'all' },
+  { name: 'Sort Laundry', section: 'weekly', frequency: 'weekly', assignedTo: 'all' },
+  { name: 'Clean Bathroom Sink', section: 'weekly', frequency: 'weekly', assignedTo: 'all' },
+  { name: 'Get Trash Together', section: 'weekly', frequency: 'weekly', assignedTo: 'all' }
 ];
 
 // ---------- Auth ----------
@@ -73,7 +73,6 @@ authForm.addEventListener('submit', async (e) => {
         unlockedBadges: [],
         totalXP: 0
       });
-      // Seed default chores into subcollection
       for (const chore of DEFAULT_CHORES) {
         await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
       }
@@ -104,8 +103,9 @@ const closeSettings = document.getElementById('close-settings');
 const addMemberForm = document.getElementById('add-member-form');
 const memberError = document.getElementById('member-error');
 
-settingsBtn.addEventListener('click', () => {
-  renderChoreSettings();
+settingsBtn.addEventListener('click', async () => {
+  await renderMembers();
+  await renderChoreSettings();
   settingsModal.classList.remove('hidden');
 });
 closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
@@ -128,6 +128,45 @@ async function ensureFamily() {
   const user = auth.currentUser;
   if (user) {
     await setDoc(doc(db, 'users', user.uid), { familyId: familyRef.id }, { merge: true });
+  }
+}
+
+let familyMembers = [];
+
+async function loadMembers() {
+  if (!userData.familyId) return;
+  const q = query(collection(db, 'users'), where('familyId', '==', userData.familyId));
+  const snap = await getDocs(q);
+  familyMembers = [];
+  snap.forEach(d => familyMembers.push({ uid: d.id, ...d.data() }));
+}
+
+async function renderMembers() {
+  await loadMembers();
+  const list = document.getElementById('members-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (familyMembers.length === 0) {
+    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">No members yet.</p>';
+    return;
+  }
+  familyMembers.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'child-item';
+    div.innerHTML = `<span>${m.username}</span><span style="font-size:0.75rem; color:var(--text-dim);">${m.role}</span>`;
+    list.appendChild(div);
+  });
+
+  // Update assign dropdown
+  const assignSelect = document.getElementById('new-chore-assign');
+  if (assignSelect) {
+    assignSelect.innerHTML = '<option value="all">Everyone</option>';
+    familyMembers.filter(m => m.role === 'child').forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.uid;
+      opt.textContent = m.username;
+      assignSelect.appendChild(opt);
+    });
   }
 }
 
@@ -176,18 +215,18 @@ addMemberForm.addEventListener('submit', async (e) => {
   btn.textContent = 'Add Member';
 });
 
-// ---------- Chore Settings UI ----------
 async function renderChoreSettings() {
   const list = document.getElementById('chore-settings-list');
   if (!list || !userData.familyId) return;
-  list.innerHTML = '<p style="color: var(--text-dim);">Loading...</p>';
-  const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
   list.innerHTML = '';
+  const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
   if (snap.empty) {
-    list.innerHTML = '<p style="color: var(--text-dim);">No chores yet.</p>';
+    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">No chores yet.</p>';
+    return;
   }
   snap.forEach(docSnap => {
     const chore = docSnap.data();
+    const assigned = chore.assignedTo === 'all' ? 'Everyone' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || 'Unknown');
     const div = document.createElement('div');
     div.className = 'child-item';
     div.style.flexDirection = 'column';
@@ -198,7 +237,7 @@ async function renderChoreSettings() {
         <button class="ghost-btn delete-chore" data-id="${docSnap.id}" style="padding:4px 8px; font-size:0.75rem;">Delete</button>
       </div>
       <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">
-        ${chore.section} • ${chore.frequency}${chore.days ? ' (days: ' + chore.days.join(',') + ')' : ''}
+        ${chore.section} • ${chore.frequency} • ${assigned}
       </div>
     `;
     list.appendChild(div);
@@ -220,12 +259,9 @@ document.getElementById('add-chore-form')?.addEventListener('submit', async (e) 
   const name = document.getElementById('new-chore-name').value.trim();
   const section = document.getElementById('new-chore-section').value;
   const frequency = document.getElementById('new-chore-frequency').value;
+  const assignedTo = document.getElementById('new-chore-assign').value;
   if (!name || !userData.familyId) return;
-  const chore = { name, section, frequency };
-  if (frequency === 'specific') {
-    const daysStr = document.getElementById('new-chore-days').value;
-    chore.days = daysStr.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
-  }
+  const chore = { name, section, frequency, assignedTo };
   await addDoc(collection(db, 'families', userData.familyId, 'chores'), chore);
   document.getElementById('new-chore-name').value = '';
   renderChoreSettings();
@@ -233,8 +269,6 @@ document.getElementById('add-chore-form')?.addEventListener('submit', async (e) 
 });
 
 // ---------- Shared Family Data ----------
-const badges = [ /* full list kept from previous versions */ ];
-
 const levels = [
   { level: 1, xp: 0, title: 'Recruit' },
   { level: 2, xp: 50, title: 'Trainee' },
@@ -280,7 +314,6 @@ async function loadChores() {
   snap.forEach(docSnap => {
     choresList.push({ id: docSnap.id, ...docSnap.data() });
   });
-  // Seed defaults if empty
   if (choresList.length === 0 && userData.role === 'parent') {
     for (const chore of DEFAULT_CHORES) {
       const ref = await addDoc(collection(db, 'families', userData.familyId, 'chores'), chore);
@@ -293,7 +326,10 @@ async function loadChores() {
 function getChoresForDate(date) {
   const result = { morning: [], evening: [], weekly: [] };
   const dow = getDayOfWeek(date);
+  const myUid = auth.currentUser?.uid;
   choresList.forEach(c => {
+    // Filter by assignment for children
+    if (userData.role === 'child' && c.assignedTo && c.assignedTo !== 'all' && c.assignedTo !== myUid) return;
     if (c.frequency === 'daily' || (c.frequency === 'weekdays' && isWeekday(date)) || (c.frequency === 'specific' && c.days && c.days.includes(dow)) || c.frequency === 'weekly') {
       const section = c.section || 'evening';
       if (!result[section]) result[section] = [];
@@ -508,6 +544,7 @@ async function loadFamily() {
   if (snap.exists()) {
     familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   }
+  await loadMembers();
   await loadChores();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
