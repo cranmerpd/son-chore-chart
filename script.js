@@ -87,6 +87,24 @@ settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidd
 closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
 settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
 
+// Ensure parent has a family
+async function ensureFamily() {
+  if (userData.role !== 'parent') return;
+  if (userData.familyId) return;
+  const familyRef = doc(collection(db, 'families'));
+  await setDoc(familyRef, {
+    days: {},
+    weekly: {},
+    unlockedBadges: [],
+    totalXP: 0
+  });
+  userData.familyId = familyRef.id;
+  const user = auth.currentUser;
+  if (user) {
+    await setDoc(doc(db, 'users', user.uid), { familyId: familyRef.id }, { merge: true });
+  }
+}
+
 addMemberForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const username = document.getElementById('member-username').value.trim();
@@ -98,16 +116,19 @@ addMemberForm.addEventListener('submit', async (e) => {
     memberError.textContent = 'Username and password required';
     return;
   }
-  if (!userData.familyId) {
-    memberError.textContent = 'No family found. Sign out and create a new parent account.';
-    return;
-  }
 
   const btn = addMemberForm.querySelector('button');
   btn.disabled = true;
   btn.textContent = 'Creating...';
 
   try {
+    await ensureFamily();
+    if (!userData.familyId) {
+      memberError.textContent = 'Could not create family. Try again.';
+      btn.disabled = false;
+      btn.textContent = 'Add Member';
+      return;
+    }
     const email = usernameToEmail(username);
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'users', cred.user.uid), {
@@ -536,6 +557,7 @@ function spawnConfetti() {
 }
 
 async function loadFamily() {
+  await ensureFamily();
   if (!userData.familyId) {
     renderAll();
     updateStats();
