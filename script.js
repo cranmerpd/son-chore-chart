@@ -27,6 +27,10 @@ const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
 const roleSelect = document.getElementById('role-select');
 
+function usernameToEmail(username) {
+  return username.toLowerCase().trim() + '@chorechart.local';
+}
+
 roleSelect.querySelectorAll('.role-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     roleSelect.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
@@ -46,14 +50,17 @@ toggleAuth.addEventListener('click', () => {
 
 authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('email').value.trim();
+  const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
+  if (!username) { authError.textContent = 'Username required'; return; }
+  const email = usernameToEmail(username);
   authError.textContent = '';
   authSubmit.disabled = true;
   try {
     if (isRegistering) {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', cred.user.uid), {
+        username: username,
         role: selectedRole,
         days: {},
         weekly: {},
@@ -64,7 +71,10 @@ authForm.addEventListener('submit', async (e) => {
       await signInWithEmailAndPassword(auth, email, password);
     }
   } catch (err) {
-    authError.textContent = err.message.replace('Firebase: ', '');
+    let msg = err.message.replace('Firebase: ', '');
+    if (err.code === 'auth/email-already-in-use') msg = 'Username already taken';
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Wrong username or password';
+    authError.textContent = msg;
   }
   authSubmit.disabled = false;
 });
@@ -147,7 +157,7 @@ const XP_PER_CHORE = 10;
 const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
-let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent' };
+let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '' };
 let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -391,7 +401,10 @@ function updateStats() {
   updateTrend();
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
-  if (roleTag) roleTag.textContent = (data.role === 'child' ? 'Child • ' : 'Parent • ') + 'Daily Ops';
+  if (roleTag) {
+    const name = data.username ? data.username + ' • ' : '';
+    roleTag.textContent = name + (data.role === 'child' ? 'Child' : 'Parent');
+  }
 }
 
 function checkDayComplete() {
@@ -436,7 +449,7 @@ function saveData() {
 async function loadUserData(user) {
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (snap.exists()) {
-    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', ...snap.data() };
+    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', ...snap.data() };
   } else {
     const local = JSON.parse(localStorage.getItem('choreData') || 'null');
     if (local) data = { ...data, ...local };
@@ -445,7 +458,7 @@ async function loadUserData(user) {
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
     if (docSnap.exists()) {
-      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', ...docSnap.data() };
+      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', username: '', ...docSnap.data() };
       renderAll(); updateStats(); checkBadges();
     }
   });
