@@ -312,7 +312,6 @@ function checkBadges() {
   const count = (familyData.unlockedBadges || []).length;
   document.getElementById('badge-count').textContent = count;
   document.getElementById('badge-count-strip').textContent = count;
-  document.getElementById('mobile-badge-count').textContent = count;
 }
 
 function showBadgeUnlock(badge) {
