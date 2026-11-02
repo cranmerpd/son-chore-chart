@@ -32,6 +32,8 @@
     .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--accent); }
     .day-checks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
     .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
+    .allowance-row { display: flex; gap: 8px; align-items: center; }
+    .allowance-row input { flex: 1; }
   </style>
 </head>
 <body>
@@ -56,12 +58,21 @@
       </div>
     </header>
 
-    <div id="login-required" style="text-align: center; padding: 60px 20px;">
+    <div id="login-required" style="text-align: center; padding: 60px 20px; display: none;">
       <p>Sign in as a parent to manage the family.</p>
       <a href="index.html" class="primary-btn" style="display: inline-block; margin-top: 16px; text-decoration: none;">Go to Login</a>
     </div>
 
     <div id="settings-content" style="display: none;">
+      <div class="panel" style="margin-bottom: 24px;">
+        <h2>Weekly Allowance</h2>
+        <div class="allowance-row">
+          <input type="number" id="weekly-allowance" min="0" step="0.50" value="5" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; max-width: 120px;">
+          <button id="save-allowance" class="primary-btn" style="margin: 0; padding: 10px 16px;">Save</button>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px;">This amount is used for the earnings calculator on the chart.</p>
+      </div>
+
       <div class="two-col">
         <div class="panel">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -78,6 +89,26 @@
           </div>
           <div id="chore-settings-list"></div>
         </div>
+      </div>
+
+      <div class="panel" style="margin-top: 24px;">
+        <h2>Badges</h2>
+        <div id="badges-list"></div>
+        <form id="add-badge-form" class="form-row" style="margin-top: 16px;">
+          <input type="text" id="badge-name" placeholder="Badge name" required>
+          <input type="text" id="badge-icon" placeholder="Icon (emoji)">
+          <input type="text" id="badge-desc" placeholder="Description">
+          <select id="badge-type">
+            <option value="totalChecks">Total chores</option>
+            <option value="fullDays">Full days</option>
+            <option value="streak">Streak</option>
+            <option value="fullWeeks">Full weeks</option>
+            <option value="perfectWeeks">Perfect weeks</option>
+            <option value="totalEarned">Total earned ($)</option>
+          </select>
+          <input type="number" id="badge-threshold" placeholder="Threshold" min="1" required>
+          <button type="submit" class="primary-btn">Add Badge</button>
+        </form>
       </div>
     </div>
   </div>

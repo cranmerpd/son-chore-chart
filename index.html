@@ -12,7 +12,7 @@
 <body>
   <canvas id="particle-canvas"></canvas>
 
-  <div id="login-screen" class="login-screen">
+  <div id="login-screen" class="login-screen" style="display: none;">
     <div class="login-card">
       <div class="logo" style="justify-content: center; margin-bottom: 24px;">
         <span class="logo-icon">⚡</span>
@@ -85,7 +85,7 @@
         </svg>
         <div class="ring-center">
           <span id="earned-amount" class="earned">$0.00</span>
-          <span class="earned-label">of $5.00</span>
+          <span id="earned-label" class="earned-label">of $5.00</span>
         </div>
       </div>
       <div class="earnings-meta">
@@ -137,6 +137,14 @@
     <footer class="footer">
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
+  </div>
+
+  <div id="badge-unlock" class="badge-unlock hidden">
+    <div class="unlock-content">
+      <div class="unlock-icon" id="unlock-icon">🏅</div>
+      <p id="unlock-name">Badge Unlocked</p>
+      <p id="unlock-desc" class="unlock-desc"></p>
+    </div>
   </div>
 
   <script type="module" src="script.js"></script>

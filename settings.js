@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -24,6 +24,7 @@ const loginRequired = document.getElementById('login-required');
 const settingsContent = document.getElementById('settings-content');
 let userData = null;
 let familyMembers = [];
+let familyData = {};
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
@@ -42,8 +43,12 @@ onAuthStateChanged(auth, async (user) => {
   userData = snap.data();
   loginRequired.style.display = 'none';
   settingsContent.style.display = 'block';
+  const famSnap = await getDoc(doc(db, 'families', userData.familyId));
+  if (famSnap.exists()) familyData = famSnap.data();
+  document.getElementById('weekly-allowance').value = familyData.weeklyAllowance || 5;
   await loadMembers();
   await renderChores();
+  await renderBadges();
 });
 
 async function loadMembers() {
@@ -81,6 +86,13 @@ function updateAssignDropdown() {
     sel.appendChild(opt);
   });
 }
+
+document.getElementById('save-allowance').addEventListener('click', async () => {
+  const val = parseFloat(document.getElementById('weekly-allowance').value);
+  if (isNaN(val) || val < 0) return;
+  await updateDoc(doc(db, 'families', userData.familyId), { weeklyAllowance: val });
+  alert('Allowance saved');
+});
 
 // Add Member Modal
 const addMemberModal = document.getElementById('add-member-modal');
@@ -142,21 +154,32 @@ async function renderChores() {
   }
   snap.forEach(docSnap => {
     const chore = docSnap.data();
+    const active = chore.active !== false;
     const assigned = chore.assignedTo === 'all' ? 'Everyone' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || 'Unknown');
     const daysText = chore.frequency === 'specific' && chore.days ? ' (' + chore.days.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ') + ')' : '';
     const div = document.createElement('div');
     div.className = 'chore-row';
+    if (!active) div.style.opacity = '0.5';
     div.innerHTML = `
       <div class="chore-info">
-        <strong>${chore.name}</strong>
+        <strong>${chore.name}${!active ? ' (inactive)' : ''}</strong>
         <div class="chore-meta">${chore.section} • ${chore.frequency}${daysText} • ${assigned}</div>
       </div>
       <div class="row-actions">
+        <button class="small-btn toggle-active" data-id="${docSnap.id}" data-active="${active}">${active ? 'Deactivate' : 'Activate'}</button>
         <button class="small-btn edit-chore" data-id="${docSnap.id}">Edit</button>
         <button class="small-btn danger delete-chore" data-id="${docSnap.id}">Delete</button>
       </div>
     `;
     list.appendChild(div);
+  });
+
+  list.querySelectorAll('.toggle-active').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const isActive = btn.dataset.active === 'true';
+      await updateDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id), { active: !isActive });
+      renderChores();
+    });
   });
 
   list.querySelectorAll('.edit-chore').forEach(btn => {
@@ -180,7 +203,7 @@ async function renderChores() {
 
   list.querySelectorAll('.delete-chore').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this chore?')) {
+      if (confirm('Permanently delete this chore?')) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id));
         renderChores();
       }
@@ -197,7 +220,7 @@ choreForm.addEventListener('submit', async (e) => {
   const assignedTo = document.getElementById('chore-assign').value;
   if (!name || !userData.familyId) return;
 
-  const data = { name, section, frequency, assignedTo };
+  const data = { name, section, frequency, assignedTo, active: true };
   if (frequency === 'specific') {
     data.days = Array.from(daySelector.querySelectorAll('input:checked')).map(cb => parseInt(cb.value, 10));
   }
@@ -209,4 +232,68 @@ choreForm.addEventListener('submit', async (e) => {
   }
   choreModal.classList.add('hidden');
   renderChores();
+});
+
+// Badges
+async function renderBadges() {
+  if (!userData.familyId) return;
+  const list = document.getElementById('badges-list');
+  list.innerHTML = '';
+  const snap = await getDocs(collection(db, 'families', userData.familyId, 'badges'));
+  if (snap.empty) {
+    list.innerHTML = '<p style="color: var(--text-dim);">No badges yet.</p>';
+    return;
+  }
+  snap.forEach(docSnap => {
+    const b = docSnap.data();
+    const active = b.active !== false;
+    const div = document.createElement('div');
+    div.className = 'chore-row';
+    if (!active) div.style.opacity = '0.5';
+    div.innerHTML = `
+      <div class="chore-info">
+        <strong>${b.icon || ''} ${b.name}${!active ? ' (inactive)' : ''}</strong>
+        <div class="chore-meta">${b.desc || ''} • ${b.type} ≥ ${b.threshold}</div>
+      </div>
+      <div class="row-actions">
+        <button class="small-btn toggle-badge" data-id="${docSnap.id}" data-active="${active}">${active ? 'Deactivate' : 'Activate'}</button>
+        <button class="small-btn danger delete-badge" data-id="${docSnap.id}">Delete</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('.toggle-badge').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const isActive = btn.dataset.active === 'true';
+      await updateDoc(doc(db, 'families', userData.familyId, 'badges', btn.dataset.id), { active: !isActive });
+      renderBadges();
+    });
+  });
+
+  list.querySelectorAll('.delete-badge').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('Delete this badge?')) {
+        await deleteDoc(doc(db, 'families', userData.familyId, 'badges', btn.dataset.id));
+        renderBadges();
+      }
+    });
+  });
+}
+
+document.getElementById('add-badge-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('badge-name').value.trim();
+  const icon = document.getElementById('badge-icon').value.trim();
+  const desc = document.getElementById('badge-desc').value.trim();
+  const type = document.getElementById('badge-type').value;
+  const threshold = parseInt(document.getElementById('badge-threshold').value, 10);
+  if (!name || !userData.familyId) return;
+  await addDoc(collection(db, 'families', userData.familyId, 'badges'), {
+    name, icon, desc, type, threshold, active: true
+  });
+  document.getElementById('badge-name').value = '';
+  document.getElementById('badge-icon').value = '';
+  document.getElementById('badge-desc').value = '';
+  renderBadges();
 });

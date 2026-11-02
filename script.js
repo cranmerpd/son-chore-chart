@@ -21,20 +21,35 @@ function usernameToEmail(username) {
 }
 
 const DEFAULT_CHORES = [
-  { name: 'Brush Teeth', section: 'morning', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Water Animals', section: 'morning', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Walk the Dog', section: 'evening', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Get Mail', section: 'evening', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Unpack Bookbag', section: 'evening', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Feed Animal', section: 'evening', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Clear Dinner Table', section: 'evening', frequency: 'daily', assignedTo: 'all' },
-  { name: 'Dirty Clothes in Hamper', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
-  { name: 'Toys Put Away', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
-  { name: 'Brush Teeth', section: 'evening', frequency: 'weekdays', assignedTo: 'all' },
-  { name: 'Pick Up Yard', section: 'weekly', frequency: 'specific', days: [4], assignedTo: 'all' },
-  { name: 'Sort Laundry', section: 'weekly', frequency: 'weekly', assignedTo: 'all' },
-  { name: 'Clean Bathroom Sink', section: 'weekly', frequency: 'weekly', assignedTo: 'all' },
-  { name: 'Get Trash Together', section: 'weekly', frequency: 'weekly', assignedTo: 'all' }
+  { name: 'Brush Teeth', section: 'morning', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Water Animals', section: 'morning', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Walk the Dog', section: 'evening', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Get Mail', section: 'evening', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Unpack Bookbag', section: 'evening', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Feed Animal', section: 'evening', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Clear Dinner Table', section: 'evening', frequency: 'daily', assignedTo: 'all', active: true },
+  { name: 'Dirty Clothes in Hamper', section: 'evening', frequency: 'weekdays', assignedTo: 'all', active: true },
+  { name: 'Toys Put Away', section: 'evening', frequency: 'weekdays', assignedTo: 'all', active: true },
+  { name: 'Brush Teeth', section: 'evening', frequency: 'weekdays', assignedTo: 'all', active: true },
+  { name: 'Pick Up Yard', section: 'weekly', frequency: 'specific', days: [4], assignedTo: 'all', active: true },
+  { name: 'Sort Laundry', section: 'weekly', frequency: 'weekly', assignedTo: 'all', active: true },
+  { name: 'Clean Bathroom Sink', section: 'weekly', frequency: 'weekly', assignedTo: 'all', active: true },
+  { name: 'Get Trash Together', section: 'weekly', frequency: 'weekly', assignedTo: 'all', active: true }
+];
+
+const DEFAULT_BADGES = [
+  { name: 'Initiated', icon: '🟢', desc: 'First verified chore', type: 'totalChecks', threshold: 1, active: true },
+  { name: 'First Contact', icon: '🚀', desc: 'Complete first full day', type: 'fullDays', threshold: 1, active: true },
+  { name: 'Cadet', icon: '⭐', desc: '5 full days', type: 'fullDays', threshold: 5, active: true },
+  { name: 'Veteran', icon: '🎖️', desc: '10 full days', type: 'fullDays', threshold: 10, active: true },
+  { name: 'Elite', icon: '👑', desc: '20 full days', type: 'fullDays', threshold: 20, active: true },
+  { name: 'Operator', icon: '⚡', desc: '3-day streak', type: 'streak', threshold: 3, active: true },
+  { name: 'Steady', icon: '🔥', desc: '5-day streak', type: 'streak', threshold: 5, active: true },
+  { name: 'Specialist', icon: '🎖', desc: '7-day streak', type: 'streak', threshold: 7, active: true },
+  { name: 'Commander', icon: '🛡️', desc: '14-day streak', type: 'streak', threshold: 14, active: true },
+  { name: 'Mission Complete', icon: '🏆', desc: 'Finish a solid week', type: 'fullWeeks', threshold: 1, active: true },
+  { name: 'Flawless', icon: '✨', desc: '100% in a week', type: 'perfectWeeks', threshold: 1, active: true },
+  { name: 'First Payday', icon: '💵', desc: 'Earn first allowance', type: 'totalEarned', threshold: 5, active: true }
 ];
 
 // ---------- Auth ----------
@@ -46,6 +61,9 @@ const authSubmit = document.getElementById('auth-submit');
 const toggleAuth = document.getElementById('toggle-auth');
 const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
+
+// Hide login until auth resolves
+loginScreen.style.display = 'none';
 
 toggleAuth.addEventListener('click', () => {
   isRegistering = !isRegistering;
@@ -71,10 +89,14 @@ authForm.addEventListener('submit', async (e) => {
         days: {},
         weekly: {},
         unlockedBadges: [],
-        totalXP: 0
+        totalXP: 0,
+        weeklyAllowance: 5
       });
       for (const chore of DEFAULT_CHORES) {
         await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
+      }
+      for (const badge of DEFAULT_BADGES) {
+        await addDoc(collection(db, 'families', familyRef.id, 'badges'), badge);
       }
       await setDoc(doc(db, 'users', cred.user.uid), {
         username,
@@ -117,8 +139,9 @@ const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
 let userData = { role: 'parent', username: '', familyId: null };
-let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
+let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5 };
 let choresList = [];
+let badgesList = [];
 let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -140,7 +163,8 @@ async function loadChores() {
   const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
   choresList = [];
   snap.forEach(docSnap => {
-    choresList.push({ id: docSnap.id, ...docSnap.data() });
+    const data = docSnap.data();
+    if (data.active !== false) choresList.push({ id: docSnap.id, ...data });
   });
   if (choresList.length === 0 && userData.role === 'parent') {
     for (const chore of DEFAULT_CHORES) {
@@ -148,7 +172,22 @@ async function loadChores() {
       choresList.push({ id: ref.id, ...chore });
     }
   }
-  renderAll();
+}
+
+async function loadBadges() {
+  if (!userData.familyId) return;
+  const snap = await getDocs(collection(db, 'families', userData.familyId, 'badges'));
+  badgesList = [];
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
+    if (data.active !== false) badgesList.push({ id: docSnap.id, ...data });
+  });
+  if (badgesList.length === 0 && userData.role === 'parent') {
+    for (const badge of DEFAULT_BADGES) {
+      const ref = await addDoc(collection(db, 'families', userData.familyId, 'badges'), badge);
+      badgesList.push({ id: ref.id, ...badge });
+    }
+  }
 }
 
 function getChoresForDate(date) {
@@ -233,6 +272,55 @@ function calculateStreak() {
   return streak;
 }
 
+function getAllTimeStats() {
+  let fullDays = 0, totalEarned = 0, fullWeeks = 0, perfectWeeks = 0, totalChecks = 0;
+  const seenWeeks = new Set();
+  const allowance = familyData.weeklyAllowance || 5;
+  Object.keys(familyData.days || {}).forEach(key => {
+    const d = new Date(key + 'T12:00:00');
+    const dayData = familyData.days[key] || {};
+    const checks = getVerifiedCount(dayData);
+    totalChecks += checks;
+    const dayChores = getChoresForDate(d);
+    const required = dayChores.morning.length + dayChores.evening.length;
+    if (required > 0 && checks >= required) fullDays++;
+    const ws = getWeekStart(d).toISOString().split('T')[0];
+    if (!seenWeeks.has(ws)) {
+      seenWeeks.add(ws);
+      const stats = getWeekStats(getWeekStart(d));
+      if (stats.percent >= 100) perfectWeeks++;
+      if (stats.fullDays >= 5) fullWeeks++;
+      totalEarned += (stats.percent / 100) * allowance;
+    }
+  });
+  return { fullDays, fullWeeks, perfectWeeks, totalEarned, totalChecks, streak: calculateStreak() };
+}
+
+function checkBadges() {
+  const stats = getAllTimeStats();
+  const newlyUnlocked = [];
+  badgesList.forEach(b => {
+    if (!(familyData.unlockedBadges || []).includes(b.id)) {
+      const val = stats[b.type] || 0;
+      if (val >= (b.threshold || 0)) {
+        if (!familyData.unlockedBadges) familyData.unlockedBadges = [];
+        familyData.unlockedBadges.push(b.id);
+        newlyUnlocked.push(b);
+      }
+    }
+  });
+  if (newlyUnlocked.length) { saveFamily(); showBadgeUnlock(newlyUnlocked[0]); }
+  document.getElementById('badge-count').textContent = (familyData.unlockedBadges || []).length;
+}
+
+function showBadgeUnlock(badge) {
+  document.getElementById('unlock-icon').textContent = badge.icon || '🏅';
+  document.getElementById('unlock-name').textContent = badge.name;
+  document.getElementById('unlock-desc').textContent = badge.desc || '';
+  const el = document.getElementById('badge-unlock');
+  if (el) { el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 2500); }
+}
+
 function renderList(containerId, list, isWeekly = false) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -282,6 +370,7 @@ function renderList(containerId, list, isWeekly = false) {
         saveFamily();
         renderAll();
         updateStats();
+        checkBadges();
         return;
       }
 
@@ -345,9 +434,11 @@ function updateStats() {
   const weekStart = getWeekStart(currentDate);
   const stats = getWeekStats(weekStart);
   const percent = stats.percent;
-  const earned = (percent / 100) * 5;
+  const allowance = familyData.weeklyAllowance || 5;
+  const earned = (percent / 100) * allowance;
   document.getElementById('ring-progress').style.strokeDashoffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
   document.getElementById('earned-amount').textContent = `$${earned.toFixed(2)}`;
+  document.getElementById('earned-label')?.textContent = `of $${allowance.toFixed(2)}`;
   document.getElementById('mini-fill').style.width = percent + '%';
   document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% verified`;
   document.getElementById('streak').textContent = calculateStreak();
@@ -358,6 +449,7 @@ function updateStats() {
   if (settingsLink) settingsLink.style.display = userData.role === 'parent' ? 'block' : 'none';
   const resetBtn = document.getElementById('reset-btn');
   if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
+  checkBadges();
 }
 
 async function loadFamily() {
@@ -369,13 +461,14 @@ async function loadFamily() {
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
   if (snap.exists()) {
-    familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
+    familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5, ...snap.data() };
   }
   await loadChores();
+  await loadBadges();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
     if (docSnap.exists()) {
-      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
+      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, weeklyAllowance: 5, ...docSnap.data() };
       renderAll();
       updateStats();
     }
