@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -15,6 +15,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ---------- Auth helpers ----------
+function usernameToEmail(username) {
+  const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
+  return clean + '@son-chore-chart.firebaseapp.com';
+}
+
 // ---------- Auth UI ----------
 let isRegistering = false;
 let selectedRole = 'parent';
@@ -26,10 +32,6 @@ const toggleAuth = document.getElementById('toggle-auth');
 const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
 const roleSelect = document.getElementById('role-select');
-
-function usernameToEmail(username) {
-  return username.toLowerCase().trim() + '@chorechart.local';
-}
 
 roleSelect.querySelectorAll('.role-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -58,10 +60,11 @@ authForm.addEventListener('submit', async (e) => {
   authSubmit.disabled = true;
   try {
     if (isRegistering) {
+      // Only allow parent self-registration for now
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', cred.user.uid), {
         username: username,
-        role: selectedRole,
+        role: 'parent',
         days: {},
         weekly: {},
         unlockedBadges: [],
@@ -74,6 +77,7 @@ authForm.addEventListener('submit', async (e) => {
     let msg = err.message.replace('Firebase: ', '');
     if (err.code === 'auth/email-already-in-use') msg = 'Username already taken';
     if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Wrong username or password';
+    if (err.code === 'auth/invalid-email') msg = 'Invalid username (use letters/numbers only)';
     authError.textContent = msg;
   }
   authSubmit.disabled = false;
