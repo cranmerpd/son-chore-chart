@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -96,178 +96,6 @@ authForm.addEventListener('submit', async (e) => {
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-// ---------- Settings ----------
-const settingsBtn = document.getElementById('settings-btn');
-const settingsModal = document.getElementById('settings-modal');
-const closeSettings = document.getElementById('close-settings');
-const addMemberForm = document.getElementById('add-member-form');
-const memberError = document.getElementById('member-error');
-
-settingsBtn.addEventListener('click', async () => {
-  await renderMembers();
-  await renderChoreSettings();
-  settingsModal.classList.remove('hidden');
-});
-closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
-settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
-
-async function ensureFamily() {
-  if (userData.role !== 'parent') return;
-  if (userData.familyId) return;
-  const familyRef = doc(collection(db, 'families'));
-  await setDoc(familyRef, {
-    days: {},
-    weekly: {},
-    unlockedBadges: [],
-    totalXP: 0
-  });
-  for (const chore of DEFAULT_CHORES) {
-    await addDoc(collection(db, 'families', familyRef.id, 'chores'), chore);
-  }
-  userData.familyId = familyRef.id;
-  const user = auth.currentUser;
-  if (user) {
-    await setDoc(doc(db, 'users', user.uid), { familyId: familyRef.id }, { merge: true });
-  }
-}
-
-let familyMembers = [];
-
-async function loadMembers() {
-  if (!userData.familyId) return;
-  const q = query(collection(db, 'users'), where('familyId', '==', userData.familyId));
-  const snap = await getDocs(q);
-  familyMembers = [];
-  snap.forEach(d => familyMembers.push({ uid: d.id, ...d.data() }));
-}
-
-async function renderMembers() {
-  await loadMembers();
-  const list = document.getElementById('members-list');
-  if (!list) return;
-  list.innerHTML = '';
-  if (familyMembers.length === 0) {
-    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">No members yet.</p>';
-    return;
-  }
-  familyMembers.forEach(m => {
-    const div = document.createElement('div');
-    div.className = 'child-item';
-    div.innerHTML = `<span>${m.username}</span><span style="font-size:0.75rem; color:var(--text-dim);">${m.role}</span>`;
-    list.appendChild(div);
-  });
-
-  // Update assign dropdown
-  const assignSelect = document.getElementById('new-chore-assign');
-  if (assignSelect) {
-    assignSelect.innerHTML = '<option value="all">Everyone</option>';
-    familyMembers.filter(m => m.role === 'child').forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.uid;
-      opt.textContent = m.username;
-      assignSelect.appendChild(opt);
-    });
-  }
-}
-
-addMemberForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('member-username').value.trim();
-  const password = document.getElementById('member-password').value;
-  const role = document.getElementById('member-role').value;
-  memberError.textContent = '';
-
-  if (!username || !password) {
-    memberError.textContent = 'Username and password required';
-    return;
-  }
-
-  const btn = addMemberForm.querySelector('button');
-  btn.disabled = true;
-  btn.textContent = 'Creating...';
-
-  try {
-    await ensureFamily();
-    if (!userData.familyId) {
-      memberError.textContent = 'Could not create family. Try again.';
-      btn.disabled = false;
-      btn.textContent = 'Add Member';
-      return;
-    }
-    const email = usernameToEmail(username);
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      username,
-      role,
-      familyId: userData.familyId
-    });
-    alert(`${role === 'child' ? 'Child' : 'Parent'} account created for ${username}. You will be signed out — sign back in.`);
-    await signOut(auth);
-  } catch (err) {
-    console.error(err);
-    let msg = err.message.replace('Firebase: ', '');
-    if (err.code === 'auth/email-already-in-use') msg = 'Username already taken';
-    if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters';
-    if (err.code === 'auth/invalid-email') msg = 'Invalid username (use letters/numbers only)';
-    memberError.textContent = msg;
-  }
-  btn.disabled = false;
-  btn.textContent = 'Add Member';
-});
-
-async function renderChoreSettings() {
-  const list = document.getElementById('chore-settings-list');
-  if (!list || !userData.familyId) return;
-  list.innerHTML = '';
-  const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
-  if (snap.empty) {
-    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">No chores yet.</p>';
-    return;
-  }
-  snap.forEach(docSnap => {
-    const chore = docSnap.data();
-    const assigned = chore.assignedTo === 'all' ? 'Everyone' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || 'Unknown');
-    const div = document.createElement('div');
-    div.className = 'child-item';
-    div.style.flexDirection = 'column';
-    div.style.alignItems = 'stretch';
-    div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong>${chore.name}</strong>
-        <button class="ghost-btn delete-chore" data-id="${docSnap.id}" style="padding:4px 8px; font-size:0.75rem;">Delete</button>
-      </div>
-      <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">
-        ${chore.section} • ${chore.frequency} • ${assigned}
-      </div>
-    `;
-    list.appendChild(div);
-  });
-
-  list.querySelectorAll('.delete-chore').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (confirm('Delete this chore?')) {
-        await deleteDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id));
-        renderChoreSettings();
-        loadChores();
-      }
-    });
-  });
-}
-
-document.getElementById('add-chore-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('new-chore-name').value.trim();
-  const section = document.getElementById('new-chore-section').value;
-  const frequency = document.getElementById('new-chore-frequency').value;
-  const assignedTo = document.getElementById('new-chore-assign').value;
-  if (!name || !userData.familyId) return;
-  const chore = { name, section, frequency, assignedTo };
-  await addDoc(collection(db, 'families', userData.familyId, 'chores'), chore);
-  document.getElementById('new-chore-name').value = '';
-  renderChoreSettings();
-  loadChores();
-});
-
 // ---------- Shared Family Data ----------
 const levels = [
   { level: 1, xp: 0, title: 'Recruit' },
@@ -328,7 +156,6 @@ function getChoresForDate(date) {
   const dow = getDayOfWeek(date);
   const myUid = auth.currentUser?.uid;
   choresList.forEach(c => {
-    // Filter by assignment for children
     if (userData.role === 'child' && c.assignedTo && c.assignedTo !== 'all' && c.assignedTo !== myUid) return;
     if (c.frequency === 'daily' || (c.frequency === 'weekdays' && isWeekday(date)) || (c.frequency === 'specific' && c.days && c.days.includes(dow)) || c.frequency === 'weekly') {
       const section = c.section || 'evening';
@@ -527,13 +354,13 @@ function updateStats() {
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
   if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
-  if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
+  const settingsLink = document.getElementById('settings-link');
+  if (settingsLink) settingsLink.style.display = userData.role === 'parent' ? 'block' : 'none';
   const resetBtn = document.getElementById('reset-btn');
   if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
 }
 
 async function loadFamily() {
-  await ensureFamily();
   if (!userData.familyId) {
     renderAll();
     updateStats();
@@ -544,7 +371,6 @@ async function loadFamily() {
   if (snap.exists()) {
     familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   }
-  await loadMembers();
   await loadChores();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
@@ -563,7 +389,8 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {
       userData = userSnap.data();
-      if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
+      const settingsLink = document.getElementById('settings-link');
+      if (settingsLink) settingsLink.style.display = userData.role === 'parent' ? 'block' : 'none';
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
       loginScreen.style.display = 'none';
