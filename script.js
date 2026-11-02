@@ -17,6 +17,7 @@ const db = getFirestore(app);
 
 // ---------- Auth UI ----------
 let isRegistering = false;
+let selectedRole = 'parent';
 const loginScreen = document.getElementById('login-screen');
 const mainApp = document.getElementById('main-app');
 const authForm = document.getElementById('auth-form');
@@ -24,12 +25,22 @@ const authSubmit = document.getElementById('auth-submit');
 const toggleAuth = document.getElementById('toggle-auth');
 const authMessage = document.getElementById('auth-message');
 const authError = document.getElementById('auth-error');
+const roleSelect = document.getElementById('role-select');
+
+roleSelect.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    roleSelect.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRole = btn.dataset.role;
+  });
+});
 
 toggleAuth.addEventListener('click', () => {
   isRegistering = !isRegistering;
   authSubmit.textContent = isRegistering ? 'Create Account' : 'Sign In';
   authMessage.textContent = isRegistering ? 'Already have an account?' : "Don't have an account?";
   toggleAuth.textContent = isRegistering ? 'Sign in' : 'Create one';
+  roleSelect.style.display = isRegistering ? 'flex' : 'none';
   authError.textContent = '';
 });
 
@@ -41,7 +52,14 @@ authForm.addEventListener('submit', async (e) => {
   authSubmit.disabled = true;
   try {
     if (isRegistering) {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        role: selectedRole,
+        days: {},
+        weekly: {},
+        unlockedBadges: [],
+        totalXP: 0
+      });
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
@@ -129,15 +147,12 @@ const XP_PER_CHORE = 10;
 const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
-let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
+let data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent' };
 let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
-function getDateKey(date) {
-  return date.toISOString().split('T')[0];
-}
-
+function getDateKey(date) { return date.toISOString().split('T')[0]; }
 function getWeekStart(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -146,76 +161,48 @@ function getWeekStart(date) {
   d.setHours(0, 0, 0, 0);
   return d;
 }
-
-function getDayOfWeek(date) {
-  return date.getDay();
-}
-
-function isWeekday(date) {
-  const day = getDayOfWeek(date);
-  return day >= 1 && day <= 5;
-}
+function getDayOfWeek(date) { return date.getDay(); }
+function isWeekday(date) { const day = getDayOfWeek(date); return day >= 1 && day <= 5; }
 
 function getChoresForDate(date) {
   const chores = { morning: [], evening: [], weekly: [] };
   const dow = getDayOfWeek(date);
   choreDefinitions.daily.forEach(c => chores[c.section].push(c));
-  if (isWeekday(date)) {
-    choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
-  }
-  choreDefinitions.specific.forEach(c => {
-    if (c.days.includes(dow)) chores[c.section].push(c);
-  });
+  if (isWeekday(date)) choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
+  choreDefinitions.specific.forEach(c => { if (c.days.includes(dow)) chores[c.section].push(c); });
   choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
   return chores;
 }
 
 function getLevelInfo(xp) {
-  let current = levels[0];
-  let next = levels[1] || levels[0];
+  let current = levels[0], next = levels[1] || levels[0];
   for (let i = levels.length - 1; i >= 0; i--) {
-    if (xp >= levels[i].xp) {
-      current = levels[i];
-      next = levels[i + 1] || levels[i];
-      break;
-    }
+    if (xp >= levels[i].xp) { current = levels[i]; next = levels[i + 1] || levels[i]; break; }
   }
   const progress = next.xp > current.xp ? (xp - current.xp) / (next.xp - current.xp) : 1;
   return { ...current, next, progress: Math.min(1, Math.max(0, progress)), xpIntoLevel: xp - current.xp, xpNeeded: next.xp - current.xp };
 }
 
-function awardXP(amount) {
-  data.totalXP = (data.totalXP || 0) + amount;
-  saveData();
-  updateLevelDisplay();
-}
+function awardXP(amount) { data.totalXP = (data.totalXP || 0) + amount; saveData(); updateLevelDisplay(); }
 
 function updateLevelDisplay() {
   const info = getLevelInfo(data.totalXP || 0);
-  const levelEl = document.getElementById('level-value');
-  const titleEl = document.getElementById('level-title');
-  const xpBar = document.getElementById('xp-fill');
-  const xpText = document.getElementById('xp-text');
-  if (levelEl) levelEl.textContent = info.level;
-  if (titleEl) titleEl.textContent = info.title;
-  if (xpBar) xpBar.style.width = (info.progress * 100) + '%';
-  if (xpText) xpText.textContent = `${info.xpIntoLevel} / ${info.xpNeeded} XP`;
+  document.getElementById('level-value').textContent = info.level;
+  document.getElementById('level-title').textContent = info.title;
+  document.getElementById('xp-fill').style.width = (info.progress * 100) + '%';
+  document.getElementById('xp-text').textContent = `${info.xpIntoLevel} / ${info.xpNeeded} XP`;
 }
 
 function getWeekStats(weekStart) {
-  let total = 0;
-  let completed = 0;
-  let fullDays = 0;
+  let total = 0, completed = 0, fullDays = 0;
   for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
     const key = getDateKey(d);
     const dayData = data.days[key] || {};
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
     const done = Object.values(dayData).filter(Boolean).length;
-    total += required;
-    completed += done;
+    total += required; completed += done;
     if (required > 0 && done >= required) fullDays++;
   }
   total += choreDefinitions.weekly.length + choreDefinitions.specific.length;
@@ -224,37 +211,23 @@ function getWeekStats(weekStart) {
 }
 
 function getAllTimeStats() {
-  let fullDays = 0;
-  let totalEarned = 0;
-  let fullWeeks = 0;
-  let perfectWeeks = 0;
-  let totalChecks = 0;
-  let fullWeekends = 0;
-  let yardCount = 0;
-  let dogWalks = 0;
-  let teethCount = 0;
-  const seenWeeks = new Set();
-  const weekendKeys = new Set();
-
+  let fullDays = 0, totalEarned = 0, fullWeeks = 0, perfectWeeks = 0, totalChecks = 0, fullWeekends = 0, yardCount = 0, dogWalks = 0, teethCount = 0;
+  const seenWeeks = new Set(), weekendKeys = new Set();
   Object.keys(data.days).forEach(key => {
     const d = new Date(key + 'T12:00:00');
     const dayData = data.days[key] || {};
     const checks = Object.values(dayData).filter(Boolean).length;
     totalChecks += checks;
-
     if (dayData['walk-dog']) dogWalks++;
     if (dayData['brush-teeth-m'] || dayData['brush-teeth-e']) teethCount++;
     if (dayData['pick-up-yard']) yardCount++;
-
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
-    const done = checks;
-    if (required > 0 && done >= required) {
+    if (required > 0 && checks >= required) {
       fullDays++;
       const dow = getDayOfWeek(d);
       if (dow === 0 || dow === 6) weekendKeys.add(key);
     }
-
     const ws = getWeekStart(d).toISOString().split('T')[0];
     if (!seenWeeks.has(ws)) {
       seenWeeks.add(ws);
@@ -264,29 +237,15 @@ function getAllTimeStats() {
       totalEarned += (stats.percent / 100) * 5;
     }
   });
-
   fullWeekends = Math.floor(weekendKeys.size / 2);
-
-  return {
-    fullDays,
-    fullWeeks,
-    perfectWeeks,
-    totalEarned,
-    totalChecks,
-    fullWeekends,
-    yardCount,
-    dogWalks,
-    teethCount,
-    streak: calculateStreak()
-  };
+  return { fullDays, fullWeeks, perfectWeeks, totalEarned, totalChecks, fullWeekends, yardCount, dogWalks, teethCount, streak: calculateStreak() };
 }
 
 function calculateStreak() {
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 120; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
+    const d = new Date(today); d.setDate(today.getDate() - i);
     const key = getDateKey(d);
     const dayData = data.days[key] || {};
     const dayChores = getChoresForDate(d);
@@ -307,12 +266,8 @@ function checkBadges() {
       newlyUnlocked.push(b);
     }
   });
-  if (newlyUnlocked.length) {
-    saveData();
-    showBadgeUnlock(newlyUnlocked[0]);
-  }
-  const countEl = document.getElementById('badge-count');
-  if (countEl) countEl.textContent = data.unlockedBadges.length;
+  if (newlyUnlocked.length) { saveData(); showBadgeUnlock(newlyUnlocked[0]); }
+  document.getElementById('badge-count').textContent = data.unlockedBadges.length;
   return stats;
 }
 
@@ -327,17 +282,12 @@ function showBadgeUnlock(badge) {
 
 function renderBadgeGrid() {
   const grid = document.getElementById('badge-grid');
-  if (!grid) return;
   grid.innerHTML = '';
   badges.forEach(b => {
     const unlocked = data.unlockedBadges.includes(b.id);
     const card = document.createElement('div');
     card.className = `badge-card${unlocked ? ' unlocked' : ''}`;
-    card.innerHTML = `
-      <div class="icon">${b.icon}</div>
-      <div class="name">${b.name}</div>
-      <div class="desc">${b.desc}</div>
-    `;
+    card.innerHTML = `<div class="icon">${b.icon}</div><div class="name">${b.name}</div><div class="desc">${b.desc}</div>`;
     grid.appendChild(card);
   });
 }
@@ -347,68 +297,38 @@ function renderWeekGrid() {
   grid.innerHTML = '';
   const weekStart = getWeekStart(currentDate);
   const todayKey = getDateKey(new Date());
-
   for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
     const key = getDateKey(d);
     const dayData = data.days[key] || {};
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
     const done = Object.values(dayData).filter(Boolean).length;
     const pct = required > 0 ? Math.round((done / required) * 100) : 0;
-
     const pill = document.createElement('div');
     pill.className = 'day-pill';
     if (key === todayKey) pill.classList.add('today');
     if (pct === 100) pill.classList.add('complete');
-    else if (pct > 0) {
-      pill.classList.add('partial');
-      pill.style.setProperty('--fill', pct / 100);
-    }
-    pill.innerHTML = `
-      <span class="dow">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
-      <span class="pct">${pct}%</span>
-    `;
-    pill.addEventListener('click', () => {
-      currentDate = new Date(d);
-      renderAll();
-      updateStats();
-    });
+    else if (pct > 0) { pill.classList.add('partial'); pill.style.setProperty('--fill', pct / 100); }
+    pill.innerHTML = `<span class="dow">${d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span><span class="pct">${pct}%</span>`;
+    pill.addEventListener('click', () => { currentDate = new Date(d); renderAll(); updateStats(); });
     grid.appendChild(pill);
   }
-
-  const end = new Date(weekStart);
-  end.setDate(weekStart.getDate() + 6);
-  document.getElementById('week-range').textContent =
-    weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' +
-    end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const end = new Date(weekStart); end.setDate(weekStart.getDate() + 6);
+  document.getElementById('week-range').textContent = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function updateTrend() {
   const thisWeek = getWeekStats(getWeekStart(currentDate));
-  const lastWeekStart = new Date(getWeekStart(currentDate));
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekStart = new Date(getWeekStart(currentDate)); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
   const lastWeek = getWeekStats(lastWeekStart);
-
   const diff = thisWeek.completed - lastWeek.completed;
   const arrow = document.getElementById('trend-arrow');
   const text = document.getElementById('trend-text');
-
   arrow.className = 'trend-arrow';
-  if (diff > 0) {
-    arrow.textContent = '↑';
-    arrow.classList.add('up');
-    text.textContent = `+${diff} vs last week`;
-  } else if (diff < 0) {
-    arrow.textContent = '↓';
-    arrow.classList.add('down');
-    text.textContent = `${diff} vs last week`;
-  } else {
-    arrow.textContent = '→';
-    arrow.classList.add('same');
-    text.textContent = 'same as last week';
-  }
+  if (diff > 0) { arrow.textContent = '↑'; arrow.classList.add('up'); text.textContent = `+${diff} vs last week`; }
+  else if (diff < 0) { arrow.textContent = '↓'; arrow.classList.add('down'); text.textContent = `${diff} vs last week`; }
+  else { arrow.textContent = '→'; arrow.classList.add('same'); text.textContent = 'same as last week'; }
 }
 
 function renderList(containerId, list, isWeekly = false) {
@@ -416,47 +336,28 @@ function renderList(containerId, list, isWeekly = false) {
   container.innerHTML = '';
   const dateKey = getDateKey(currentDate);
   const dayData = data.days[dateKey] || {};
-
   if (list.length === 0) {
     container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">No chores for this section today.</p>';
     return;
   }
-
   list.forEach(chore => {
     const checked = isWeekly ? !!data.weekly[chore.id] : !!dayData[chore.id];
     const item = document.createElement('div');
     item.className = `chore-item${checked ? ' completed' : ''}`;
-    item.innerHTML = `
-      <div class="checkbox">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      </div>
-      <span class="chore-name">${chore.name}</span>
-    `;
+    item.innerHTML = `<div class="checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div><span class="chore-name">${chore.name}</span>`;
     item.addEventListener('click', () => {
       const wasChecked = checked;
       const newState = !checked;
-      if (isWeekly) {
-        data.weekly[chore.id] = newState;
-      } else {
-        if (!data.days[dateKey]) data.days[dateKey] = {};
-        data.days[dateKey][chore.id] = newState;
-      }
-
+      if (isWeekly) data.weekly[chore.id] = newState;
+      else { if (!data.days[dateKey]) data.days[dateKey] = {}; data.days[dateKey][chore.id] = newState; }
       if (newState && !wasChecked) {
         awardXP(XP_PER_CHORE);
         const dayChores = getChoresForDate(currentDate);
         const required = dayChores.morning.length + dayChores.evening.length;
         const done = Object.values(data.days[dateKey] || {}).filter(Boolean).length;
-        if (required > 0 && done === required) {
-          awardXP(XP_FULL_DAY_BONUS);
-        }
+        if (required > 0 && done === required) awardXP(XP_FULL_DAY_BONUS);
       }
-
-      saveData();
-      renderAll();
-      updateStats();
-      checkDayComplete();
-      checkBadges();
+      saveData(); renderAll(); updateStats(); checkDayComplete(); checkBadges();
     });
     container.appendChild(item);
   });
@@ -467,12 +368,8 @@ function renderAll() {
   renderList('morning-list', dayChores.morning);
   renderList('evening-list', dayChores.evening);
   renderList('weekly-list', dayChores.weekly, true);
-
-  const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-  const dayDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  document.getElementById('day-name').textContent = dayName;
-  document.getElementById('day-date').textContent = dayDate;
-
+  document.getElementById('day-name').textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+  document.getElementById('day-date').textContent = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   renderWeekGrid();
 }
 
@@ -481,25 +378,20 @@ function updateStats() {
   const stats = getWeekStats(weekStart);
   const percent = stats.percent;
   const earned = (percent / 100) * 5;
-
-  const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
-  document.getElementById('ring-progress').style.strokeDashoffset = offset;
-
+  document.getElementById('ring-progress').style.strokeDashoffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
   document.getElementById('earned-amount').textContent = `$${earned.toFixed(2)}`;
   document.getElementById('mini-fill').style.width = percent + '%';
   document.getElementById('week-status').textContent = percent >= 100 ? 'Week complete!' : `${Math.round(percent)}% of weekly target`;
-
   const todayChores = getChoresForDate(currentDate);
   const todayRequired = todayChores.morning.length + todayChores.evening.length;
   const todayKey = getDateKey(currentDate);
-  const todayData = data.days[todayKey] || {};
-  const todayDone = Object.values(todayData).filter(Boolean).length;
-  const todayPct = todayRequired > 0 ? Math.round((todayDone / todayRequired) * 100) : 0;
-  document.getElementById('today-percent').textContent = todayPct + '%';
-
+  const todayDone = Object.values(data.days[todayKey] || {}).filter(Boolean).length;
+  document.getElementById('today-percent').textContent = (todayRequired > 0 ? Math.round((todayDone / todayRequired) * 100) : 0) + '%';
   document.getElementById('streak').textContent = calculateStreak();
   updateTrend();
   updateLevelDisplay();
+  const roleTag = document.getElementById('user-role-tag');
+  if (roleTag) roleTag.textContent = (data.role === 'child' ? 'Child • ' : 'Parent • ') + 'Daily Ops';
 }
 
 function checkDayComplete() {
@@ -508,9 +400,7 @@ function checkDayComplete() {
   const dayChores = getChoresForDate(currentDate);
   const required = dayChores.morning.length + dayChores.evening.length;
   const done = Object.values(dayData).filter(Boolean).length;
-  if (required > 0 && done === required) {
-    showCelebration();
-  }
+  if (required > 0 && done === required) showCelebration();
 }
 
 function showCelebration() {
@@ -523,34 +413,14 @@ function showCelebration() {
 function spawnConfetti() {
   const canvas = document.getElementById('particle-canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
   const particles = [];
   for (let i = 0; i < 80; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: canvas.height / 2 + (Math.random() - 0.5) * 200,
-      vx: (Math.random() - 0.5) * 12,
-      vy: Math.random() * -8 - 2,
-      life: 60 + Math.random() * 40,
-      color: ['#00e5ff', '#7c4dff', '#00e676', '#ffab00'][Math.floor(Math.random() * 4)]
-    });
+    particles.push({ x: Math.random() * canvas.width, y: canvas.height / 2 + (Math.random() - 0.5) * 200, vx: (Math.random() - 0.5) * 12, vy: Math.random() * -8 - 2, life: 60 + Math.random() * 40, color: ['#00e5ff', '#7c4dff', '#00e676', '#ffab00'][Math.floor(Math.random() * 4)] });
   }
-
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.15;
-      p.life--;
-      if (p.life > 0) {
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life / 80;
-        ctx.fillRect(p.x, p.y, 6, 6);
-      }
-    });
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--; if (p.life > 0) { ctx.fillStyle = p.color; ctx.globalAlpha = p.life / 80; ctx.fillRect(p.x, p.y, 6, 6); } });
     if (particles.some(p => p.life > 0)) requestAnimationFrame(animate);
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
@@ -559,37 +429,27 @@ function spawnConfetti() {
 
 function saveData() {
   const user = auth.currentUser;
-  if (user) {
-    setDoc(userDoc(user.uid), data, { merge: true });
-  }
+  if (user) setDoc(doc(db, 'users', user.uid), data, { merge: true });
   localStorage.setItem('choreData', JSON.stringify(data));
 }
 
-function userDoc(uid) {
-  return doc(db, 'users', uid);
-}
-
 async function loadUserData(user) {
-  const snap = await getDoc(userDoc(user.uid));
+  const snap = await getDoc(doc(db, 'users', user.uid));
   if (snap.exists()) {
-    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
+    data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', ...snap.data() };
   } else {
     const local = JSON.parse(localStorage.getItem('choreData') || 'null');
     if (local) data = { ...data, ...local };
-    await setDoc(userDoc(user.uid), data);
+    await setDoc(doc(db, 'users', user.uid), data);
   }
   if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(userDoc(user.uid), (docSnap) => {
+  unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
     if (docSnap.exists()) {
-      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
-      renderAll();
-      updateStats();
-      checkBadges();
+      data = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, role: 'parent', ...docSnap.data() };
+      renderAll(); updateStats(); checkBadges();
     }
   });
-  renderAll();
-  updateStats();
-  checkBadges();
+  renderAll(); updateStats(); checkBadges();
 }
 
 onAuthStateChanged(auth, (user) => {
@@ -604,72 +464,26 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-function openBadgeModal() {
-  renderBadgeGrid();
-  const modal = document.getElementById('badge-modal');
-  if (modal) modal.classList.remove('hidden');
-}
+function openBadgeModal() { renderBadgeGrid(); document.getElementById('badge-modal').classList.remove('hidden'); }
+function closeBadgeModal() { document.getElementById('badge-modal').classList.add('hidden'); }
 
-function closeBadgeModal() {
-  const modal = document.getElementById('badge-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-document.getElementById('prev-day')?.addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() - 1);
-  renderAll();
-  updateStats();
-});
-
-document.getElementById('next-day')?.addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() + 1);
-  renderAll();
-  updateStats();
-});
-
+document.getElementById('prev-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() - 1); renderAll(); updateStats(); });
+document.getElementById('next-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() + 1); renderAll(); updateStats(); });
 document.getElementById('reset-btn')?.addEventListener('click', () => {
   if (confirm('Reset all progress for this week?')) {
     const weekStart = getWeekStart(currentDate);
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + i);
-      delete data.days[getDateKey(d)];
-    }
-    data.weekly = {};
-    saveData();
-    renderAll();
-    updateStats();
+    for (let i = 0; i < 7; i++) { const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); delete data.days[getDateKey(d)]; }
+    data.weekly = {}; saveData(); renderAll(); updateStats();
   }
 });
-
-const badgesBtn = document.getElementById('badges-btn');
-if (badgesBtn) {
-  badgesBtn.addEventListener('click', openBadgeModal);
-  badgesBtn.style.cursor = 'pointer';
-}
-
-const closeBtn = document.getElementById('close-badges');
-if (closeBtn) closeBtn.addEventListener('click', closeBadgeModal);
-
-const badgeModal = document.getElementById('badge-modal');
-if (badgeModal) {
-  badgeModal.addEventListener('click', (e) => {
-    if (e.target === badgeModal) closeBadgeModal();
-  });
-}
-
-document.getElementById('badge-unlock')?.addEventListener('click', () => {
-  document.getElementById('badge-unlock').classList.add('hidden');
-});
+document.getElementById('badges-btn')?.addEventListener('click', openBadgeModal);
+document.getElementById('close-badges')?.addEventListener('click', closeBadgeModal);
+document.getElementById('badge-modal')?.addEventListener('click', (e) => { if (e.target.id === 'badge-modal') closeBadgeModal(); });
+document.getElementById('badge-unlock')?.addEventListener('click', () => document.getElementById('badge-unlock').classList.add('hidden'));
 
 const svg = document.querySelector('.progress-ring');
 if (svg) {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.innerHTML = `
-    <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00e5ff" />
-      <stop offset="100%" stop-color="#00e676" />
-    </linearGradient>
-  `;
+  defs.innerHTML = `<linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00e5ff" /><stop offset="100%" stop-color="#00e676" /></linearGradient>`;
   svg.appendChild(defs);
 }
