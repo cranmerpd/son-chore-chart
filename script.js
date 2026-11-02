@@ -20,6 +20,32 @@ function usernameToEmail(username) {
   return clean + '@son-chore-chart.firebaseapp.com';
 }
 
+// Default chores used when a new family is created
+const DEFAULT_CHORES = {
+  daily: [
+    { id: 'brush-teeth-m', name: 'Brush Teeth', section: 'morning' },
+    { id: 'water-animals', name: 'Water Animals', section: 'morning' },
+    { id: 'walk-dog', name: 'Walk the Dog', section: 'evening' },
+    { id: 'get-mail', name: 'Get Mail', section: 'evening' },
+    { id: 'unpack-bookbag', name: 'Unpack Bookbag', section: 'evening' },
+    { id: 'feed-animal', name: 'Feed Animal', section: 'evening' },
+    { id: 'clear-table', name: 'Clear Dinner Table', section: 'evening' }
+  ],
+  weekdays: [
+    { id: 'dirty-clothes', name: 'Dirty Clothes in Hamper', section: 'evening' },
+    { id: 'toys-away', name: 'Toys Put Away', section: 'evening' },
+    { id: 'brush-teeth-e', name: 'Brush Teeth', section: 'evening' }
+  ],
+  specific: [
+    { id: 'pick-up-yard', name: 'Pick Up Yard', section: 'weekly', days: [4] }
+  ],
+  weekly: [
+    { id: 'sort-laundry', name: 'Sort Laundry', section: 'weekly' },
+    { id: 'clean-sink', name: 'Clean Bathroom Sink', section: 'weekly' },
+    { id: 'get-trash', name: 'Get Trash Together', section: 'weekly' }
+  ]
+};
+
 // ---------- Auth ----------
 let isRegistering = false;
 const loginScreen = document.getElementById('login-screen');
@@ -51,6 +77,7 @@ authForm.addEventListener('submit', async (e) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const familyRef = doc(collection(db, 'families'));
       await setDoc(familyRef, {
+        chores: DEFAULT_CHORES,
         days: {},
         weekly: {},
         unlockedBadges: [],
@@ -87,12 +114,12 @@ settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidd
 closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
 settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
 
-// Ensure parent has a family
 async function ensureFamily() {
   if (userData.role !== 'parent') return;
   if (userData.familyId) return;
   const familyRef = doc(collection(db, 'families'));
   await setDoc(familyRef, {
+    chores: DEFAULT_CHORES,
     days: {},
     weekly: {},
     unlockedBadges: [],
@@ -151,31 +178,6 @@ addMemberForm.addEventListener('submit', async (e) => {
 });
 
 // ---------- Shared Family Data ----------
-const choreDefinitions = {
-  daily: [
-    { id: 'brush-teeth-m', name: 'Brush Teeth', section: 'morning' },
-    { id: 'water-animals', name: 'Water Animals', section: 'morning' },
-    { id: 'walk-dog', name: 'Walk the Dog', section: 'evening' },
-    { id: 'get-mail', name: 'Get Mail', section: 'evening' },
-    { id: 'unpack-bookbag', name: 'Unpack Bookbag', section: 'evening' },
-    { id: 'feed-animal', name: 'Feed Animal', section: 'evening' },
-    { id: 'clear-table', name: 'Clear Dinner Table', section: 'evening' }
-  ],
-  weekdays: [
-    { id: 'dirty-clothes', name: 'Dirty Clothes in Hamper', section: 'evening' },
-    { id: 'toys-away', name: 'Toys Put Away', section: 'evening' },
-    { id: 'brush-teeth-e', name: 'Brush Teeth', section: 'evening' }
-  ],
-  specific: [
-    { id: 'pick-up-yard', name: 'Pick Up Yard', section: 'weekly', days: [4] }
-  ],
-  weekly: [
-    { id: 'sort-laundry', name: 'Sort Laundry', section: 'weekly' },
-    { id: 'clean-sink', name: 'Clean Bathroom Sink', section: 'weekly' },
-    { id: 'get-trash', name: 'Get Trash Together', section: 'weekly' }
-  ]
-};
-
 const badges = [
   { id: 'first-check', name: 'Initiated', icon: '🟢', desc: 'First verified chore', check: (s) => s.totalChecks >= 1 },
   { id: 'first-day', name: 'First Contact', icon: '🚀', desc: 'Complete first full day', check: (s) => s.fullDays >= 1 },
@@ -227,7 +229,7 @@ const XP_FULL_DAY_BONUS = 25;
 
 let currentDate = new Date();
 let userData = { role: 'parent', username: '', familyId: null };
-let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
+let familyData = { chores: DEFAULT_CHORES, days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
 let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -246,11 +248,12 @@ function isWeekday(date) { const day = getDayOfWeek(date); return day >= 1 && da
 
 function getChoresForDate(date) {
   const chores = { morning: [], evening: [], weekly: [] };
+  const defs = familyData.chores || DEFAULT_CHORES;
   const dow = getDayOfWeek(date);
-  choreDefinitions.daily.forEach(c => chores[c.section].push(c));
-  if (isWeekday(date)) choreDefinitions.weekdays.forEach(c => chores[c.section].push(c));
-  choreDefinitions.specific.forEach(c => { if (c.days.includes(dow)) chores[c.section].push(c); });
-  choreDefinitions.weekly.forEach(c => chores.weekly.push(c));
+  (defs.daily || []).forEach(c => chores[c.section].push(c));
+  if (isWeekday(date)) (defs.weekdays || []).forEach(c => chores[c.section].push(c));
+  (defs.specific || []).forEach(c => { if (c.days && c.days.includes(dow)) chores[c.section].push(c); });
+  (defs.weekly || []).forEach(c => chores.weekly.push(c));
   return chores;
 }
 
@@ -300,7 +303,8 @@ function getWeekStats(weekStart) {
     total += required; completed += done;
     if (required > 0 && done >= required) fullDays++;
   }
-  total += choreDefinitions.weekly.length + choreDefinitions.specific.length;
+  const defs = familyData.chores || DEFAULT_CHORES;
+  total += (defs.weekly || []).length + (defs.specific || []).length;
   completed += Object.values(familyData.weekly || {}).filter(isVerified).length;
   return { total, completed, fullDays, percent: total > 0 ? (completed / total) * 100 : 0 };
 }
@@ -565,11 +569,18 @@ async function loadFamily() {
   }
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
-  if (snap.exists()) familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
+  if (snap.exists()) {
+    familyData = { chores: DEFAULT_CHORES, days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
+    // If old family has no chores field, write the defaults
+    if (!familyData.chores) {
+      familyData.chores = DEFAULT_CHORES;
+      await setDoc(ref, { chores: DEFAULT_CHORES }, { merge: true });
+    }
+  }
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
     if (docSnap.exists()) {
-      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
+      familyData = { chores: DEFAULT_CHORES, days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
       renderAll();
       updateStats();
       checkBadges();
