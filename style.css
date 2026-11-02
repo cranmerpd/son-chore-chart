@@ -286,9 +286,7 @@ body {
 .earned { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 600; color: var(--success); }
 .earned-label { font-size: 0.6rem; color: var(--text-dim); }
 
-.earnings-meta {
-  display: none;
-}
+.earnings-meta { display: none; }
 
 .day-nav {
   display: flex;
@@ -435,7 +433,7 @@ body {
   bottom: 0; left: 0; right: 0;
   background: #101624;
   border-top: 1px solid var(--border);
-  padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
   z-index: 100;
   justify-content: space-around;
   align-items: stretch;
@@ -446,25 +444,25 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   background: none;
   border: none;
   color: var(--text-dim);
   font-family: inherit;
   font-size: 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-decoration: none;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 6px 0;
   transition: color 0.15s;
 }
 .bottom-nav a.active, .bottom-nav button.active {
   color: var(--accent);
 }
 .bottom-nav .nav-icon {
-  font-size: 1.25rem;
-  line-height: 1;
+  width: 22px;
+  height: 22px;
 }
 
 @media (max-width: 640px) {
