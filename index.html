@@ -12,7 +12,6 @@
 <body>
   <canvas id="particle-canvas"></canvas>
 
-  <!-- Login Screen -->
   <div id="login-screen" class="login-screen">
     <div class="login-card">
       <div class="logo" style="justify-content: center; margin-bottom: 24px;">
@@ -25,6 +24,10 @@
       <form id="auth-form">
         <input type="email" id="email" placeholder="Email" required autocomplete="email">
         <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+        <div class="role-select" id="role-select" style="display: none;">
+          <button type="button" class="role-btn active" data-role="parent">Parent</button>
+          <button type="button" class="role-btn" data-role="child">Child</button>
+        </div>
         <button type="submit" id="auth-submit" class="primary-btn">Sign In</button>
       </form>
       <p class="auth-toggle">
@@ -41,7 +44,7 @@
         <span class="logo-icon">⚡</span>
         <div>
           <h1>Mission Control</h1>
-          <p class="tagline">Daily Ops • Earnings Tracker</p>
+          <p class="tagline" id="user-role-tag">Daily Ops • Earnings Tracker</p>
         </div>
       </div>
       <div class="header-stats">
