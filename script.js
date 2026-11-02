@@ -76,7 +76,7 @@ authForm.addEventListener('submit', async (e) => {
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-// ---------- Settings (parent adds members) ----------
+// ---------- Settings ----------
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const closeSettings = document.getElementById('close-settings');
@@ -388,6 +388,7 @@ function updateTrend() {
 
 function renderList(containerId, list, isWeekly = false) {
   const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = '';
   const dateKey = getDateKey(currentDate);
   const dayData = familyData.days[dateKey] || {};
@@ -442,8 +443,7 @@ function renderList(containerId, list, isWeekly = false) {
         return;
       }
 
-      // Toggle checked (child or parent can mark; parent can also uncheck)
-      if (userData.role === 'child' && entry.verified) return; // child can't uncheck verified
+      if (userData.role === 'child' && entry.verified) return;
       entry.checked = !entry.checked;
       if (!entry.checked) entry.verified = false;
       entry.checkedBy = auth.currentUser.uid;
@@ -486,17 +486,10 @@ function updateStats() {
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
   if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
-  settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
-  document.getElementById('reset-btn').style.display = userData.role === 'parent' ? 'inline-block' : 'none';
-}
-
-function checkDayComplete() {
-  const dateKey = getDateKey(currentDate);
-  const dayData = familyData.days[dateKey] || {};
-  const dayChores = getChoresForDate(currentDate);
-  const required = dayChores.morning.length + dayChores.evening.length;
-  const done = getVerifiedCount(dayData);
-  if (required > 0 && done === required) showCelebration();
+  // Always show settings for parent
+  if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
+  const resetBtn = document.getElementById('reset-btn');
+  if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
 }
 
 function showCelebration() {
@@ -524,7 +517,11 @@ function spawnConfetti() {
 }
 
 async function loadFamily() {
-  if (!userData.familyId) return;
+  if (!userData.familyId) {
+    renderAll();
+    updateStats();
+    return;
+  }
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
   if (snap.exists()) familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
@@ -547,8 +544,13 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {
       userData = userSnap.data();
+      // Show settings immediately for parent
+      if (settingsBtn) settingsBtn.style.display = userData.role === 'parent' ? 'block' : 'none';
+      const resetBtn = document.getElementById('reset-btn');
+      if (resetBtn) resetBtn.style.display = userData.role === 'parent' ? 'inline-block' : 'none';
       loginScreen.style.display = 'none';
       mainApp.style.display = 'block';
+      currentDate = new Date();
       await loadFamily();
     }
   } else {
@@ -561,13 +563,25 @@ onAuthStateChanged(auth, async (user) => {
 function openBadgeModal() { renderBadgeGrid(); document.getElementById('badge-modal').classList.remove('hidden'); }
 function closeBadgeModal() { document.getElementById('badge-modal').classList.add('hidden'); }
 
-document.getElementById('prev-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() - 1); renderAll(); updateStats(); });
-document.getElementById('next-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() + 1); renderAll(); updateStats(); });
+document.getElementById('prev-day')?.addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() - 1);
+  renderAll();
+  updateStats();
+});
+document.getElementById('next-day')?.addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() + 1);
+  renderAll();
+  updateStats();
+});
 document.getElementById('reset-btn')?.addEventListener('click', () => {
   if (userData.role !== 'parent') return;
   if (confirm('Reset all progress for this week?')) {
     const weekStart = getWeekStart(currentDate);
-    for (let i = 0; i < 7; i++) { const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); delete familyData.days[getDateKey(d)]; }
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      delete familyData.days[getDateKey(d)];
+    }
     familyData.weekly = {};
     saveFamily();
     renderAll();
