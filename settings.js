@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -29,13 +29,13 @@ document.getElementById('logout-btn').addEventListener('click', () => signOut(au
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    loginRequired.style.display = 'flex';
+    loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
     return;
   }
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (!snap.exists() || snap.data().role !== 'parent') {
-    loginRequired.style.display = 'flex';
+    loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
     return;
   }
@@ -65,15 +65,14 @@ function renderMembers() {
   }
   familyMembers.forEach(m => {
     const div = document.createElement('div');
-    div.className = 'chore-item';
-    div.style.cursor = 'default';
-    div.innerHTML = `<span class="chore-name">${m.username}</span><span style="font-size:0.75rem; color:var(--text-dim);">${m.role}</span>`;
+    div.className = 'member-row';
+    div.innerHTML = `<div><strong>${m.username}</strong><div class="chore-meta">${m.role}</div></div>`;
     list.appendChild(div);
   });
 }
 
 function updateAssignDropdown() {
-  const sel = document.getElementById('new-chore-assign');
+  const sel = document.getElementById('chore-assign');
   sel.innerHTML = '<option value="all">Everyone</option>';
   familyMembers.filter(m => m.role === 'child').forEach(m => {
     const opt = document.createElement('option');
@@ -82,6 +81,12 @@ function updateAssignDropdown() {
     sel.appendChild(opt);
   });
 }
+
+// Add Member Modal
+const addMemberModal = document.getElementById('add-member-modal');
+document.getElementById('open-add-member').addEventListener('click', () => addMemberModal.classList.remove('hidden'));
+document.getElementById('close-add-member').addEventListener('click', () => addMemberModal.classList.add('hidden'));
+addMemberModal.addEventListener('click', (e) => { if (e.target === addMemberModal) addMemberModal.classList.add('hidden'); });
 
 document.getElementById('add-member-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -106,6 +111,26 @@ document.getElementById('add-member-form').addEventListener('submit', async (e) 
   }
 });
 
+// Chore Modal
+const choreModal = document.getElementById('chore-modal');
+const choreForm = document.getElementById('chore-form');
+const freqSelect = document.getElementById('chore-frequency');
+const daySelector = document.getElementById('day-selector');
+
+freqSelect.addEventListener('change', () => {
+  daySelector.style.display = freqSelect.value === 'specific' ? 'flex' : 'none';
+});
+
+document.getElementById('open-add-chore').addEventListener('click', () => {
+  document.getElementById('chore-modal-title').textContent = 'Add Chore';
+  choreForm.reset();
+  document.getElementById('chore-id').value = '';
+  daySelector.style.display = 'none';
+  choreModal.classList.remove('hidden');
+});
+document.getElementById('close-chore-modal').addEventListener('click', () => choreModal.classList.add('hidden'));
+choreModal.addEventListener('click', (e) => { if (e.target === choreModal) choreModal.classList.add('hidden'); });
+
 async function renderChores() {
   if (!userData.familyId) return;
   const list = document.getElementById('chore-settings-list');
@@ -118,18 +143,41 @@ async function renderChores() {
   snap.forEach(docSnap => {
     const chore = docSnap.data();
     const assigned = chore.assignedTo === 'all' ? 'Everyone' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || 'Unknown');
+    const daysText = chore.frequency === 'specific' && chore.days ? ' (' + chore.days.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ') + ')' : '';
     const div = document.createElement('div');
-    div.className = 'chore-item';
-    div.style.cursor = 'default';
+    div.className = 'chore-row';
     div.innerHTML = `
-      <div style="flex:1;">
-        <div class="chore-name">${chore.name}</div>
-        <div style="font-size:0.75rem; color:var(--text-dim);">${chore.section} • ${chore.frequency} • ${assigned}</div>
+      <div class="chore-info">
+        <strong>${chore.name}</strong>
+        <div class="chore-meta">${chore.section} • ${chore.frequency}${daysText} • ${assigned}</div>
       </div>
-      <button class="ghost-btn delete-chore" data-id="${docSnap.id}" style="padding:4px 10px;">Delete</button>
+      <div class="row-actions">
+        <button class="small-btn edit-chore" data-id="${docSnap.id}">Edit</button>
+        <button class="small-btn danger delete-chore" data-id="${docSnap.id}">Delete</button>
+      </div>
     `;
     list.appendChild(div);
   });
+
+  list.querySelectorAll('.edit-chore').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const snap = await getDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id));
+      if (!snap.exists()) return;
+      const c = snap.data();
+      document.getElementById('chore-modal-title').textContent = 'Edit Chore';
+      document.getElementById('chore-id').value = btn.dataset.id;
+      document.getElementById('chore-name').value = c.name || '';
+      document.getElementById('chore-section').value = c.section || 'evening';
+      document.getElementById('chore-frequency').value = c.frequency || 'daily';
+      document.getElementById('chore-assign').value = c.assignedTo || 'all';
+      daySelector.style.display = c.frequency === 'specific' ? 'flex' : 'none';
+      daySelector.querySelectorAll('input').forEach(cb => {
+        cb.checked = c.days && c.days.includes(parseInt(cb.value, 10));
+      });
+      choreModal.classList.remove('hidden');
+    });
+  });
+
   list.querySelectorAll('.delete-chore').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (confirm('Delete this chore?')) {
@@ -140,14 +188,25 @@ async function renderChores() {
   });
 }
 
-document.getElementById('add-chore-form').addEventListener('submit', async (e) => {
+choreForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const name = document.getElementById('new-chore-name').value.trim();
-  const section = document.getElementById('new-chore-section').value;
-  const frequency = document.getElementById('new-chore-frequency').value;
-  const assignedTo = document.getElementById('new-chore-assign').value;
+  const id = document.getElementById('chore-id').value;
+  const name = document.getElementById('chore-name').value.trim();
+  const section = document.getElementById('chore-section').value;
+  const frequency = document.getElementById('chore-frequency').value;
+  const assignedTo = document.getElementById('chore-assign').value;
   if (!name || !userData.familyId) return;
-  await addDoc(collection(db, 'families', userData.familyId, 'chores'), { name, section, frequency, assignedTo });
-  document.getElementById('new-chore-name').value = '';
+
+  const data = { name, section, frequency, assignedTo };
+  if (frequency === 'specific') {
+    data.days = Array.from(daySelector.querySelectorAll('input:checked')).map(cb => parseInt(cb.value, 10));
+  }
+
+  if (id) {
+    await updateDoc(doc(db, 'families', userData.familyId, 'chores', id), data);
+  } else {
+    await addDoc(collection(db, 'families', userData.familyId, 'chores'), data);
+  }
+  choreModal.classList.add('hidden');
   renderChores();
 });
