@@ -7,7 +7,7 @@
   <title>Settings — Mission Control</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0f19">
-  <link rel="stylesheet" href="style.css?v=131">
+  <link rel="stylesheet" href="style.css?v=132">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=VT323&family=Patrick+Hand&family=Fredoka:wght@500;700&family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -49,7 +49,9 @@
           <div class="panel-header">
             <h2>Chores</h2>
             <button id="open-add-chore" class="add-btn">+ Add</button>
+            <button id="open-add-task" class="add-btn" type="button">+ Repeats</button>
           </div>
+          <p class="field-help">Chart chores, and a child's monthly or yearly chores. Repeats on your own account are at the bottom of Account.</p>
           <div id="chore-settings-list" class="list"></div>
         </div>
 
@@ -65,14 +67,6 @@
       <div class="settings-split">
         <section class="panel">
           <div class="panel-header">
-            <h2>Recurring</h2>
-            <button id="open-add-task" class="add-btn" type="button">+ Add</button>
-          </div>
-          <p class="field-help">Recurring chores for a child. Your own recurring chores are at the bottom of Account.</p>
-          <div id="recurring-list" class="list"></div>
-        </section>
-        <section class="panel">
-          <div class="panel-header">
             <h2>Scheduled one-offs</h2>
           </div>
           <p class="field-help">One-offs, honey-dos, and bonus chores are added from the chart on the day they are due.</p>
@@ -81,7 +75,7 @@
       </div>
     </div>
 
-    <p class="version">v1.31</p>
+    <p class="version">v1.32</p>
   </div>
 
   <!-- Add Member Modal -->
@@ -244,6 +238,6 @@
     </a>
   </nav>
 
-  <script type="module" src="settings.js?v=131"></script>
+  <script type="module" src="settings.js?v=132"></script>
 </body>
 </html>

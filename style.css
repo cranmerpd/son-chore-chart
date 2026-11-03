@@ -1869,6 +1869,9 @@ html[data-theme="horns"] .version { color: #fff; position: relative; z-index: 50
 html[data-theme="horns"] .version::before { content: "Rocky Top remains undefeated. "; }
 html[data-theme="horns"] .theme-card.selected { border-color: #bf5700; }
 
+body:not(.ready) .app,
+body:not(.ready) .bottom-nav,
+body:not(.ready) .login-screen { visibility: hidden; }
 .app, .bottom-nav, .login-screen { animation: page-in 0.22s ease; }
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
 .sign-out-btn { width: 100%; margin: 18px 0 8px; }

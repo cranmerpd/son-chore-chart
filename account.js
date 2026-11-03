@@ -49,12 +49,14 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     content.style.display = 'none';
     gate.style.display = 'block';
+    document.body.classList.add('ready');
     return;
   }
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (!snap.exists()) {
     content.style.display = 'none';
     gate.style.display = 'block';
+    document.body.classList.add('ready');
     return;
   }
   userData = snap.data();
@@ -67,14 +69,15 @@ onAuthStateChanged(auth, async (user) => {
   if (familyLink) familyLink.style.display = userData.role === 'parent' ? 'flex' : 'none';
   const mobileSettings = document.getElementById('mobile-settings');
   if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
-  gate.style.display = 'none';
-  content.style.display = 'block';
   const anchor = document.getElementById('my-task-anchor');
   if (anchor && !anchor.value) {
     const n = new Date();
     anchor.value = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
   }
-  loadMyRecurring();
+  await loadMyRecurring();
+  gate.style.display = 'none';
+  content.style.display = 'block';
+  document.body.classList.add('ready');
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));

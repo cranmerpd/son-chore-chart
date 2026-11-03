@@ -75,22 +75,25 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
+    document.body.classList.add('ready');
     return;
   }
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (!snap.exists() || snap.data().role !== 'parent') {
     loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
+    document.body.classList.add('ready');
     return;
   }
   userData = snap.data();
   applyTheme(userData.theme);
-  loginRequired.style.display = 'none';
-  settingsContent.style.display = 'block';
   await loadMembers();
   await renderChores();
   await renderBadges();
   await renderTasks();
+  loginRequired.style.display = 'none';
+  settingsContent.style.display = 'block';
+  document.body.classList.add('ready');
 });
 
 async function loadMembers() {
@@ -287,10 +290,7 @@ async function renderChores() {
   const list = document.getElementById('chore-settings-list');
   list.innerHTML = '';
   const snap = await getDocs(collection(db, 'families', userData.familyId, 'chores'));
-  if (snap.empty) {
-    list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No chores yet.</p>';
-    return;
-  }
+  if (snap.empty && !list.children.length) list.innerHTML = '';
   snap.forEach(docSnap => {
     const chore = docSnap.data();
     const active = chore.active !== false;
@@ -342,6 +342,56 @@ async function renderChores() {
     btn.addEventListener('click', async () => {
       if (await askConfirm({ title: 'Delete this chore?', body: 'This removes it from the chart. Past checks for it go away with it.', confirmLabel: 'Delete', danger: true })) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id));
+        renderChores();
+      }
+    });
+  });
+
+  const taskSnap = await getDocs(query(collection(db, 'families', userData.familyId, 'tasks'), where('audience', '==', 'child')));
+  taskSnap.forEach(docSnap => {
+    const task = { id: docSnap.id, ...docSnap.data() };
+    if (task.kind === 'once') return;
+    const active = task.active !== false;
+    const div = document.createElement('div');
+    div.className = 'row' + (active ? '' : ' inactive');
+    div.innerHTML = `
+      <div class="row-info">
+        <div class="row-title">${task.name}</div>
+        <div class="row-meta">${taskMeta(task)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn toggle-task" data-id="${task.id}" data-active="${active}" title="${active ? 'Deactivate' : 'Activate'}">${active ? '●' : '○'}</button>
+        <button class="icon-btn edit-task" data-id="${task.id}" title="Edit">✎</button>
+        <button class="icon-btn danger delete-task" data-id="${task.id}" title="Delete">✕</button>
+      </div>`;
+    list.appendChild(div);
+  });
+  if (!list.children.length) list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No chores yet.</p>';
+
+  list.querySelectorAll('.toggle-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await updateDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id), { active: btn.dataset.active !== 'true' });
+      renderChores();
+    });
+  });
+  list.querySelectorAll('.edit-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const snap = await getDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
+      if (!snap.exists()) return;
+      const t = snap.data();
+      document.getElementById('task-modal-title').textContent = 'Edit repeating chore';
+      document.getElementById('task-id').value = btn.dataset.id;
+      document.getElementById('task-name').value = t.name || '';
+      document.getElementById('task-frequency').value = t.frequency || 'monthly';
+      document.getElementById('task-anchor').value = t.anchorDate || localToday();
+      fillTaskAssign(t.assigneeUid);
+      taskModal.classList.remove('hidden');
+    });
+  });
+  list.querySelectorAll('.delete-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (await askConfirm({ title: 'Delete this chore?', body: 'This removes the repeating chore. It does not change chores already checked off.', confirmLabel: 'Delete', danger: true })) {
+        await deleteDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
         renderChores();
       }
     });
@@ -468,9 +518,7 @@ function taskMeta(task) {
 
 async function renderTasks() {
   if (!userData.familyId) return;
-  const recurringEl = document.getElementById('recurring-list');
   const onceEl = document.getElementById('onetime-list');
-  recurringEl.innerHTML = '';
   onceEl.innerHTML = '';
   const col = collection(db, 'families', userData.familyId, 'tasks');
   const ownSnap = await getDocs(query(col, where('assigneeUid', '==', auth.currentUser.uid)));
@@ -480,34 +528,14 @@ async function renderTasks() {
   ownSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
   sharedSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
   sentSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
-  const recurring = [];
   const once = [];
   seen.forEach(data => {
     if (data.audience === 'honey' && data.assigneeUid !== auth.currentUser.uid && data.ownerUid !== auth.currentUser.uid) return;
     if (data.audience === 'mine' && data.assigneeUid !== auth.currentUser.uid) return;
     if (data.kind === 'once') once.push(data);
-    else if (data.audience === 'child') recurring.push(data);
   });
   once.sort((a, b) => String(b.dueDate || '').localeCompare(String(a.dueDate || '')));
-  if (!recurring.length) recurringEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No recurring chores yet.</p>';
   if (!once.length) onceEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No one-offs scheduled. Add those from the chart, on the day they are due.</p>';
-
-  recurring.forEach(task => {
-    const active = task.active !== false;
-    const div = document.createElement('div');
-    div.className = 'row' + (active ? '' : ' inactive');
-    div.innerHTML = `
-      <div class="row-info">
-        <div class="row-title">${task.name}</div>
-        <div class="row-meta">${taskMeta(task)}</div>
-      </div>
-      <div class="row-actions">
-        <button class="icon-btn toggle-task" data-id="${task.id}" data-active="${active}" title="${active ? 'Deactivate' : 'Activate'}">${active ? '●' : '○'}</button>
-        <button class="icon-btn edit-task" data-id="${task.id}" title="Edit">✎</button>
-        <button class="icon-btn danger delete-task" data-id="${task.id}" title="Delete">✕</button>
-      </div>`;
-    recurringEl.appendChild(div);
-  });
 
   once.forEach(task => {
     const div = document.createElement('div');
@@ -523,33 +551,12 @@ async function renderTasks() {
     onceEl.appendChild(div);
   });
 
-  document.querySelectorAll('.toggle-task').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const isActive = btn.dataset.active === 'true';
-      await updateDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id), { active: !isActive });
-      renderTasks();
-    });
-  });
-  document.querySelectorAll('.delete-task').forEach(btn => {
+  onceEl.querySelectorAll('.delete-task').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (await askConfirm({ title: 'Delete this chore?', body: 'This removes the scheduled chore. It does not change chores already checked off.', confirmLabel: 'Delete', danger: true })) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
         renderTasks();
       }
-    });
-  });
-  document.querySelectorAll('.edit-task').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const snap = await getDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
-      if (!snap.exists()) return;
-      const t = snap.data();
-      document.getElementById('task-modal-title').textContent = 'Edit recurring chore';
-      document.getElementById('task-id').value = btn.dataset.id;
-      document.getElementById('task-name').value = t.name || '';
-      document.getElementById('task-frequency').value = t.frequency || 'monthly';
-      document.getElementById('task-anchor').value = t.anchorDate || localToday();
-      fillTaskAssign(t.assigneeUid);
-      taskModal.classList.remove('hidden');
     });
   });
 }
@@ -588,6 +595,7 @@ taskForm.addEventListener('submit', async (e) => {
     await addDoc(collection(db, 'families', userData.familyId, 'tasks'), data);
   }
   taskModal.classList.add('hidden');
+  renderChores();
   renderTasks();
 });
 

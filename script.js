@@ -1133,10 +1133,16 @@ function visibleTask(task, uid) {
   return task.audience === 'bonus' || task.audience === 'child';
 }
 
+let tasksReady = Promise.resolve();
+
 function watchTasks() {
   const uid = auth.currentUser.uid;
   const col = collection(db, 'families', userData.familyId, 'tasks');
   const buckets = { own: [], shared: [], sent: [] };
+  const expected = userData.role === 'parent' ? 3 : 1;
+  let got = 0;
+  let resolveReady;
+  tasksReady = new Promise(resolve => { resolveReady = resolve; });
   const publish = () => {
     const map = new Map();
     [...buckets.own, ...buckets.shared, ...buckets.sent].forEach(task => {
@@ -1146,21 +1152,20 @@ function watchTasks() {
     renderAll();
     updateStats();
   };
-  const unsubs = [
-    onSnapshot(query(col, where('assigneeUid', '==', uid)), (snap) => {
-      buckets.own = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const mark = () => { if (got < expected) { got += 1; if (got === expected) resolveReady(); } };
+  const listen = (q, key) => {
+    let noted = false;
+    const note = () => { if (!noted) { noted = true; mark(); } };
+    return onSnapshot(q, (snap) => {
+      buckets[key] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       publish();
-    })
-  ];
+      note();
+    }, () => note());
+  };
+  const unsubs = [listen(query(col, where('assigneeUid', '==', uid)), 'own')];
   if (userData.role === 'parent') {
-    unsubs.push(onSnapshot(query(col, where('audience', 'in', ['bonus', 'child'])), (snap) => {
-      buckets.shared = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      publish();
-    }));
-    unsubs.push(onSnapshot(query(col, where('ownerUid', '==', uid)), (snap) => {
-      buckets.sent = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      publish();
-    }));
+    unsubs.push(listen(query(col, where('audience', 'in', ['bonus', 'child'])), 'shared'));
+    unsubs.push(listen(query(col, where('ownerUid', '==', uid)), 'sent'));
   }
   return () => unsubs.forEach(unsub => unsub());
 }
@@ -1184,6 +1189,7 @@ async function loadFamily() {
   });
   if (unsubscribeTasks) unsubscribeTasks();
   unsubscribeTasks = watchTasks();
+  await tasksReady;
   renderAll();
   updateStats();
   lookForSnakePass();
@@ -1208,18 +1214,23 @@ onAuthStateChanged(auth, async (user) => {
       if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
+      currentDate = new Date();
+      try { await loadFamily(); } catch (e) {}
       loginScreen.style.display = 'none';
       mainApp.style.display = 'block';
-      currentDate = new Date();
-      await loadFamily();
+      document.body.classList.add('ready');
       if (new URLSearchParams(location.search).get('badges') === '1') {
         openBadgeCase();
         history.replaceState(null, '', 'index.html');
       }
+    } else {
+      loginScreen.style.display = 'flex';
+      document.body.classList.add('ready');
     }
   } else {
     loginScreen.style.display = 'flex';
     mainApp.style.display = 'none';
+    document.body.classList.add('ready');
     if (unsubscribe) unsubscribe();
     if (unsubscribeTasks) unsubscribeTasks();
   }
