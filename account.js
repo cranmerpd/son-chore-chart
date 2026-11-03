@@ -22,13 +22,16 @@ try {
 
 let userData = null;
 
+function normalizeTheme(theme) {
+  return theme === 'block' || theme === 'pink' ? theme : 'mission';
+}
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' ? 'block' : 'mission';
+  document.documentElement.dataset.theme = normalizeTheme(theme);
 }
 
 function markTheme(theme) {
   document.querySelectorAll('.theme-card').forEach(btn => {
-    btn.classList.toggle('selected', btn.dataset.theme === (theme === 'block' ? 'block' : 'mission'));
+    btn.classList.toggle('selected', btn.dataset.theme === normalizeTheme(theme));
   });
 }
 
@@ -76,8 +79,8 @@ document.getElementById('name-form').addEventListener('submit', async (e) => {
 
 document.querySelectorAll('.theme-card').forEach(btn => {
   btn.addEventListener('click', async () => {
-    const theme = btn.dataset.theme === 'block' ? 'block' : 'mission';
-    const previous = userData?.theme === 'block' ? 'block' : 'mission';
+    const theme = normalizeTheme(btn.dataset.theme);
+    const previous = normalizeTheme(userData?.theme);
     applyTheme(theme);
     markTheme(theme);
     const msg = document.getElementById('theme-msg');
