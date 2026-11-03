@@ -1339,6 +1339,122 @@ html[data-theme="journal"] .bottom-nav button.active { color: #c23b3b; }
 html[data-theme="journal"] .theme-card.selected { border-color: #c23b3b; box-shadow: none; }
 html[data-theme="journal"] .tagline { font-family: 'Patrick Hand', 'Outfit', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 0.95rem; }
 
+.swatch.pocket { background: linear-gradient(#f2f2f7 0 72%, #0a64d8 72% 100%); }
+
+html[data-theme="pocket"] {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #e5e5ea;
+  --border: transparent;
+  --text: #1c1c1e;
+  --text-dim: #636366;
+  --accent: #0a64d8;
+  --accent-2: #0a64d8;
+  --success: #128a4e;
+  --warning: #9a6700;
+  --danger: #d70015;
+  --radius: 22px;
+  --shadow: none;
+}
+html[data-theme="pocket"] body { background: #f2f2f7; }
+html[data-theme="pocket"] .app {
+  max-width: 430px;
+  padding: max(14px, env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));
+}
+html[data-theme="pocket"] body:has(.bottom-nav) .header-actions { display: none; }
+html[data-theme="pocket"] .header {
+  border-bottom: none;
+  margin-bottom: 8px;
+  padding-bottom: 0;
+}
+html[data-theme="pocket"] .logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #0a64d8;
+  box-shadow: none;
+}
+html[data-theme="pocket"] .logo h1 { font-size: 1.35rem; letter-spacing: -0.04em; }
+html[data-theme="pocket"] .tagline { letter-spacing: 0; text-transform: none; font-size: 0.8rem; }
+html[data-theme="pocket"] .stat-card,
+html[data-theme="pocket"] .panel,
+html[data-theme="pocket"] .level-panel,
+html[data-theme="pocket"] .week-overview,
+html[data-theme="pocket"] .earnings-panel,
+html[data-theme="pocket"] .day-nav,
+html[data-theme="pocket"] .modal-box,
+html[data-theme="pocket"] .login-card {
+  background: #fff;
+  border: none;
+  border-radius: 22px;
+  box-shadow: none;
+}
+html[data-theme="pocket"] .chore-list { gap: 8px; }
+html[data-theme="pocket"] .chore-item {
+  min-height: 56px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 16px;
+}
+html[data-theme="pocket"] .checkbox { width: 26px; height: 26px; border-radius: 8px; }
+html[data-theme="pocket"] .chore-name { font-size: 1.02rem; }
+html[data-theme="pocket"] .nav-btn { width: 44px; height: 44px; }
+html[data-theme="pocket"] .compact-row { gap: 10px; align-items: stretch; }
+html[data-theme="pocket"] .form-row input,
+html[data-theme="pocket"] .form-row select,
+html[data-theme="pocket"] .account-form input {
+  background: #fff;
+  color: #1c1c1e;
+  border: none;
+  border-radius: 14px;
+  min-height: 48px;
+  padding: 12px 14px;
+}
+html[data-theme="pocket"] .primary-btn,
+html[data-theme="pocket"] .approve-btn,
+html[data-theme="pocket"] .view-switch button.active {
+  background: #0a64d8;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  min-height: 48px;
+}
+html[data-theme="pocket"] .view-switch button,
+html[data-theme="pocket"] .ghost-btn,
+html[data-theme="pocket"] .schedule-btn {
+  border-radius: 14px;
+  min-height: 44px;
+  color: #0a64d8;
+  background: #fff;
+  border: none;
+}
+html[data-theme="pocket"] .day-pill { background: #fff; border-radius: 14px; color: #1c1c1e; }
+html[data-theme="pocket"] .day-pill.today { box-shadow: inset 0 0 0 2px #0a64d8; }
+html[data-theme="pocket"] .xp-fill { background: #0a64d8; }
+html[data-theme="pocket"] .bottom-nav {
+  display: flex;
+  left: 50%;
+  right: auto;
+  width: min(430px, 100%);
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 6px 4px calc(8px + env(safe-area-inset-bottom));
+}
+html[data-theme="pocket"] .bottom-nav a,
+html[data-theme="pocket"] .bottom-nav button {
+  color: #636366;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+  min-height: 48px;
+}
+html[data-theme="pocket"] .bottom-nav a.active,
+html[data-theme="pocket"] .bottom-nav button.active { color: #0a64d8; }
+html[data-theme="pocket"] .theme-card.selected { border-color: #0a64d8; box-shadow: 0 0 0 1px #0a64d8; }
+html[data-theme="pocket"] .version { text-align: center; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
