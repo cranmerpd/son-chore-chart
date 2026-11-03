@@ -245,7 +245,7 @@ function memberName(uid) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' ? theme : 'mission';
+  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' ? theme : 'mission';
 }
 function freqLabel(task) {
   if (task.kind === 'once') {
@@ -1204,6 +1204,10 @@ onAuthStateChanged(auth, async (user) => {
       mainApp.style.display = 'block';
       currentDate = new Date();
       await loadFamily();
+      if (new URLSearchParams(location.search).get('badges') === '1') {
+        openBadgeCase();
+        history.replaceState(null, '', 'index.html');
+      }
     }
   } else {
     loginScreen.style.display = 'flex';

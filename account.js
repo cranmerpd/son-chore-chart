@@ -23,7 +23,7 @@ try {
 let userData = null;
 
 function normalizeTheme(theme) {
-  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' ? theme : 'mission';
+  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' ? theme : 'mission';
 }
 function applyTheme(theme) {
   document.documentElement.dataset.theme = normalizeTheme(theme);
@@ -57,11 +57,14 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('account-tag').textContent = (userData.role === 'child' ? 'Child' : 'Parent') + ' account';
   const familyLink = document.getElementById('family-link');
   if (familyLink) familyLink.style.display = userData.role === 'parent' ? 'flex' : 'none';
+  const mobileSettings = document.getElementById('mobile-settings');
+  if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
   gate.style.display = 'none';
   content.style.display = 'block';
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
+document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
 
 document.getElementById('name-form').addEventListener('submit', async (e) => {
   e.preventDefault();

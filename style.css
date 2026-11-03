@@ -928,21 +928,21 @@ button.nav-pill { font-family: inherit; }
   font-size: 1rem;
 }
 .account-label { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
-.theme-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 14px; }
+.theme-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 8px; margin-top: 12px; }
 .theme-card {
   text-align: left;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 8px;
   color: var(--text);
   font-family: inherit;
   cursor: pointer;
 }
-.theme-card strong { display: block; margin: 10px 0 4px; }
-.theme-card span { display: block; color: var(--text-dim); font-size: 0.75rem; line-height: 1.35; }
+.theme-card strong { display: block; margin: 6px 0 2px; font-size: 0.72rem; line-height: 1.25; }
+.theme-card span { display: block; color: var(--text-dim); font-size: 0.62rem; line-height: 1.3; }
 .theme-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.swatch { height: 48px; border-radius: 8px; border: 1px solid var(--border); }
+.swatch { height: 28px; border-radius: 6px; border: 1px solid var(--border); }
 .swatch.mission { background: linear-gradient(135deg, #0b0f19, #00e5ff); }
 .swatch.block { background: linear-gradient(#5d9c2a 0 42%, #6b4f2a 42% 100%); border-radius: 0; }
 .swatch.pink { background: linear-gradient(160deg, #fff 0 18%, #ff4f9a 18% 62%, #ffd76a 62% 100%); }
@@ -1128,6 +1128,112 @@ html[data-theme="ledger"] .bottom-nav a,
 html[data-theme="ledger"] .bottom-nav button { color: #5d6b7e; }
 html[data-theme="ledger"] .theme-card.selected { border-color: #1e4d8c; box-shadow: 0 0 0 1px #1e4d8c; }
 .swatch.ledger { background: linear-gradient(#f3f5f8 0 55%, #1e4d8c 55% 100%); }
+.swatch.kids { background: linear-gradient(135deg, #ffe14a, #3dfff3 40%, #ff4fa3 75%, #7c5cff); }
+
+html[data-theme="kids"] {
+  --bg: #6d4aff;
+  --surface: #fff7d6;
+  --surface-2: #ffe14a;
+  --border: #1a1033;
+  --text: #1a1033;
+  --text-dim: #4c2d78;
+  --accent: #ff2d95;
+  --accent-2: #7c5cff;
+  --success: #078a3c;
+  --warning: #c45a00;
+  --danger: #d0123a;
+  --radius: 18px;
+  --shadow: 4px 4px 0 #1a1033;
+}
+html[data-theme="kids"] body {
+  background-color: #6d4aff;
+  background-image:
+    radial-gradient(circle, #ffe14a 16px, transparent 17px),
+    radial-gradient(circle, #3dfff3 11px, transparent 12px),
+    radial-gradient(circle, #ff4fa3 13px, transparent 14px);
+  background-size: 150px 150px, 190px 190px, 230px 230px;
+  background-position: 0 0, 46px 78px, 96px 18px;
+}
+html[data-theme="kids"] h1,
+html[data-theme="kids"] .section-title,
+html[data-theme="kids"] .panel h2,
+html[data-theme="kids"] .modal-box h3,
+html[data-theme="kids"] .level-title,
+html[data-theme="kids"] .theme-card strong {
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #d01278;
+}
+html[data-theme="kids"] h1 { font-size: 1.6rem; }
+html[data-theme="kids"] .header,
+html[data-theme="kids"] .stat-card,
+html[data-theme="kids"] .panel,
+html[data-theme="kids"] .chore-item,
+html[data-theme="kids"] .level-panel,
+html[data-theme="kids"] .week-overview,
+html[data-theme="kids"] .day-nav,
+html[data-theme="kids"] .earnings-panel,
+html[data-theme="kids"] .modal-box,
+html[data-theme="kids"] .login-card,
+html[data-theme="kids"] .nav-pill,
+html[data-theme="kids"] .theme-card {
+  background: #fff7d6;
+  border: 3px solid #1a1033;
+  border-radius: 18px;
+  box-shadow: 4px 4px 0 #1a1033;
+}
+html[data-theme="kids"] .header { padding: 12px 14px; }
+html[data-theme="kids"] .panel { padding: 16px; }
+html[data-theme="kids"] .chore-item { padding: 14px; }
+html[data-theme="kids"] .logo-icon {
+  background: linear-gradient(135deg, #ffe14a, #3dfff3 40%, #ff4fa3);
+  border-radius: 12px;
+  box-shadow: none;
+}
+html[data-theme="kids"] .form-row input,
+html[data-theme="kids"] .form-row select,
+html[data-theme="kids"] .account-form input {
+  background: #fff;
+  color: #1a1033;
+  border: 3px solid #1a1033;
+  border-radius: 14px;
+  padding: 12px;
+}
+html[data-theme="kids"] .primary-btn,
+html[data-theme="kids"] .approve-btn,
+html[data-theme="kids"] .view-switch button.active {
+  background: #ff2d95;
+  color: #fff;
+  border: 3px solid #1a1033;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 #1a1033;
+  font-weight: 700;
+}
+html[data-theme="kids"] .ghost-btn,
+html[data-theme="kids"] .schedule-btn,
+html[data-theme="kids"] .nav-pill,
+html[data-theme="kids"] .view-switch button {
+  color: #1a1033;
+  background: #ffe14a;
+  border: 3px solid #1a1033;
+  border-radius: 14px;
+}
+html[data-theme="kids"] .day-pill { background: #fff; color: #1a1033; border-radius: 14px; border: 2px solid #1a1033; }
+html[data-theme="kids"] .day-pill.today { background: #3dfff3; }
+html[data-theme="kids"] .xp-fill { background: #ff2d95; }
+html[data-theme="kids"] .bottom-nav { background: #ffe14a; border-top: 3px solid #1a1033; }
+html[data-theme="kids"] .bottom-nav a,
+html[data-theme="kids"] .bottom-nav button { color: #1a1033; }
+html[data-theme="kids"] .bottom-nav a.active,
+html[data-theme="kids"] .bottom-nav button.active { color: #d01278; }
+html[data-theme="kids"] .version,
+html[data-theme="kids"] .net-status { color: #fff; }
+html[data-theme="kids"] .theme-card.selected { border-color: #ff2d95; box-shadow: 4px 4px 0 #ff2d95; }
+
+@media (max-width: 640px) {
+  .account-page .header-actions { display: none; }
+}
 
 html[data-theme="block"] {
   --bg: #5c4124;
