@@ -300,9 +300,7 @@ async function loadMembers() {
     const q = query(collection(db, 'users'), where('familyId', '==', userData.familyId));
     const snap = await getDocs(q);
     snap.forEach(d => familyMembers.push({ uid: d.id, ...d.data() }));
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) {}
 }
 
 function getChoresForDate(date) {
@@ -1157,6 +1155,7 @@ function watchTasks() {
     let noted = false;
     const note = () => { if (!noted) { noted = true; mark(); } };
     return onSnapshot(q, (snap) => {
+      if (snap.metadata.fromCache && !snap.metadata.hasPendingWrites) return;
       buckets[key] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       publish();
       note();
@@ -1170,16 +1169,42 @@ function watchTasks() {
   return () => unsubs.forEach(unsub => unsub());
 }
 
+async function loadTasksOnce() {
+  if (!userData.familyId || !auth.currentUser) return;
+  const uid = auth.currentUser.uid;
+  const col = collection(db, 'families', userData.familyId, 'tasks');
+  const jobs = [getDocs(query(col, where('assigneeUid', '==', uid)))];
+  if (userData.role === 'parent') {
+    jobs.push(getDocs(query(col, where('audience', 'in', ['bonus', 'child']))));
+    jobs.push(getDocs(query(col, where('ownerUid', '==', uid))));
+  }
+  const snaps = await Promise.all(jobs);
+  const map = new Map();
+  snaps.forEach(snap => snap.forEach(d => {
+    const task = { id: d.id, ...d.data() };
+    if (visibleTask(task, uid)) map.set(task.id, task);
+  }));
+  tasks = [...map.values()];
+}
+
+function dismissBoot() {
+  const boot = document.getElementById('boot');
+  if (!boot || boot.classList.contains('boot-out')) return;
+  boot.classList.add('boot-out');
+  setTimeout(() => boot.remove(), 320);
+}
+
 async function loadFamily() {
   if (!userData.familyId) { renderAll(); updateStats(); return; }
   const ref = doc(db, 'families', userData.familyId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
-  await loadChores();
-  await loadBadges();
-  await loadMembers();
+  const [fam] = await Promise.all([getDoc(ref), loadChores(), loadBadges(), loadMembers(), loadTasksOnce()]);
+  if (fam.exists()) familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...fam.data() };
+  renderAll();
+  updateStats();
+  lookForSnakePass();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
+    if (docSnap.metadata.fromCache && !docSnap.metadata.hasPendingWrites) return;
     if (docSnap.exists()) {
       familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
       renderAll();
@@ -1189,10 +1214,6 @@ async function loadFamily() {
   });
   if (unsubscribeTasks) unsubscribeTasks();
   unsubscribeTasks = watchTasks();
-  await tasksReady;
-  renderAll();
-  updateStats();
-  lookForSnakePass();
 }
 
 let seenAuth = null;
@@ -1219,6 +1240,7 @@ onAuthStateChanged(auth, async (user) => {
       loginScreen.style.display = 'none';
       mainApp.style.display = 'block';
       document.body.classList.add('ready');
+      dismissBoot();
       if (new URLSearchParams(location.search).get('badges') === '1') {
         openBadgeCase();
         history.replaceState(null, '', 'index.html');
@@ -1226,11 +1248,13 @@ onAuthStateChanged(auth, async (user) => {
     } else {
       loginScreen.style.display = 'flex';
       document.body.classList.add('ready');
+      dismissBoot();
     }
   } else {
     loginScreen.style.display = 'flex';
     mainApp.style.display = 'none';
     document.body.classList.add('ready');
+    dismissBoot();
     if (unsubscribe) unsubscribe();
     if (unsubscribeTasks) unsubscribeTasks();
   }

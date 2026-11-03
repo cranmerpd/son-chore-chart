@@ -65,6 +65,13 @@ let familyMembers = [];
 
 document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
 
+function dismissBoot() {
+  const boot = document.getElementById('boot');
+  if (!boot || boot.classList.contains('boot-out')) return;
+  boot.classList.add('boot-out');
+  setTimeout(() => boot.remove(), 320);
+}
+
 let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
   await auth.authStateReady();
@@ -76,6 +83,7 @@ onAuthStateChanged(auth, async (user) => {
     loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
     document.body.classList.add('ready');
+    dismissBoot();
     return;
   }
   const snap = await getDoc(doc(db, 'users', user.uid));
@@ -83,6 +91,7 @@ onAuthStateChanged(auth, async (user) => {
     loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
     document.body.classList.add('ready');
+    dismissBoot();
     return;
   }
   userData = snap.data();
@@ -94,6 +103,7 @@ onAuthStateChanged(auth, async (user) => {
   loginRequired.style.display = 'none';
   settingsContent.style.display = 'block';
   document.body.classList.add('ready');
+  dismissBoot();
 });
 
 async function loadMembers() {
