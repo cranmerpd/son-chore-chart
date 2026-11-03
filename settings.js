@@ -380,13 +380,15 @@ async function renderTasks() {
   const col = collection(db, 'families', userData.familyId, 'tasks');
   const ownSnap = await getDocs(query(col, where('assigneeUid', '==', auth.currentUser.uid)));
   const sharedSnap = await getDocs(query(col, where('audience', 'in', ['bonus', 'child'])));
+  const sentSnap = await getDocs(query(col, where('ownerUid', '==', auth.currentUser.uid)));
   const seen = new Map();
   ownSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
   sharedSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
+  sentSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
   const recurring = [];
   const once = [];
   seen.forEach(data => {
-    if (data.audience === 'honey' && data.assigneeUid !== auth.currentUser.uid) return;
+    if (data.audience === 'honey' && data.assigneeUid !== auth.currentUser.uid && data.ownerUid !== auth.currentUser.uid) return;
     if (data.audience === 'mine' && data.assigneeUid !== auth.currentUser.uid) return;
     if (data.kind === 'once') once.push(data);
     else if (data.ownerUid === auth.currentUser.uid || data.audience === 'child') recurring.push(data);

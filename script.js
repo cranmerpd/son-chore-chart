@@ -593,6 +593,7 @@ function renderSpecialTasks() {
   const bonus = due.filter(t => t.audience === 'bonus' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
   const childExtra = due.filter(t => t.audience === 'child' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
   const mine = due.filter(t => t.assigneeUid === myUid && (t.audience === 'mine' || t.audience === 'honey'));
+  const sent = due.filter(t => t.audience === 'honey' && t.ownerUid === myUid && t.assigneeUid !== myUid);
 
   const bonusSection = document.getElementById('bonus-section');
   const extraSection = document.getElementById('child-scheduled-section');
@@ -609,6 +610,12 @@ function renderSpecialTasks() {
 
   const mineList = document.getElementById('mine-list');
   if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due this day.');
+  const sentSection = document.getElementById('sent-section');
+  const sentList = document.getElementById('sent-list');
+  if (sentSection && sentList) {
+    sentSection.style.display = sent.length ? '' : 'none';
+    fillTaskList(sentList, sent.map(t => renderTaskRow(t, dateKey, 'readonly')), '');
+  }
 }
 
 function applyView() {
@@ -716,7 +723,7 @@ function syncScheduleFields() {
   amountWrap.style.display = kind === 'bonus' ? '' : 'none';
   if (kind === 'honey' && !options.length) help.textContent = 'Add another parent in Settings before sending a honey-do.';
   else if (kind === 'bonus' && !options.length) help.textContent = 'Add a child in Settings before scheduling a bonus chore.';
-  else if (kind === 'honey') help.textContent = 'Only the parent you assign will see this. It will not show on your list.';
+  else if (kind === 'honey') help.textContent = 'Only you and the parent you assign will see this. It does not show on the family chart.';
   else if (kind === 'bonus') help.textContent = 'Paid on top of allowance after a parent approves it. It does not change the weekly allowance.';
   else help.textContent = 'This lands on your list for this day only.';
   document.getElementById('schedule-submit').disabled = kind !== 'once-self' && !options.length;
@@ -789,7 +796,8 @@ document.querySelectorAll('#view-switch button').forEach(btn => {
 });
 
 function visibleTask(task, uid) {
-  if (!task || task.audience === 'honey') return task?.assigneeUid === uid;
+  if (!task) return false;
+  if (task.audience === 'honey') return task.assigneeUid === uid || task.ownerUid === uid;
   if (task.audience === 'mine') return task.assigneeUid === uid;
   return task.audience === 'bonus' || task.audience === 'child';
 }
@@ -797,10 +805,10 @@ function visibleTask(task, uid) {
 function watchTasks() {
   const uid = auth.currentUser.uid;
   const col = collection(db, 'families', userData.familyId, 'tasks');
-  const buckets = { own: [], shared: [] };
+  const buckets = { own: [], shared: [], sent: [] };
   const publish = () => {
     const map = new Map();
-    [...buckets.own, ...buckets.shared].forEach(task => {
+    [...buckets.own, ...buckets.shared, ...buckets.sent].forEach(task => {
       if (visibleTask(task, uid)) map.set(task.id, task);
     });
     tasks = [...map.values()];
@@ -816,6 +824,10 @@ function watchTasks() {
   if (userData.role === 'parent') {
     unsubs.push(onSnapshot(query(col, where('audience', 'in', ['bonus', 'child'])), (snap) => {
       buckets.shared = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      publish();
+    }));
+    unsubs.push(onSnapshot(query(col, where('ownerUid', '==', uid)), (snap) => {
+      buckets.sent = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       publish();
     }));
   }
