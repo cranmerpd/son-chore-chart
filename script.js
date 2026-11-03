@@ -506,6 +506,7 @@ function renderList(containerId, list, isWeekly = false) {
         renderAll();
         updateStats();
         checkBadges();
+        maybeAwardSnake(dateKey);
         return;
       }
 
@@ -516,8 +517,9 @@ function renderList(containerId, list, isWeekly = false) {
         entry.checkedBy = auth.currentUser.uid;
       } else {
         entry.checked = !entry.checked;
-        if (!entry.checked) entry.verified = false;
+        entry.verified = !!entry.checked;
         entry.checkedBy = auth.currentUser.uid;
+        if (entry.verified) awardXP(XP_PER_CHORE);
       }
 
       if (isWeekly) {
@@ -531,6 +533,7 @@ function renderList(containerId, list, isWeekly = false) {
       saveFamily();
       renderAll();
       updateStats();
+      if (entry.verified && !isWeekly) maybeAwardSnake(dateKey);
     });
     container.appendChild(item);
   });
@@ -586,6 +589,7 @@ function renderTaskRow(task, dateKey, mode) {
       writeTaskEntry(task, dateKey, current);
       renderAll();
       updateStats();
+      if (current.verified) maybeAwardSnake(dateKey);
       return;
     }
     if (mode === 'self') {
@@ -601,9 +605,10 @@ function renderTaskRow(task, dateKey, mode) {
       writeTaskEntry(task, dateKey, current);
     } else {
       current.checked = !current.checked;
-      if (!current.checked) current.verified = false;
+      current.verified = !!current.checked;
       current.checkedBy = auth.currentUser.uid;
       writeTaskEntry(task, dateKey, current);
+      if (current.verified && (task.audience === 'bonus' || task.audience === 'child')) maybeAwardSnake(dateKey);
     }
     renderAll();
     updateStats();
@@ -1167,12 +1172,14 @@ async function loadFamily() {
       familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
       renderAll();
       updateStats();
+      lookForSnakePass();
     }
   });
   if (unsubscribeTasks) unsubscribeTasks();
   unsubscribeTasks = watchTasks();
   renderAll();
   updateStats();
+  lookForSnakePass();
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -1344,3 +1351,377 @@ setupInstall();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
+
+const SNAKE_MS = 24 * 60 * 60 * 1000;
+const SNAKE_BADGES = [
+  { id: 'power-on', name: 'Power On', desc: 'Play Cranmerboy', test: s => s.games >= 1 },
+  { id: 'double', name: 'Double Digits', desc: 'Score 10 in one game', test: s => s.best >= 10 },
+  { id: 'trail', name: 'Trail', desc: 'Score 25 in one game', test: s => s.best >= 25 },
+  { id: 'long-boy', name: 'Long Boy', desc: 'Score 50 in one game', test: s => s.best >= 50 },
+  { id: 'century', name: 'Century', desc: 'Score 100 in one game', test: s => s.best >= 100 },
+  { id: 'regular', name: 'Regular', desc: 'Finish 10 games', test: s => s.games >= 10 },
+  { id: 'week', name: 'Week of Games', desc: 'Play on 7 different days', test: s => (s.days || []).length >= 7 },
+  { id: 'bushel', name: 'Bushel', desc: 'Eat 100 apples', test: s => s.apples >= 100 }
+];
+
+let snakeOfferOpen = false;
+let snakeInviteDismissed = false;
+let gbOpen = false;
+let gbLoop = 0;
+let gbMode = 'title';
+let gbChildUid = null;
+let gbSnake = [];
+let gbDir = { x: 1, y: 0 };
+let gbNext = { x: 1, y: 0 };
+let gbFood = { x: 10, y: 8 };
+let gbScore = 0;
+let gbAcc = 0;
+let gbLast = 0;
+let gbRan = false;
+const GB_COLS = 20;
+const GB_ROWS = 18;
+
+function snakeRoot() {
+  if (!familyData.snake) familyData.snake = { awards: {}, stats: {} };
+  if (!familyData.snake.awards) familyData.snake.awards = {};
+  if (!familyData.snake.stats) familyData.snake.stats = {};
+  return familyData.snake;
+}
+
+function snakeStats(uid) {
+  const root = snakeRoot();
+  if (!root.stats[uid]) root.stats[uid] = { best: 0, games: 0, apples: 0, days: [], unlocked: [] };
+  return root.stats[uid];
+}
+
+function choresDueForChild(date, uid) {
+  const dow = date.getDay();
+  return choresList.filter(c => {
+    if (c.active === false) return false;
+    if (c.assignedTo && c.assignedTo !== 'all' && c.assignedTo !== uid) return false;
+    if (c.section === 'weekly' || c.frequency === 'weekly') return false;
+    if (c.frequency === 'daily') return true;
+    if (c.frequency === 'weekdays' && dow >= 1 && dow <= 5) return true;
+    if (c.frequency === 'specific' && (c.days || []).includes(dow)) return true;
+    return false;
+  });
+}
+
+function childDayComplete(uid, date) {
+  const key = getDateKey(date);
+  const day = (familyData.days || {})[key] || {};
+  const chores = choresDueForChild(date, uid);
+  const extras = tasks.filter(t => t.active !== false && (t.audience === 'bonus' || t.audience === 'child') && t.assigneeUid === uid && occursOn(t, date));
+  if (!chores.length && !extras.length) return false;
+  if (!chores.every(c => isVerified(day[c.id]))) return false;
+  return extras.every(t => isVerified(taskEntry(t, key)));
+}
+
+function maybeAwardSnake(dateKey) {
+  const date = parseLocalDate(dateKey);
+  if (!date || !familyMembers.length) return;
+  familyMembers.filter(m => m.role === 'child').forEach(kid => {
+    if (!childDayComplete(kid.uid, date)) return;
+    const root = snakeRoot();
+    if (!root.awards[kid.uid]) root.awards[kid.uid] = {};
+    if (root.awards[kid.uid][dateKey]) return;
+    const earnedAt = Date.now();
+    root.awards[kid.uid][dateKey] = { earnedAt, expiresAt: earnedAt + SNAKE_MS, status: 'pending' };
+    saveFamily();
+    if (userData.role === 'child' && auth.currentUser?.uid === kid.uid) {
+      root.awards[kid.uid][dateKey].status = 'played';
+      saveFamily();
+      openCranmerboy(kid.uid);
+    } else if (isParentUser()) {
+      const when = dateKey === getDateKey(new Date()) ? "today's chores" : 'the chores for ' + date.toLocaleDateString('en-US', { weekday: 'long' });
+      showSnakeOffer({
+        title: 'Chores are done',
+        body: kid.username + ' finished ' + when + '. Hand over the phone, or save Cranmerboy. It stays available for 24 hours.',
+        primary: 'Play now',
+        secondary: 'Save for ' + kid.username,
+        onPrimary: () => {
+          const rec = familyData.snake.awards[kid.uid][dateKey];
+          rec.status = 'played';
+          saveFamily();
+          openCranmerboy(kid.uid);
+        },
+        onSecondary: () => {
+          familyData.snake.awards[kid.uid][dateKey].status = 'saved';
+          saveFamily();
+        }
+      });
+    }
+  });
+}
+
+function openSnakePass(uid) {
+  const awards = (familyData.snake && familyData.snake.awards && familyData.snake.awards[uid]) || {};
+  const now = Date.now();
+  const hit = Object.entries(awards).find(([, rec]) => rec && rec.status !== 'played' && rec.expiresAt > now);
+  return hit ? { dateKey: hit[0], rec: hit[1] } : null;
+}
+
+function lookForSnakePass() {
+  if (!auth.currentUser || gbOpen || snakeOfferOpen) return;
+  if (userData.role === 'child') {
+    if (snakeInviteDismissed) return;
+    const pass = openSnakePass(auth.currentUser.uid);
+    if (!pass) return;
+    const until = new Date(pass.rec.expiresAt).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    showSnakeOffer({
+      title: 'Cranmerboy is charged',
+      body: 'Your chores earned a game. It stays available until ' + until + '.',
+      primary: 'Play',
+      secondary: 'Later',
+      onPrimary: () => {
+        pass.rec.status = 'played';
+        saveFamily();
+        openCranmerboy(auth.currentUser.uid);
+      },
+      onSecondary: () => { snakeInviteDismissed = true; }
+    });
+    return;
+  }
+  if (!isParentUser()) return;
+  const kid = familyMembers.find(m => m.role === 'child' && openSnakePass(m.uid) && openSnakePass(m.uid).rec.status === 'pending');
+  if (!kid) return;
+  const pass = openSnakePass(kid.uid);
+  showSnakeOffer({
+    title: 'Chores are done',
+    body: kid.username + ' has a Cranmerboy game waiting. Hand over the phone, or leave it saved for 24 hours.',
+    primary: 'Play now',
+    secondary: 'Save for ' + kid.username,
+    onPrimary: () => { pass.rec.status = 'played'; saveFamily(); openCranmerboy(kid.uid); },
+    onSecondary: () => { pass.rec.status = 'saved'; saveFamily(); }
+  });
+}
+
+function showSnakeOffer(opts) {
+  const modal = document.getElementById('snake-offer');
+  if (!modal) return;
+  snakeOfferOpen = true;
+  document.getElementById('snake-offer-title').textContent = opts.title;
+  document.getElementById('snake-offer-body').textContent = opts.body;
+  const primary = document.getElementById('snake-primary');
+  const secondary = document.getElementById('snake-secondary');
+  primary.textContent = opts.primary;
+  secondary.textContent = opts.secondary;
+  const close = (fn) => {
+    modal.classList.add('hidden');
+    snakeOfferOpen = false;
+    primary.onclick = null;
+    secondary.onclick = null;
+    modal.onclick = null;
+    if (fn) fn();
+  };
+  primary.onclick = () => close(opts.onPrimary);
+  secondary.onclick = () => close(opts.onSecondary);
+  modal.onclick = (e) => { if (e.target === modal) close(opts.onSecondary); };
+  modal.classList.remove('hidden');
+}
+
+function gbPlaceFood() {
+  const open = [];
+  for (let y = 0; y < GB_ROWS; y++) {
+    for (let x = 0; x < GB_COLS; x++) {
+      if (!gbSnake.some(p => p.x === x && p.y === y)) open.push({ x, y });
+    }
+  }
+  gbFood = open[Math.floor(Math.random() * open.length)] || { x: 1, y: 1 };
+}
+
+function gbReset() {
+  gbSnake = [{ x: 6, y: 9 }, { x: 5, y: 9 }, { x: 4, y: 9 }];
+  gbDir = { x: 1, y: 0 };
+  gbNext = { x: 1, y: 0 };
+  gbScore = 0;
+  gbAcc = 0;
+  gbPlaceFood();
+  const scoreEl = document.getElementById('gb-score');
+  if (scoreEl) scoreEl.textContent = '0';
+}
+
+function gbTurn(dir) {
+  const map = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+  const next = map[dir];
+  if (!next) return;
+  if (next.x === -gbDir.x && next.y === -gbDir.y) return;
+  gbNext = next;
+  if (gbMode === 'title') gbStart();
+}
+
+function gbStart() {
+  gbReset();
+  gbMode = 'play';
+  gbRan = false;
+}
+
+function gbFinish() {
+  if (gbRan) return;
+  gbRan = true;
+  const stats = snakeStats(gbChildUid);
+  stats.games += 1;
+  stats.apples += gbScore;
+  stats.best = Math.max(stats.best || 0, gbScore);
+  const today = getDateKey(new Date());
+  if (!(stats.days || []).includes(today)) stats.days.push(today);
+  const had = new Set(stats.unlocked || []);
+  stats.unlocked = SNAKE_BADGES.filter(b => b.test(stats)).map(b => b.id);
+  saveFamily();
+  const fresh = SNAKE_BADGES.find(b => stats.unlocked.includes(b.id) && !had.has(b.id));
+  gbFresh = fresh ? fresh.name : '';
+  const bestEl = document.getElementById('gb-best');
+  if (bestEl) bestEl.textContent = String(stats.best || 0);
+}
+
+let gbFresh = '';
+
+function gbStep() {
+  gbDir = gbNext;
+  const head = { x: gbSnake[0].x + gbDir.x, y: gbSnake[0].y + gbDir.y };
+  if (head.x < 0 || head.y < 0 || head.x >= GB_COLS || head.y >= GB_ROWS || gbSnake.some(p => p.x === head.x && p.y === head.y)) {
+    gbMode = 'over';
+    gbFinish();
+    return;
+  }
+  gbSnake.unshift(head);
+  if (head.x === gbFood.x && head.y === gbFood.y) {
+    gbScore += 1;
+    document.getElementById('gb-score').textContent = String(gbScore);
+    gbPlaceFood();
+  } else gbSnake.pop();
+}
+
+function gbDraw() {
+  const canvas = document.getElementById('gb-screen');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#9bbc0f';
+  ctx.fillRect(0, 0, 160, 144);
+  ctx.fillStyle = '#0f380f';
+  ctx.font = '8px monospace';
+  if (gbMode === 'title') {
+    ctx.fillText('CRANMERBOY', 36, 48);
+    ctx.fillText('PRESS START', 36, 78);
+    ctx.fillText('SELECT  BADGES', 28, 96);
+    return;
+  }
+  if (gbMode === 'awards') {
+    const stats = snakeStats(gbChildUid);
+    ctx.fillText('BADGES', 60, 14);
+    SNAKE_BADGES.forEach((badge, i) => {
+      const on = (stats.unlocked || []).includes(badge.id);
+      ctx.globalAlpha = on ? 1 : 0.45;
+      ctx.fillText((on ? '* ' : '  ') + badge.name.toUpperCase(), 8, 30 + i * 13);
+      ctx.globalAlpha = 1;
+    });
+    return;
+  }
+  gbSnake.forEach((p, i) => {
+    ctx.fillStyle = i === 0 ? '#0f380f' : '#306230';
+    ctx.fillRect(p.x * 8, p.y * 8, 7, 7);
+  });
+  ctx.fillStyle = '#0f380f';
+  ctx.fillRect(gbFood.x * 8, gbFood.y * 8, 7, 7);
+  if (gbMode === 'pause') {
+    ctx.fillStyle = '#9bbc0f';
+    ctx.fillRect(40, 60, 80, 20);
+    ctx.fillStyle = '#0f380f';
+    ctx.fillText('PAUSED', 60, 74);
+  }
+  if (gbMode === 'over') {
+    ctx.fillStyle = '#9bbc0f';
+    ctx.fillRect(28, 48, 104, 48);
+    ctx.fillStyle = '#0f380f';
+    ctx.fillText('GAME OVER', 48, 64);
+    ctx.fillText('START RETRIES', 36, 80);
+    if (gbFresh) ctx.fillText(gbFresh.toUpperCase().slice(0, 16), 32, 92);
+  }
+}
+
+function gbFrame(t) {
+  if (!gbOpen) return;
+  if (!gbLast) gbLast = t;
+  const delta = t - gbLast;
+  gbLast = t;
+  if (gbMode === 'play') {
+    gbAcc += delta;
+    const speed = Math.max(70, 180 - gbScore * 4);
+    while (gbAcc >= speed) {
+      gbAcc -= speed;
+      gbStep();
+    }
+  }
+  gbDraw();
+  gbLoop = requestAnimationFrame(gbFrame);
+}
+
+function openCranmerboy(uid) {
+  gbChildUid = uid;
+  gbOpen = true;
+  gbMode = 'title';
+  gbFresh = '';
+  gbLast = 0;
+  const best = (snakeStats(uid).best) || 0;
+  document.getElementById('gb-best').textContent = String(best);
+  document.getElementById('gb-score').textContent = '0';
+  document.getElementById('cranmerboy').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  gbDraw();
+  cancelAnimationFrame(gbLoop);
+  gbLoop = requestAnimationFrame(gbFrame);
+}
+
+function closeCranmerboy() {
+  gbOpen = false;
+  gbMode = 'title';
+  cancelAnimationFrame(gbLoop);
+  const el = document.getElementById('cranmerboy');
+  if (el) el.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('gb-close')?.addEventListener('click', closeCranmerboy);
+document.getElementById('gb-start')?.addEventListener('click', () => {
+  if (!gbOpen) return;
+  if (gbMode === 'play') gbMode = 'pause';
+  else if (gbMode === 'pause') gbMode = 'play';
+  else gbStart();
+});
+document.getElementById('gb-select')?.addEventListener('click', () => {
+  if (!gbOpen) return;
+  gbMode = gbMode === 'awards' ? (gbSnake.length ? 'pause' : 'title') : 'awards';
+});
+document.getElementById('gb-a')?.addEventListener('click', () => { if (gbMode !== 'play') gbStart(); });
+document.getElementById('gb-b')?.addEventListener('click', () => { if (gbMode === 'play') gbMode = 'pause'; });
+document.querySelectorAll('.gb-dpad button').forEach(btn => {
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    gbTurn(btn.dataset.dir);
+  });
+});
+
+let gbTouch = null;
+document.getElementById('gb-screen')?.addEventListener('pointerdown', (e) => { gbTouch = { x: e.clientX, y: e.clientY }; });
+document.getElementById('gb-screen')?.addEventListener('pointerup', (e) => {
+  if (!gbTouch) return;
+  const dx = e.clientX - gbTouch.x;
+  const dy = e.clientY - gbTouch.y;
+  gbTouch = null;
+  if (Math.abs(dx) < 16 && Math.abs(dy) < 16) {
+    if (gbMode !== 'play') gbStart();
+    return;
+  }
+  gbTurn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+});
+window.addEventListener('keydown', (e) => {
+  if (!gbOpen) return;
+  const keys = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', a: 'left', s: 'down', d: 'right' };
+  if (keys[e.key]) {
+    e.preventDefault();
+    gbTurn(keys[e.key]);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('gb-start')?.click();
+  } else if (e.key === 'Escape') closeCranmerboy();
+});
