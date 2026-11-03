@@ -1455,6 +1455,94 @@ html[data-theme="pocket"] .bottom-nav button.active { color: #0a64d8; }
 html[data-theme="pocket"] .theme-card.selected { border-color: #0a64d8; box-shadow: 0 0 0 1px #0a64d8; }
 html[data-theme="pocket"] .version { text-align: center; }
 
+.swatch.skol { background: linear-gradient(#4f2683 0 62%, #ffc62f 62% 100%); }
+
+html[data-theme="skol"] {
+  --bg: #3b1d6e;
+  --surface: #ffffff;
+  --surface-2: #f3eef8;
+  --border: #4f2683;
+  --text: #2a1248;
+  --text-dim: #5a4574;
+  --accent: #ffc62f;
+  --accent-2: #4f2683;
+  --success: #0e7a4b;
+  --warning: #8a5a00;
+  --danger: #b42318;
+  --radius: 12px;
+  --shadow: none;
+}
+html[data-theme="skol"] body { background: #3b1d6e; }
+html[data-theme="skol"] .header {
+  border-bottom: 3px solid #ffc62f;
+  padding-bottom: 14px;
+}
+html[data-theme="skol"] h1,
+html[data-theme="skol"] .tagline { color: #fff; }
+html[data-theme="skol"] .tagline { letter-spacing: 0.14em; }
+html[data-theme="skol"] .logo-icon {
+  background: #ffc62f;
+  color: #3b1d6e;
+  border-radius: 8px;
+  box-shadow: none;
+}
+html[data-theme="skol"] .stat-card,
+html[data-theme="skol"] .panel,
+html[data-theme="skol"] .chore-item,
+html[data-theme="skol"] .level-panel,
+html[data-theme="skol"] .week-overview,
+html[data-theme="skol"] .day-nav,
+html[data-theme="skol"] .earnings-panel,
+html[data-theme="skol"] .modal-box,
+html[data-theme="skol"] .login-card,
+html[data-theme="skol"] .nav-pill,
+html[data-theme="skol"] .theme-card {
+  background: #fff;
+  border: 2px solid #4f2683;
+  box-shadow: none;
+  color: #2a1248;
+}
+html[data-theme="skol"] .panel { padding: 16px; }
+html[data-theme="skol"] .section-title { color: #ffc62f; }
+html[data-theme="skol"] .panel h2,
+html[data-theme="skol"] .level-title { color: #4f2683; }
+html[data-theme="skol"] .form-row input,
+html[data-theme="skol"] .form-row select,
+html[data-theme="skol"] .account-form input {
+  background: #fff;
+  color: #2a1248;
+  border: 2px solid #4f2683;
+  border-radius: 8px;
+  padding: 12px;
+}
+html[data-theme="skol"] .primary-btn,
+html[data-theme="skol"] .approve-btn,
+html[data-theme="skol"] .view-switch button.active {
+  background: #ffc62f;
+  color: #2a1248;
+  border: none;
+  font-weight: 700;
+}
+html[data-theme="skol"] .ghost-btn,
+html[data-theme="skol"] .schedule-btn,
+html[data-theme="skol"] .nav-pill,
+html[data-theme="skol"] .view-switch button { color: #2a1248; }
+html[data-theme="skol"] .day-pill { background: #f3eef8; color: #2a1248; }
+html[data-theme="skol"] .day-pill.today { border-color: #ffc62f; box-shadow: inset 0 0 0 2px #ffc62f; }
+html[data-theme="skol"] .xp-fill { background: #4f2683; }
+html[data-theme="skol"] .stat-card .value,
+html[data-theme="skol"] .link-btn { color: #4f2683; }
+html[data-theme="skol"] .bottom-nav { background: #2a1248; border-top: 3px solid #ffc62f; }
+html[data-theme="skol"] .bottom-nav a,
+html[data-theme="skol"] .bottom-nav button { color: #e6d7f5; }
+html[data-theme="skol"] .bottom-nav a.active,
+html[data-theme="skol"] .bottom-nav button.active { color: #ffc62f; }
+html[data-theme="skol"] .version,
+html[data-theme="skol"] .net-status { color: #f3eef8; }
+html[data-theme="skol"] .theme-card.selected { border-color: #ffc62f; box-shadow: 0 0 0 2px #ffc62f; }
+html[data-theme="skol"] .theme-card strong,
+html[data-theme="skol"] .theme-card span { color: #2a1248; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
