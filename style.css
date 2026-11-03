@@ -1034,6 +1034,101 @@ html[data-theme="rocky"] .bottom-nav a.active,
 html[data-theme="rocky"] .bottom-nav button.active { color: #ff8200; }
 html[data-theme="rocky"] .theme-card.selected { border-color: #ff8200; box-shadow: 0 0 0 1px #ff8200; }
 
+html[data-theme="ledger"] {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #eef2f6;
+  --border: #e1e6ee;
+  --text: #172033;
+  --text-dim: #5d6b7e;
+  --accent: #1e4d8c;
+  --accent-2: #163a6b;
+  --success: #0e7a4b;
+  --warning: #9a6700;
+  --danger: #b42318;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(23, 32, 51, 0.05), 0 8px 24px rgba(23, 32, 51, 0.04);
+}
+html[data-theme="ledger"] body {
+  background: #f3f5f8;
+  font-feature-settings: "tnum" 1;
+}
+html[data-theme="ledger"] h1,
+html[data-theme="ledger"] .section-title,
+html[data-theme="ledger"] .panel h2,
+html[data-theme="ledger"] .modal-box h3,
+html[data-theme="ledger"] .level-title {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  color: #172033;
+}
+html[data-theme="ledger"] .section-title { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: #5d6b7e; }
+html[data-theme="ledger"] .header { border-bottom: 1px solid #e1e6ee; padding-bottom: 16px; margin-bottom: 20px; }
+html[data-theme="ledger"] .logo-icon {
+  background: #1e4d8c;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: none;
+}
+html[data-theme="ledger"] .tagline { letter-spacing: 0.08em; }
+html[data-theme="ledger"] .stat-card,
+html[data-theme="ledger"] .panel,
+html[data-theme="ledger"] .chore-item,
+html[data-theme="ledger"] .level-panel,
+html[data-theme="ledger"] .week-overview,
+html[data-theme="ledger"] .day-nav,
+html[data-theme="ledger"] .earnings-panel,
+html[data-theme="ledger"] .modal-box,
+html[data-theme="ledger"] .login-card,
+html[data-theme="ledger"] .nav-pill,
+html[data-theme="ledger"] .theme-card {
+  background: #fff;
+  border: 1px solid #e1e6ee;
+  box-shadow: var(--shadow);
+}
+html[data-theme="ledger"] .panel { padding: 20px; }
+html[data-theme="ledger"] .stat-card { padding: 14px 12px; }
+html[data-theme="ledger"] .stat-card .label { color: #5d6b7e; }
+html[data-theme="ledger"] .stat-card .value { color: #172033; }
+html[data-theme="ledger"] .chore-item { padding: 14px 16px; }
+html[data-theme="ledger"] .chore-item:hover { border-color: #c5d0de; background: #fff; }
+html[data-theme="ledger"] .form-row input,
+html[data-theme="ledger"] .form-row select,
+html[data-theme="ledger"] .account-form input {
+  background: #fff;
+  color: #172033;
+  border: 1px solid #d5dce6;
+  border-radius: 8px;
+  padding: 11px 12px;
+}
+html[data-theme="ledger"] .primary-btn,
+html[data-theme="ledger"] .approve-btn,
+html[data-theme="ledger"] .view-switch button.active {
+  background: #1e4d8c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+html[data-theme="ledger"] .ghost-btn,
+html[data-theme="ledger"] .nav-pill,
+html[data-theme="ledger"] .schedule-btn { color: #172033; border-color: #d5dce6; background: #fff; }
+html[data-theme="ledger"] .schedule-btn { border-style: solid; }
+html[data-theme="ledger"] .nav-pill { border-radius: 8px; }
+html[data-theme="ledger"] .view-switch button { border-radius: 8px; color: #5d6b7e; background: #fff; }
+html[data-theme="ledger"] .day-pill { background: #f7f9fb; color: #172033; border-radius: 8px; }
+html[data-theme="ledger"] .day-pill.today { border-color: #1e4d8c; }
+html[data-theme="ledger"] .xp-fill { background: #1e4d8c; }
+html[data-theme="ledger"] .link-btn,
+html[data-theme="ledger"] .bottom-nav a.active,
+html[data-theme="ledger"] .bottom-nav button.active { color: #1e4d8c; }
+html[data-theme="ledger"] .bottom-nav { background: #fff; border-top: 1px solid #e1e6ee; }
+html[data-theme="ledger"] .bottom-nav a,
+html[data-theme="ledger"] .bottom-nav button { color: #5d6b7e; }
+html[data-theme="ledger"] .theme-card.selected { border-color: #1e4d8c; box-shadow: 0 0 0 1px #1e4d8c; }
+.swatch.ledger { background: linear-gradient(#f3f5f8 0 55%, #1e4d8c 55% 100%); }
+
 html[data-theme="block"] {
   --bg: #5c4124;
   --surface: #ececec;

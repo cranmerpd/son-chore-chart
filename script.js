@@ -245,7 +245,7 @@ function memberName(uid) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' ? theme : 'mission';
+  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' ? theme : 'mission';
 }
 function freqLabel(task) {
   if (task.kind === 'once') {

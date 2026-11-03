@@ -23,7 +23,7 @@ try {
 let userData = null;
 
 function normalizeTheme(theme) {
-  return theme === 'block' || theme === 'pink' || theme === 'rocky' ? theme : 'mission';
+  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' ? theme : 'mission';
 }
 function applyTheme(theme) {
   document.documentElement.dataset.theme = normalizeTheme(theme);
