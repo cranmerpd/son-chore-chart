@@ -97,9 +97,20 @@
           <div id="badges-list" class="list"></div>
         </div>
       </div>
+
+    <div class="panel" style="margin-top: 20px;">
+      <div class="panel-header">
+        <h2>My chores</h2>
+        <button id="open-add-task" class="add-btn" type="button">+ Recurring</button>
+      </div>
+      <p class="field-help" style="margin-bottom: 10px;">Recurring chores are for you or a child. They show on the matching day. One-offs, honey-dos, and paid bonus chores are scheduled from the chart on the day they are due.</p>
+      <div id="recurring-list" class="list"></div>
+      <h2 style="margin: 16px 0 8px;">Scheduled one-offs</h2>
+      <div id="onetime-list" class="list"></div>
+    </div>
     </div>
 
-    <p class="version">v1.3</p>
+    <p class="version">v1.9</p>
   </div>
 
   <!-- Add Member Modal -->
@@ -190,6 +201,31 @@
         <button type="submit" class="primary-btn">Add Badge</button>
       </form>
       <button id="close-badge-modal" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
+    </div>
+  </div>
+
+
+  <div id="task-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3 id="task-modal-title">Recurring chore</h3>
+      <form id="task-form" class="form-row">
+        <input type="hidden" id="task-id">
+        <input type="text" id="task-name" placeholder="Chore name" required>
+        <select id="task-frequency">
+          <option value="daily">Daily</option>
+          <option value="weekdays">Weekdays</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Every 3 months</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <label class="field-help">Start date. Weekly repeats on this weekday. Monthly and every 3 months repeat on this day of the month, or the last day if the month is shorter.</label>
+        <input type="date" id="task-anchor" required>
+        <select id="task-assign"></select>
+        <p class="field-help">Assign this to yourself or a child. Recurring chores cannot be given to another parent. Use a honey-do on the chart for that.</p>
+        <button type="submit" class="primary-btn">Save</button>
+      </form>
+      <button type="button" id="close-task-modal" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
     </div>
   </div>
 

@@ -58,6 +58,11 @@
       </div>
     </header>
 
+    <div class="view-switch" id="view-switch" style="display: none;">
+      <button type="button" data-view="family" class="active">Family</button>
+      <button type="button" data-view="mine">My Chores</button>
+    </div>
+
     <button id="collapse-toggle" class="collapse-toggle">
       <span class="chevron">▲</span>
       <span id="collapse-label">Hide Dashboard</span>
@@ -122,7 +127,10 @@
       </div>
     </div>
 
+    <button type="button" id="schedule-btn" class="schedule-btn" style="display: none;">Schedule a chore for this day</button>
+
     <main>
+      <div id="family-sections">
       <section class="section">
         <h2 class="section-title"><span class="dot morning"></span> Morning Ops</h2>
         <div id="morning-list" class="chore-list"></div>
@@ -137,13 +145,35 @@
         <h2 class="section-title"><span class="dot weekly"></span> Weekly Objectives</h2>
         <div id="weekly-list" class="chore-list"></div>
       </section>
+
+      <section class="section" id="bonus-section" style="display: none;">
+        <h2 class="section-title"><span class="dot bonus"></span> Bonus</h2>
+        <div id="bonus-list" class="chore-list"></div>
+      </section>
+
+      <section class="section" id="child-scheduled-section" style="display: none;">
+        <h2 class="section-title"><span class="dot scheduled"></span> Scheduled</h2>
+        <div id="child-scheduled-list" class="chore-list"></div>
+      </section>
+      </div>
+
+      <div id="mine-section" style="display: none;">
+        <section class="section">
+          <h2 class="section-title"><span class="dot mine"></span> Due today</h2>
+          <div id="mine-list" class="chore-list"></div>
+        </section>
+        <section class="section">
+          <h2 class="section-title" id="outgoing-title" style="display: none;"><span class="dot honey"></span> Honey-dos you sent</h2>
+          <div id="outgoing-list" class="chore-list"></div>
+        </section>
+      </div>
     </main>
 
     <footer class="footer">
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
 
-    <p class="version">v1.8</p>
+    <p class="version">v1.9</p>
   </div>
 
   <!-- Mobile bottom nav -->
@@ -171,6 +201,32 @@
       <div class="unlock-icon" id="unlock-icon">🏅</div>
       <p id="unlock-name">Badge Unlocked</p>
       <p id="unlock-desc" class="unlock-desc"></p>
+    </div>
+  </div>
+
+
+  <div id="schedule-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Schedule a chore</h3>
+      <p id="schedule-date-label" class="modal-note"></p>
+      <form id="schedule-form" class="form-row">
+        <select id="schedule-kind">
+          <option value="once-self">One-off for me</option>
+          <option value="honey">Honey-do for another parent</option>
+          <option value="bonus">Bonus for a child</option>
+        </select>
+        <input type="text" id="schedule-name" placeholder="What needs doing?" required>
+        <div id="schedule-person-wrap">
+          <select id="schedule-person"></select>
+        </div>
+        <div id="schedule-amount-wrap" style="display: none;">
+          <input type="number" id="schedule-amount" min="0.01" step="0.01" placeholder="Dollar amount">
+        </div>
+        <p id="schedule-help" class="field-help"></p>
+        <button type="submit" id="schedule-submit" class="primary-btn">Schedule</button>
+      </form>
+      <p id="schedule-error" class="auth-error"></p>
+      <button type="button" id="close-schedule" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
     </div>
   </div>
 

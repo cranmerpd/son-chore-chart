@@ -45,6 +45,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadMembers();
   await renderChores();
   await renderBadges();
+  await renderTasks();
 });
 
 async function loadMembers() {
@@ -96,6 +97,29 @@ function updateAssignDropdown() {
     opt.textContent = m.username;
     sel.appendChild(opt);
   });
+  fillTaskAssign();
+}
+
+function localToday() {
+  const n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+}
+
+function fillTaskAssign(selected) {
+  const sel = document.getElementById('task-assign');
+  if (!sel || !auth.currentUser) return;
+  sel.innerHTML = '';
+  const me = document.createElement('option');
+  me.value = auth.currentUser.uid;
+  me.textContent = 'Me';
+  sel.appendChild(me);
+  familyMembers.filter(m => m.role === 'child').forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.uid;
+    opt.textContent = m.username;
+    sel.appendChild(opt);
+  });
+  if (selected) sel.value = selected;
 }
 
 // Allowance Modal
@@ -319,4 +343,147 @@ document.getElementById('add-badge-form').addEventListener('submit', async (e) =
   });
   badgeModal.classList.add('hidden');
   renderBadges();
+});
+
+
+const taskModal = document.getElementById('task-modal');
+const taskForm = document.getElementById('task-form');
+
+document.getElementById('open-add-task').addEventListener('click', () => {
+  document.getElementById('task-modal-title').textContent = 'Recurring chore';
+  taskForm.reset();
+  document.getElementById('task-id').value = '';
+  document.getElementById('task-anchor').value = localToday();
+  fillTaskAssign();
+  taskModal.classList.remove('hidden');
+});
+document.getElementById('close-task-modal').addEventListener('click', () => taskModal.classList.add('hidden'));
+taskModal.addEventListener('click', (e) => { if (e.target === taskModal) taskModal.classList.add('hidden'); });
+
+function taskMeta(task) {
+  const who = task.assigneeUid === auth.currentUser?.uid ? 'Me' : (familyMembers.find(m => m.uid === task.assigneeUid)?.username || '?');
+  if (task.kind === 'once') {
+    const kind = task.audience === 'honey' ? 'Honey-do' : task.audience === 'bonus' ? 'Bonus' : 'One-off';
+    const money = task.amount ? ` • +$${Number(task.amount).toFixed(2)}` : '';
+    return `${task.dueDate || ''} • ${kind} • ${who}${money}`;
+  }
+  const map = { daily: 'Daily', weekdays: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Every 3 months', yearly: 'Yearly' };
+  return `${map[task.frequency] || task.frequency} • from ${task.anchorDate || ''} • ${who}`;
+}
+
+async function renderTasks() {
+  if (!userData.familyId) return;
+  const recurringEl = document.getElementById('recurring-list');
+  const onceEl = document.getElementById('onetime-list');
+  recurringEl.innerHTML = '';
+  onceEl.innerHTML = '';
+  const snap = await getDocs(collection(db, 'families', userData.familyId, 'tasks'));
+  const recurring = [];
+  const once = [];
+  snap.forEach(d => {
+    const data = { id: d.id, ...d.data() };
+    if (data.kind === 'once') once.push(data);
+    else if (data.ownerUid === auth.currentUser.uid || data.audience === 'child') recurring.push(data);
+  });
+  once.sort((a, b) => String(b.dueDate || '').localeCompare(String(a.dueDate || '')));
+  if (!recurring.length) recurringEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No recurring chores yet.</p>';
+  if (!once.length) onceEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No one-offs scheduled. Add those from the chart, on the day they are due.</p>';
+
+  recurring.forEach(task => {
+    const active = task.active !== false;
+    const div = document.createElement('div');
+    div.className = 'row' + (active ? '' : ' inactive');
+    div.innerHTML = `
+      <div class="row-info">
+        <div class="row-title">${task.name}</div>
+        <div class="row-meta">${taskMeta(task)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn toggle-task" data-id="${task.id}" data-active="${active}" title="${active ? 'Deactivate' : 'Activate'}">${active ? '●' : '○'}</button>
+        <button class="icon-btn edit-task" data-id="${task.id}" title="Edit">✎</button>
+        <button class="icon-btn danger delete-task" data-id="${task.id}" title="Delete">✕</button>
+      </div>`;
+    recurringEl.appendChild(div);
+  });
+
+  once.forEach(task => {
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = `
+      <div class="row-info">
+        <div class="row-title">${task.name}</div>
+        <div class="row-meta">${taskMeta(task)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn danger delete-task" data-id="${task.id}" title="Delete">✕</button>
+      </div>`;
+    onceEl.appendChild(div);
+  });
+
+  document.querySelectorAll('.toggle-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const isActive = btn.dataset.active === 'true';
+      await updateDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id), { active: !isActive });
+      renderTasks();
+    });
+  });
+  document.querySelectorAll('.delete-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('Delete this scheduled chore?')) {
+        await deleteDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
+        renderTasks();
+      }
+    });
+  });
+  document.querySelectorAll('.edit-task').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const snap = await getDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
+      if (!snap.exists()) return;
+      const t = snap.data();
+      document.getElementById('task-modal-title').textContent = 'Edit recurring chore';
+      document.getElementById('task-id').value = btn.dataset.id;
+      document.getElementById('task-name').value = t.name || '';
+      document.getElementById('task-frequency').value = t.frequency || 'monthly';
+      document.getElementById('task-anchor').value = t.anchorDate || localToday();
+      fillTaskAssign(t.assigneeUid);
+      taskModal.classList.remove('hidden');
+    });
+  });
+}
+
+taskForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('task-id').value;
+  const name = document.getElementById('task-name').value.trim();
+  const frequency = document.getElementById('task-frequency').value;
+  const anchorDate = document.getElementById('task-anchor').value;
+  const assigneeUid = document.getElementById('task-assign').value;
+  if (!name || !anchorDate || !userData.familyId || !auth.currentUser) return;
+  const allowed = assigneeUid === auth.currentUser.uid || familyMembers.some(m => m.uid === assigneeUid && m.role === 'child');
+  if (!allowed) return;
+  const audience = assigneeUid === auth.currentUser.uid ? 'mine' : 'child';
+  const data = {
+    name,
+    kind: 'recurring',
+    audience,
+    ownerUid: auth.currentUser.uid,
+    assigneeUid,
+    frequency,
+    anchorDate,
+    dueDate: null,
+    amount: null,
+    active: true
+  };
+  if (id) {
+    const existing = await getDoc(doc(db, 'families', userData.familyId, 'tasks', id));
+    if (existing.exists()) {
+      if (existing.data().active === false) data.active = false;
+      data.ownerUid = existing.data().ownerUid || auth.currentUser.uid;
+    }
+    await updateDoc(doc(db, 'families', userData.familyId, 'tasks', id), data);
+  } else {
+    await addDoc(collection(db, 'families', userData.familyId, 'tasks'), data);
+  }
+  taskModal.classList.add('hidden');
+  renderTasks();
 });

@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -103,7 +103,6 @@ authForm.addEventListener('submit', async (e) => {
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth));
 
-// Collapse toggle
 const collapseToggle = document.getElementById('collapse-toggle');
 const dashboardPanel = document.getElementById('dashboard-panel');
 const collapseLabel = document.getElementById('collapse-label');
@@ -149,7 +148,11 @@ let userData = { role: 'parent', username: '', familyId: null, weeklyAllowance: 
 let familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0 };
 let choresList = [];
 let badgesList = [];
+let tasks = [];
+let familyMembers = [];
+let viewMode = localStorage.getItem('chartView') === 'mine' ? 'mine' : 'family';
 let unsubscribe = null;
+let unsubscribeTasks = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
@@ -172,6 +175,55 @@ function getWeekKey(date) {
 }
 function getDayOfWeek(date) { return date.getDay(); }
 function isWeekday(date) { const day = getDayOfWeek(date); return day >= 1 && day <= 5; }
+
+function parseLocalDate(key) {
+  const [y, m, d] = String(key || '').split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+function clampedDom(year, monthIndex, dom) {
+  const last = new Date(year, monthIndex + 1, 0).getDate();
+  return Math.min(dom, last);
+}
+function occursOn(task, date) {
+  if (!task || task.active === false) return false;
+  const day = startOfDay(date);
+  const key = getDateKey(day);
+  if (task.kind === 'once') return task.dueDate === key;
+  if (!task.anchorDate || !task.frequency) return false;
+  const anchor = parseLocalDate(task.anchorDate);
+  if (!anchor || day < anchor) return false;
+  const freq = task.frequency;
+  if (freq === 'daily') return true;
+  if (freq === 'weekdays') return day.getDay() >= 1 && day.getDay() <= 5;
+  if (freq === 'weekly') return day.getDay() === anchor.getDay();
+  if (freq === 'monthly') return day.getDate() === clampedDom(day.getFullYear(), day.getMonth(), anchor.getDate());
+  if (freq === 'quarterly') {
+    const months = (day.getFullYear() - anchor.getFullYear()) * 12 + (day.getMonth() - anchor.getMonth());
+    return months >= 0 && months % 3 === 0 && day.getDate() === clampedDom(day.getFullYear(), day.getMonth(), anchor.getDate());
+  }
+  if (freq === 'yearly') {
+    return day.getMonth() === anchor.getMonth() && day.getDate() === clampedDom(day.getFullYear(), day.getMonth(), anchor.getDate());
+  }
+  return false;
+}
+function memberName(uid) {
+  return familyMembers.find(m => m.uid === uid)?.username || 'Someone';
+}
+function freqLabel(task) {
+  if (task.kind === 'once') {
+    if (task.audience === 'honey') return 'Honey-do';
+    if (task.audience === 'bonus') return 'Bonus';
+    return 'One-off';
+  }
+  const map = { daily: 'Daily', weekdays: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Every 3 months', yearly: 'Yearly' };
+  return map[task.frequency] || 'Recurring';
+}
+function isParentUser() { return userData.role === 'parent'; }
+function activeView() { return isParentUser() && viewMode === 'mine' ? 'mine' : 'family'; }
 
 async function loadChores() {
   if (!userData.familyId) return;
@@ -202,6 +254,18 @@ async function loadBadges() {
       const ref = await addDoc(collection(db, 'families', userData.familyId, 'badges'), badge);
       badgesList.push({ id: ref.id, ...badge });
     }
+  }
+}
+
+async function loadMembers() {
+  familyMembers = [];
+  if (!userData.familyId) return;
+  try {
+    const q = query(collection(db, 'users'), where('familyId', '==', userData.familyId));
+    const snap = await getDocs(q);
+    snap.forEach(d => familyMembers.push({ uid: d.id, ...d.data() }));
+  } catch (err) {
+    console.error(err);
   }
 }
 
@@ -266,6 +330,28 @@ function getWeekStats(weekStart) {
   total += choresList.filter(c => c.frequency === 'weekly' || (c.frequency === 'specific' && c.section === 'weekly')).length;
   completed += Object.values(weekData).filter(isVerified).length;
   return { total, completed, fullDays, percent: total > 0 ? (completed / total) * 100 : 0 };
+}
+
+function bonusTotalForWeek(weekStart) {
+  const kids = familyMembers.filter(m => m.role === 'child');
+  let ids = [];
+  if (userData.role === 'child') ids = [auth.currentUser?.uid];
+  else if (kids.length === 1) ids = [kids[0].uid];
+  else return 0;
+  let sum = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = getDateKey(d);
+    tasks.forEach(task => {
+      if (task.audience !== 'bonus' || task.active === false) return;
+      if (!ids.includes(task.assigneeUid)) return;
+      if (task.dueDate !== key) return;
+      const entry = ((familyData.taskChecks || {})[task.id] || {})[key];
+      if (isVerified(entry)) sum += Number(task.amount) || 0;
+    });
+  }
+  return sum;
 }
 
 function calculateStreak() {
@@ -418,14 +504,153 @@ function renderList(containerId, list, isWeekly = false) {
   });
 }
 
+function taskEntry(task, dateKey) {
+  return ((familyData.taskChecks || {})[task.id] || {})[dateKey] || { checked: false, verified: false };
+}
+
+function writeTaskEntry(task, dateKey, entry) {
+  if (!familyData.taskChecks) familyData.taskChecks = {};
+  if (!familyData.taskChecks[task.id]) familyData.taskChecks[task.id] = {};
+  familyData.taskChecks[task.id][dateKey] = entry;
+  saveFamily();
+}
+
+function renderTaskRow(task, dateKey, mode) {
+  const entry = taskEntry(task, dateKey);
+  const item = document.createElement('div');
+  item.className = 'chore-item';
+  if (mode === 'readonly') item.classList.add('static');
+  if (entry.verified) item.classList.add('completed');
+  else if (entry.checked) item.classList.add('pending');
+
+  const bits = [freqLabel(task)];
+  if (task.audience === 'honey' && task.ownerUid !== auth.currentUser?.uid) bits.push('from ' + memberName(task.ownerUid));
+  if (task.audience === 'honey' && task.ownerUid === auth.currentUser?.uid) bits.push('for ' + memberName(task.assigneeUid));
+  if ((task.audience === 'bonus' || task.audience === 'child') && isParentUser()) bits.push(memberName(task.assigneeUid));
+
+  let statusHtml = '';
+  if (entry.verified) statusHtml = '<span class="status verified">Done</span>';
+  else if (entry.checked) statusHtml = '<span class="status pending">Pending</span>';
+
+  const money = task.audience === 'bonus' && task.amount ? `<span class="money-tag">+$${Number(task.amount).toFixed(2)}</span>` : '';
+  const showApprove = mode === 'kid' && isParentUser() && entry.checked && !entry.verified;
+
+  item.innerHTML = `
+    <div class="checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+    <span class="chore-name">${task.name}</span>
+    <span class="chore-side">${money}<span class="chore-sub">${bits.join(' · ')}</span></span>
+    ${statusHtml}
+    ${showApprove ? '<button class="approve-btn">Approve</button>' : ''}
+  `;
+
+  if (mode === 'readonly') return item;
+
+  item.addEventListener('click', (e) => {
+    const current = taskEntry(task, dateKey);
+    if (e.target.classList.contains('approve-btn')) {
+      e.stopPropagation();
+      current.verified = true;
+      current.verifiedBy = auth.currentUser.uid;
+      writeTaskEntry(task, dateKey, current);
+      renderAll();
+      updateStats();
+      return;
+    }
+    if (mode === 'self') {
+      const next = !(current.checked && current.verified);
+      writeTaskEntry(task, dateKey, { checked: next, verified: next, checkedBy: auth.currentUser.uid });
+    } else if (userData.role === 'child') {
+      if (current.verified) return;
+      current.checked = !current.checked;
+      current.verified = false;
+      current.checkedBy = auth.currentUser.uid;
+      writeTaskEntry(task, dateKey, current);
+    } else {
+      current.checked = !current.checked;
+      if (!current.checked) current.verified = false;
+      current.checkedBy = auth.currentUser.uid;
+      writeTaskEntry(task, dateKey, current);
+    }
+    renderAll();
+    updateStats();
+  });
+  return item;
+}
+
+function fillTaskList(container, rows, emptyText) {
+  container.innerHTML = '';
+  if (!rows.length) {
+    container.innerHTML = `<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">${emptyText}</p>`;
+    return;
+  }
+  rows.forEach(row => container.appendChild(row));
+}
+
+function renderSpecialTasks() {
+  const dateKey = getDateKey(currentDate);
+  const myUid = auth.currentUser?.uid;
+  const due = tasks.filter(t => occursOn(t, currentDate));
+
+  const bonus = due.filter(t => t.audience === 'bonus' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
+  const childExtra = due.filter(t => t.audience === 'child' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
+  const mine = due.filter(t => t.assigneeUid === myUid && (t.audience === 'mine' || t.audience === 'honey'));
+  const outgoing = due.filter(t => t.audience === 'honey' && t.ownerUid === myUid && t.assigneeUid !== myUid);
+
+  const bonusSection = document.getElementById('bonus-section');
+  const extraSection = document.getElementById('child-scheduled-section');
+  const bonusList = document.getElementById('bonus-list');
+  const extraList = document.getElementById('child-scheduled-list');
+  if (bonusSection && bonusList) {
+    bonusSection.style.display = bonus.length ? '' : 'none';
+    fillTaskList(bonusList, bonus.map(t => renderTaskRow(t, dateKey, 'kid')), '');
+  }
+  if (extraSection && extraList) {
+    extraSection.style.display = childExtra.length ? '' : 'none';
+    fillTaskList(extraList, childExtra.map(t => renderTaskRow(t, dateKey, 'kid')), '');
+  }
+
+  const mineList = document.getElementById('mine-list');
+  const outgoingList = document.getElementById('outgoing-list');
+  const outgoingTitle = document.getElementById('outgoing-title');
+  if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due this day.');
+  if (outgoingList && outgoingTitle) {
+    const showOut = outgoing.length > 0;
+    outgoingTitle.style.display = showOut ? '' : 'none';
+    outgoingList.style.display = showOut ? '' : 'none';
+    if (outgoingList.parentElement) outgoingList.parentElement.style.display = showOut ? '' : 'none';
+    fillTaskList(outgoingList, outgoing.map(t => renderTaskRow(t, dateKey, 'readonly')), '');
+  }
+}
+
+function applyView() {
+  const mine = activeView() === 'mine';
+  const familyEl = document.getElementById('family-sections');
+  const mineEl = document.getElementById('mine-section');
+  const earnings = document.querySelector('.earnings-panel');
+  if (familyEl) familyEl.style.display = mine ? 'none' : '';
+  if (mineEl) mineEl.style.display = mine ? '' : 'none';
+  if (earnings) earnings.style.display = mine ? 'none' : '';
+  if (collapseToggle) collapseToggle.style.display = mine ? 'none' : '';
+  if (dashboardPanel) dashboardPanel.style.display = mine ? 'none' : '';
+  document.querySelectorAll('#view-switch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === (mine ? 'mine' : 'family'));
+  });
+  const viewSwitch = document.getElementById('view-switch');
+  const scheduleBtn = document.getElementById('schedule-btn');
+  if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
+  if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
+}
+
 function renderAll() {
   const dayChores = getChoresForDate(currentDate);
   renderList('morning-list', dayChores.morning);
   renderList('evening-list', dayChores.evening);
   renderList('weekly-list', dayChores.weekly, true);
+  renderSpecialTasks();
   document.getElementById('day-name').textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
   document.getElementById('day-date').textContent = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   renderWeekGrid();
+  applyView();
 }
 
 function renderWeekGrid() {
@@ -460,38 +685,142 @@ function updateStats() {
   const stats = getWeekStats(weekStart);
   const percent = stats.percent;
   const allowance = userData.weeklyAllowance || 5;
-  const earned = (percent / 100) * allowance;
+  const bonus = bonusTotalForWeek(weekStart);
+  const earned = (percent / 100) * allowance + bonus;
   document.getElementById('ring-progress').style.strokeDashoffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
   document.getElementById('earned-amount').textContent = `$${earned.toFixed(2)}`;
-  document.getElementById('earned-label').textContent = `of $${allowance.toFixed(2)}`;
+  document.getElementById('earned-label').textContent = bonus > 0
+    ? `of $${allowance.toFixed(2)} + $${bonus.toFixed(2)}`
+    : `of $${allowance.toFixed(2)}`;
   document.getElementById('streak').textContent = calculateStreak();
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
   if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
-  const isParent = userData.role === 'parent';
+  const isParent = isParentUser();
   const settingsLink = document.getElementById('settings-link');
   if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
   const mobileSettings = document.getElementById('mobile-settings');
   if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
   const resetBtn = document.getElementById('reset-btn');
   if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
+  applyView();
   checkBadges();
 }
+
+function syncScheduleFields() {
+  const kind = document.getElementById('schedule-kind').value;
+  const personWrap = document.getElementById('schedule-person-wrap');
+  const amountWrap = document.getElementById('schedule-amount-wrap');
+  const help = document.getElementById('schedule-help');
+  const person = document.getElementById('schedule-person');
+  person.innerHTML = '';
+  let options = [];
+  if (kind === 'honey') options = familyMembers.filter(m => m.role === 'parent' && m.uid !== auth.currentUser?.uid);
+  if (kind === 'bonus') options = familyMembers.filter(m => m.role === 'child');
+  options.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.uid;
+    opt.textContent = m.username;
+    person.appendChild(opt);
+  });
+  personWrap.style.display = kind === 'once-self' ? 'none' : '';
+  amountWrap.style.display = kind === 'bonus' ? '' : 'none';
+  if (kind === 'honey' && !options.length) help.textContent = 'Add another parent in Settings before sending a honey-do.';
+  else if (kind === 'bonus' && !options.length) help.textContent = 'Add a child in Settings before scheduling a bonus chore.';
+  else if (kind === 'honey') help.textContent = 'A honey-do is a one-off for another parent. They check it off. Recurring chores stay on your own list or a child\'s.';
+  else if (kind === 'bonus') help.textContent = 'Paid on top of allowance after a parent approves it. It does not change the weekly allowance.';
+  else help.textContent = 'This lands on your list for this day only.';
+  document.getElementById('schedule-submit').disabled = kind !== 'once-self' && !options.length;
+}
+
+function openSchedule() {
+  const kind = document.getElementById('schedule-kind');
+  kind.value = activeView() === 'mine' ? 'once-self' : 'bonus';
+  document.getElementById('schedule-name').value = '';
+  document.getElementById('schedule-amount').value = '';
+  document.getElementById('schedule-error').textContent = '';
+  document.getElementById('schedule-date-label').textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  syncScheduleFields();
+  document.getElementById('schedule-modal').classList.remove('hidden');
+}
+
+document.getElementById('schedule-kind')?.addEventListener('change', syncScheduleFields);
+document.getElementById('schedule-btn')?.addEventListener('click', openSchedule);
+document.getElementById('close-schedule')?.addEventListener('click', () => document.getElementById('schedule-modal').classList.add('hidden'));
+document.getElementById('schedule-modal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'schedule-modal') e.currentTarget.classList.add('hidden');
+});
+
+document.getElementById('schedule-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('schedule-error');
+  err.textContent = '';
+  if (!isParentUser() || !userData.familyId) return;
+  const kind = document.getElementById('schedule-kind').value;
+  const name = document.getElementById('schedule-name').value.trim();
+  const dueDate = getDateKey(currentDate);
+  if (!name) { err.textContent = 'Name it first.'; return; }
+  const myUid = auth.currentUser.uid;
+  const data = { name, kind: 'once', ownerUid: myUid, dueDate, anchorDate: null, frequency: null, amount: null, active: true };
+  if (kind === 'once-self') {
+    data.audience = 'mine';
+    data.assigneeUid = myUid;
+  } else if (kind === 'honey') {
+    const other = familyMembers.find(m => m.uid === document.getElementById('schedule-person').value && m.role === 'parent' && m.uid !== myUid);
+    if (!other) { err.textContent = 'Pick another parent.'; return; }
+    data.audience = 'honey';
+    data.assigneeUid = other.uid;
+  } else if (kind === 'bonus') {
+    const child = familyMembers.find(m => m.uid === document.getElementById('schedule-person').value && m.role === 'child');
+    const amount = Number(document.getElementById('schedule-amount').value);
+    if (!child) { err.textContent = 'Pick a child.'; return; }
+    if (!amount || amount <= 0) { err.textContent = 'Enter a dollar amount.'; return; }
+    data.audience = 'bonus';
+    data.assigneeUid = child.uid;
+    data.amount = Math.round(amount * 100) / 100;
+  } else {
+    return;
+  }
+  document.getElementById('schedule-submit').disabled = true;
+  try {
+    await addDoc(collection(db, 'families', userData.familyId, 'tasks'), data);
+    document.getElementById('schedule-modal').classList.add('hidden');
+  } catch (error) {
+    err.textContent = error.message || 'Could not save.';
+  }
+  document.getElementById('schedule-submit').disabled = false;
+});
+
+document.querySelectorAll('#view-switch button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    viewMode = btn.dataset.view === 'mine' ? 'mine' : 'family';
+    localStorage.setItem('chartView', viewMode);
+    applyView();
+  });
+});
 
 async function loadFamily() {
   if (!userData.familyId) { renderAll(); updateStats(); return; }
   const ref = doc(db, 'families', userData.familyId);
   const snap = await getDoc(ref);
-  if (snap.exists()) familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
+  if (snap.exists()) familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...snap.data() };
   await loadChores();
   await loadBadges();
+  await loadMembers();
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(ref, (docSnap) => {
     if (docSnap.exists()) {
-      familyData = { days: {}, weekly: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
+      familyData = { days: {}, weekly: {}, taskChecks: {}, unlockedBadges: [], totalXP: 0, ...docSnap.data() };
       renderAll();
       updateStats();
     }
+  });
+  if (unsubscribeTasks) unsubscribeTasks();
+  unsubscribeTasks = onSnapshot(collection(db, 'families', userData.familyId, 'tasks'), (snap) => {
+    tasks = [];
+    snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
+    renderAll();
+    updateStats();
   });
   renderAll();
   updateStats();
@@ -518,6 +847,7 @@ onAuthStateChanged(auth, async (user) => {
     loginScreen.style.display = 'flex';
     mainApp.style.display = 'none';
     if (unsubscribe) unsubscribe();
+    if (unsubscribeTasks) unsubscribeTasks();
   }
 });
 
@@ -525,7 +855,7 @@ document.getElementById('prev-day')?.addEventListener('click', () => { currentDa
 document.getElementById('next-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() + 1); renderAll(); updateStats(); });
 document.getElementById('reset-btn')?.addEventListener('click', () => {
   if (userData.role !== 'parent') return;
-  if (confirm('Reset all progress for this week?')) {
+  if (confirm('Reset all progress for this week? This does not remove scheduled chores.')) {
     const weekStart = getWeekStart(currentDate);
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
