@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Account — Mission Control</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css?v=120">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <div>
+          <h1>Account</h1>
+          <p class="tagline" id="account-tag">Your settings</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="index.html" class="nav-pill">Chart</a>
+        <a href="settings.html" class="nav-pill" id="family-link" style="display: none;">Family</a>
+        <button type="button" class="nav-pill" id="logout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <p id="net-status" class="net-status" hidden>Offline. Changes will sync when you reconnect.</p>
+
+    <div id="login-required" style="text-align: center; padding: 60px 20px; display: none;">
+      <p>Sign in to change your account.</p>
+      <a href="index.html" class="primary-btn" style="display: inline-block; margin-top: 16px; text-decoration: none;">Go to Login</a>
+    </div>
+
+    <div id="account-content" style="display: none;">
+      <section class="panel">
+        <h2>Name</h2>
+        <p class="field-help">This is the name the family sees. Your username stays the sign-in name.</p>
+        <form id="name-form" class="account-form">
+          <label class="account-label" for="display-name">Display name</label>
+          <input type="text" id="display-name" maxlength="40" placeholder="PennyLee" autocomplete="name">
+          <p class="field-help" id="login-name"></p>
+          <button type="submit" class="primary-btn">Save name</button>
+          <p id="name-msg" class="field-help"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Theme</h2>
+        <p class="field-help">Only your screens change. Everyone else keeps their own.</p>
+        <div class="theme-pick">
+          <button type="button" class="theme-card" data-theme="mission">
+            <span class="swatch mission"></span>
+            <strong>Mission Control</strong>
+            <span>Dark chart</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="block">
+            <span class="swatch block"></span>
+            <strong>Blocks</strong>
+            <span>Dirt, stone, pixels</span>
+          </button>
+        </div>
+        <p id="theme-msg" class="field-help"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Password</h2>
+        <form id="password-form" class="account-form">
+          <label class="account-label" for="current-password">Current password</label>
+          <input type="password" id="current-password" autocomplete="current-password" required>
+          <label class="account-label" for="new-password">New password</label>
+          <input type="password" id="new-password" autocomplete="new-password" minlength="6" required>
+          <button type="submit" class="primary-btn">Change password</button>
+          <p id="password-msg" class="field-help"></p>
+        </form>
+      </section>
+    </div>
+
+    <p class="version">v1.20</p>
+  </div>
+  <script type="module" src="account.js?v=120"></script>
+</body>
+</html>

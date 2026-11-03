@@ -240,7 +240,12 @@ function occursOn(task, date) {
   return false;
 }
 function memberName(uid) {
-  return familyMembers.find(m => m.uid === uid)?.username || 'Someone';
+  const member = familyMembers.find(m => m.uid === uid);
+  if (!member) return 'Someone';
+  return (member.displayName || '').trim() || member.username || 'Someone';
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme === 'block' ? 'block' : 'mission';
 }
 function freqLabel(task) {
   if (task.kind === 'once') {
@@ -1014,7 +1019,7 @@ function updateStats() {
   document.getElementById('streak').textContent = calculateStreak();
   updateLevelDisplay();
   const roleTag = document.getElementById('user-role-tag');
-  if (roleTag) roleTag.textContent = (userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
+  if (roleTag) roleTag.textContent = ((userData.displayName || '').trim() || userData.username || '') + ' • ' + (userData.role === 'child' ? 'Child' : 'Parent');
   const isParent = isParentUser();
   const settingsLink = document.getElementById('settings-link');
   if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
@@ -1039,7 +1044,7 @@ function syncScheduleFields() {
   options.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.uid;
-    opt.textContent = m.username;
+    opt.textContent = (m.displayName || '').trim() || m.username;
     person.appendChild(opt);
   });
   personWrap.style.display = kind === 'once-self' ? 'none' : '';
@@ -1187,6 +1192,7 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {
       userData = userSnap.data();
+      applyTheme(userData.theme);
       const isParent = userData.role === 'parent';
       const settingsLink = document.getElementById('settings-link');
       if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
@@ -1436,9 +1442,9 @@ function maybeAwardSnake(dateKey) {
       const when = dateKey === getDateKey(new Date()) ? "today's chores" : 'the chores for ' + date.toLocaleDateString('en-US', { weekday: 'long' });
       showSnakeOffer({
         title: 'Chores are done',
-        body: kid.username + ' finished ' + when + '. Hand over the phone, or save Cranmerboy. It stays available for 24 hours.',
+        body: memberName(kid.uid) + ' finished ' + when + '. Hand over the phone, or save Cranmerboy. It stays available for 24 hours.',
         primary: 'Play now',
-        secondary: 'Save for ' + kid.username,
+        secondary: 'Save for ' + memberName(kid.uid),
         onPrimary: () => {
           const rec = familyData.snake.awards[kid.uid][dateKey];
           rec.status = 'played';
@@ -1488,9 +1494,9 @@ function lookForSnakePass() {
   const pass = openSnakePass(kid.uid);
   showSnakeOffer({
     title: 'Chores are done',
-    body: kid.username + ' has a Cranmerboy game waiting. Hand over the phone, or leave it saved for 24 hours.',
+    body: memberName(kid.uid) + ' has a Cranmerboy game waiting. Hand over the phone, or leave it saved for 24 hours.',
     primary: 'Play now',
-    secondary: 'Save for ' + kid.username,
+    secondary: 'Save for ' + memberName(kid.uid),
     onPrimary: () => { pass.rec.status = 'played'; saveFamily(); openCranmerboy(kid.uid); },
     onSecondary: () => { pass.rec.status = 'saved'; saveFamily(); }
   });

@@ -6,10 +6,10 @@
   <title>Settings — Mission Control</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0f19">
-  <link rel="stylesheet" href="style.css?v=115">
+  <link rel="stylesheet" href="style.css?v=120">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app">
@@ -23,6 +23,7 @@
       </div>
       <div class="header-actions">
         <a href="index.html" class="nav-pill">Chart</a>
+        <a href="account.html" class="nav-pill">Account</a>
         <button type="button" class="nav-pill" id="logout-btn">Sign out</button>
       </div>
     </header>
@@ -80,7 +81,7 @@
       </div>
     </div>
 
-    <p class="version">v1.15</p>
+    <p class="version">v1.20</p>
   </div>
 
   <!-- Add Member Modal -->
@@ -88,6 +89,7 @@
     <div class="modal-box">
       <h3>Add Family Member</h3>
       <form id="add-member-form" class="form-row">
+        <input type="text" id="member-display" placeholder="Display name" maxlength="40">
         <input type="text" id="member-username" placeholder="Username" required>
         <input type="password" id="member-password" placeholder="Password" required>
         <select id="member-role">
@@ -112,6 +114,19 @@
         <button type="submit" class="primary-btn">Save</button>
       </form>
       <button id="close-allowance" class="ghost-btn" style="margin-top: 12px; width: 100%;">Cancel</button>
+    </div>
+  </div>
+
+  <div id="name-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Display name</h3>
+      <p class="field-help">This is what the family sees. The username stays the sign-in name.</p>
+      <form id="name-form" class="form-row">
+        <input type="hidden" id="name-uid">
+        <input type="text" id="name-value" maxlength="40" placeholder="PennyLee">
+        <button type="submit" class="primary-btn">Save</button>
+      </form>
+      <button id="close-name" class="ghost-btn" style="margin-top: 12px; width: 100%;" type="button">Cancel</button>
     </div>
   </div>
 
@@ -210,6 +225,6 @@
     </div>
   </div>
 
-  <script type="module" src="settings.js?v=112"></script>
+  <script type="module" src="settings.js?v=120"></script>
 </body>
 </html>

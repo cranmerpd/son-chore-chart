@@ -44,6 +44,13 @@ function askConfirm(opts) {
   });
 }
 
+function personLabel(member) {
+  if (!member) return 'Someone';
+  return (member.displayName || '').trim() || member.username || 'Someone';
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme === 'block' ? 'block' : 'mission';
+}
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
   return clean + '@son-chore-chart.firebaseapp.com';
@@ -69,6 +76,7 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   userData = snap.data();
+  applyTheme(userData.theme);
   loginRequired.style.display = 'none';
   settingsContent.style.display = 'block';
   await loadMembers();
@@ -97,17 +105,47 @@ function renderMembers() {
   familyMembers.forEach(m => {
     const div = document.createElement('div');
     div.className = 'row';
-    const allowance = m.weeklyAllowance != null ? `$${m.weeklyAllowance}/wk` : '';
-    div.innerHTML = `
-      <div class="row-info">
-        <div class="row-title">${m.username}</div>
-        <div class="row-meta">${m.role}${allowance ? ' • ' + allowance : ''}</div>
-      </div>
-      ${m.role === 'child' ? `<div class="row-actions"><button class="icon-btn edit-allowance" data-uid="${m.uid}" data-allowance="${m.weeklyAllowance || 5}" title="Set allowance">$</button></div>` : ''}
-    `;
+    const allowance = m.role === 'child' && m.weeklyAllowance != null ? `$${m.weeklyAllowance}/wk` : '';
+    const info = document.createElement('div');
+    info.className = 'row-info';
+    const title = document.createElement('div');
+    title.className = 'row-title';
+    title.textContent = personLabel(m);
+    const meta = document.createElement('div');
+    meta.className = 'row-meta';
+    meta.textContent = m.username + ' • ' + m.role + (allowance ? ' • ' + allowance : '');
+    info.append(title, meta);
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    const nameBtn = document.createElement('button');
+    nameBtn.className = 'icon-btn edit-name';
+    nameBtn.type = 'button';
+    nameBtn.textContent = 'Aa';
+    nameBtn.title = 'Display name';
+    nameBtn.dataset.uid = m.uid;
+    nameBtn.dataset.name = m.displayName || '';
+    actions.appendChild(nameBtn);
+    if (m.role === 'child') {
+      const pay = document.createElement('button');
+      pay.className = 'icon-btn edit-allowance';
+      pay.type = 'button';
+      pay.textContent = '$';
+      pay.title = 'Set allowance';
+      pay.dataset.uid = m.uid;
+      pay.dataset.allowance = m.weeklyAllowance || 5;
+      actions.appendChild(pay);
+    }
+    div.append(info, actions);
     list.appendChild(div);
   });
 
+  list.querySelectorAll('.edit-name').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('name-uid').value = btn.dataset.uid;
+      document.getElementById('name-value').value = btn.dataset.name || '';
+      document.getElementById('name-modal').classList.remove('hidden');
+    });
+  });
   list.querySelectorAll('.edit-allowance').forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById('allowance-uid').value = btn.dataset.uid;
@@ -123,7 +161,7 @@ function updateAssignDropdown() {
   familyMembers.filter(m => m.role === 'child').forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.uid;
-    opt.textContent = m.username;
+    opt.textContent = personLabel(m);
     sel.appendChild(opt);
   });
   fillTaskAssign();
@@ -145,7 +183,7 @@ function fillTaskAssign(selected) {
   familyMembers.filter(m => m.role === 'child').forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.uid;
-    opt.textContent = m.username;
+    opt.textContent = personLabel(m);
     sel.appendChild(opt);
   });
   if (selected) sel.value = selected;
@@ -166,6 +204,19 @@ document.getElementById('allowance-form').addEventListener('submit', async (e) =
   loadMembers();
 });
 
+const nameModal = document.getElementById('name-modal');
+document.getElementById('close-name').addEventListener('click', () => nameModal.classList.add('hidden'));
+nameModal.addEventListener('click', (e) => { if (e.target === nameModal) nameModal.classList.add('hidden'); });
+document.getElementById('name-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const uid = document.getElementById('name-uid').value;
+  const displayName = document.getElementById('name-value').value.trim();
+  if (!uid) return;
+  await updateDoc(doc(db, 'users', uid), { displayName });
+  nameModal.classList.add('hidden');
+  loadMembers();
+});
+
 // Add Member Modal
 const addMemberModal = document.getElementById('add-member-modal');
 document.getElementById('open-add-member').addEventListener('click', () => addMemberModal.classList.remove('hidden'));
@@ -174,6 +225,7 @@ addMemberModal.addEventListener('click', (e) => { if (e.target === addMemberModa
 
 document.getElementById('add-member-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const displayName = document.getElementById('member-display').value.trim();
   const username = document.getElementById('member-username').value.trim();
   const password = document.getElementById('member-password').value;
   const role = document.getElementById('member-role').value;
@@ -185,6 +237,7 @@ document.getElementById('add-member-form').addEventListener('submit', async (e) 
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'users', cred.user.uid), {
       username,
+      displayName,
       role,
       familyId: userData.familyId,
       weeklyAllowance: role === 'child' ? 5 : null
@@ -233,7 +286,7 @@ async function renderChores() {
   snap.forEach(docSnap => {
     const chore = docSnap.data();
     const active = chore.active !== false;
-    const assigned = chore.assignedTo === 'all' ? 'All' : (familyMembers.find(m => m.uid === chore.assignedTo)?.username || '?');
+    const assigned = chore.assignedTo === 'all' ? 'All' : personLabel(familyMembers.find(m => m.uid === chore.assignedTo));
     const div = document.createElement('div');
     div.className = 'row' + (active ? '' : ' inactive');
     div.innerHTML = `
@@ -395,7 +448,7 @@ document.getElementById('close-task-modal').addEventListener('click', () => task
 taskModal.addEventListener('click', (e) => { if (e.target === taskModal) taskModal.classList.add('hidden'); });
 
 function taskMeta(task) {
-  const who = task.assigneeUid === auth.currentUser?.uid ? 'Me' : (familyMembers.find(m => m.uid === task.assigneeUid)?.username || '?');
+  const who = task.assigneeUid === auth.currentUser?.uid ? 'Me' : personLabel(familyMembers.find(m => m.uid === task.assigneeUid));
   if (task.kind === 'once') {
     const kind = task.audience === 'honey' ? 'Honey-do' : task.audience === 'bonus' ? 'Bonus' : 'One-off';
     const money = task.amount ? ` • +$${Number(task.amount).toFixed(2)}` : '';
