@@ -946,6 +946,93 @@ button.nav-pill { font-family: inherit; }
 .swatch.mission { background: linear-gradient(135deg, #0b0f19, #00e5ff); }
 .swatch.block { background: linear-gradient(#5d9c2a 0 42%, #6b4f2a 42% 100%); border-radius: 0; }
 .swatch.pink { background: linear-gradient(160deg, #fff 0 18%, #ff4f9a 18% 62%, #ffd76a 62% 100%); }
+.swatch.rocky { background: linear-gradient(#ffffff 0 62%, #ff8200 62% 100%); }
+
+html[data-theme="rocky"] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f4f4;
+  --border: #e4e4e4;
+  --text: #111111;
+  --text-dim: #4a4a4a;
+  --accent: #ff8200;
+  --accent-2: #ff8200;
+  --success: #0d6b3d;
+  --warning: #8a5200;
+  --danger: #b42318;
+  --radius: 2px;
+  --shadow: none;
+}
+html[data-theme="rocky"] body { background: #fff; }
+html[data-theme="rocky"] h1,
+html[data-theme="rocky"] .section-title,
+html[data-theme="rocky"] .panel h2,
+html[data-theme="rocky"] .modal-box h3,
+html[data-theme="rocky"] .level-title {
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  color: #111;
+}
+html[data-theme="rocky"] .header { border-bottom: 3px solid #ff8200; padding-bottom: 14px; }
+html[data-theme="rocky"] .logo-icon {
+  background: #ff8200;
+  color: #111;
+  border-radius: 2px;
+  box-shadow: none;
+}
+html[data-theme="rocky"] .stat-card,
+html[data-theme="rocky"] .panel,
+html[data-theme="rocky"] .chore-item,
+html[data-theme="rocky"] .level-panel,
+html[data-theme="rocky"] .week-overview,
+html[data-theme="rocky"] .day-nav,
+html[data-theme="rocky"] .earnings-panel,
+html[data-theme="rocky"] .modal-box,
+html[data-theme="rocky"] .login-card,
+html[data-theme="rocky"] .nav-pill,
+html[data-theme="rocky"] .theme-card {
+  background: #fff;
+  border: 1px solid #e4e4e4;
+  box-shadow: none;
+}
+html[data-theme="rocky"] .panel { padding: 18px; }
+html[data-theme="rocky"] .chore-item { padding: 14px 16px; }
+html[data-theme="rocky"] .form-row input,
+html[data-theme="rocky"] .form-row select,
+html[data-theme="rocky"] .account-form input {
+  background: #fff;
+  color: #111;
+  border: 1px solid #d0d0d0;
+  border-radius: 2px;
+  padding: 12px 14px;
+}
+html[data-theme="rocky"] .primary-btn,
+html[data-theme="rocky"] .approve-btn,
+html[data-theme="rocky"] .view-switch button.active {
+  background: #ff8200;
+  color: #111;
+  border: none;
+  border-radius: 2px;
+  font-weight: 700;
+}
+html[data-theme="rocky"] .ghost-btn,
+html[data-theme="rocky"] .schedule-btn,
+html[data-theme="rocky"] .nav-pill { color: #111; border-color: #e4e4e4; }
+html[data-theme="rocky"] .schedule-btn { border-style: solid; }
+html[data-theme="rocky"] .view-switch button { border-radius: 2px; color: #4a4a4a; }
+html[data-theme="rocky"] .day-pill { background: #fafafa; color: #111; border-radius: 2px; }
+html[data-theme="rocky"] .day-pill.today { border-color: #ff8200; }
+html[data-theme="rocky"] .stat-card .value,
+html[data-theme="rocky"] .link-btn,
+html[data-theme="rocky"] .xp-fill { color: #ff8200; }
+html[data-theme="rocky"] .xp-fill { background: #ff8200; }
+html[data-theme="rocky"] .bottom-nav { background: #fff; border-top: 3px solid #ff8200; }
+html[data-theme="rocky"] .bottom-nav a,
+html[data-theme="rocky"] .bottom-nav button { color: #4a4a4a; }
+html[data-theme="rocky"] .bottom-nav a.active,
+html[data-theme="rocky"] .bottom-nav button.active { color: #ff8200; }
+html[data-theme="rocky"] .theme-card.selected { border-color: #ff8200; box-shadow: 0 0 0 1px #ff8200; }
 
 html[data-theme="block"] {
   --bg: #5c4124;

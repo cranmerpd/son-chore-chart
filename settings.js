@@ -49,7 +49,7 @@ function personLabel(member) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' ? theme : 'mission';
+  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' ? theme : 'mission';
 }
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
