@@ -1668,6 +1668,110 @@ html[data-theme="channel"] .version,
 html[data-theme="channel"] .net-status { color: #b7c0d0; }
 html[data-theme="channel"] .theme-card.selected { border-color: #ff3d9a; }
 
+.swatch.glass { background: linear-gradient(180deg, #f4f8f1 0 55%, #c46a45 55% 100%); }
+
+html[data-theme="glass"] {
+  --bg: #e5f0df;
+  --surface: #f7f3ea;
+  --surface-2: #e7f0df;
+  --border: #c9b89a;
+  --text: #2c2416;
+  --text-dim: #5c5346;
+  --accent: #2f6b3a;
+  --accent-2: #c46a45;
+  --success: #2f6b3a;
+  --warning: #8a5a12;
+  --danger: #a33b2b;
+  --radius: 16px;
+  --shadow: 0 10px 24px rgba(70, 90, 50, 0.08);
+}
+html[data-theme="glass"] body {
+  background-color: #dcead4;
+  background-image:
+    radial-gradient(circle at 6% 10%, rgba(255,255,255,0.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 94% 16%, rgba(255,255,255,0.8) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 8% 86%, rgba(255,255,255,0.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 96% 78%, rgba(255,255,255,0.7) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.85), transparent 55%),
+    linear-gradient(180deg, #f7fbf4, #d5e6cc);
+  background-size: 90px 110px, 120px 140px, 80px 100px, 140px 120px, auto, auto;
+}
+html[data-theme="glass"] h1,
+html[data-theme="glass"] .section-title,
+html[data-theme="glass"] .panel h2,
+html[data-theme="glass"] .modal-box h3,
+html[data-theme="glass"] .level-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #3d4a32;
+}
+html[data-theme="glass"] h1 { font-size: 2.1rem; line-height: 1; }
+html[data-theme="glass"] .section-title { font-size: 1.55rem; margin-bottom: 10px; }
+html[data-theme="glass"] .panel h2 { font-size: 1.6rem; }
+html[data-theme="glass"] .header { border-bottom: none; }
+html[data-theme="glass"] .tagline { letter-spacing: 0.04em; text-transform: none; color: #5c5346; }
+html[data-theme="glass"] .logo-icon {
+  background: #c46a45;
+  border-radius: 40% 40% 46% 46%;
+  box-shadow: none;
+}
+html[data-theme="glass"] .stat-card,
+html[data-theme="glass"] .panel,
+html[data-theme="glass"] .chore-item,
+html[data-theme="glass"] .level-panel,
+html[data-theme="glass"] .week-overview,
+html[data-theme="glass"] .day-nav,
+html[data-theme="glass"] .earnings-panel,
+html[data-theme="glass"] .modal-box,
+html[data-theme="glass"] .login-card,
+html[data-theme="glass"] .nav-pill,
+html[data-theme="glass"] .theme-card {
+  background: #f7f3ea;
+  border: 1px solid #c9b89a;
+  border-radius: 4px 16px 16px 4px;
+  box-shadow: var(--shadow);
+  color: #2c2416;
+}
+html[data-theme="glass"] .theme-card strong,
+html[data-theme="glass"] .theme-card span { color: #2c2416; }
+html[data-theme="glass"] .form-row input,
+html[data-theme="glass"] .form-row select,
+html[data-theme="glass"] .account-form input {
+  background: #fffdf8;
+  color: #2c2416;
+  border: 1px solid #c9b89a;
+  border-radius: 12px;
+  padding: 12px;
+}
+html[data-theme="glass"] .primary-btn,
+html[data-theme="glass"] .approve-btn,
+html[data-theme="glass"] .view-switch button.active {
+  background: #2f6b3a;
+  color: #f7f3ea;
+  border: none;
+  border-radius: 999px;
+}
+html[data-theme="glass"] .ghost-btn,
+html[data-theme="glass"] .schedule-btn,
+html[data-theme="glass"] .nav-pill,
+html[data-theme="glass"] .view-switch button {
+  color: #2f6b3a;
+  background: #f7f3ea;
+  border-color: #c9b89a;
+}
+html[data-theme="glass"] .day-pill { background: #f7f3ea; color: #2c2416; border-radius: 12px; }
+html[data-theme="glass"] .day-pill.today { box-shadow: inset 0 0 0 2px #c46a45; }
+html[data-theme="glass"] .xp-fill { background: #2f6b3a; }
+html[data-theme="glass"] .bottom-nav { background: rgba(247, 243, 234, 0.94); border-top: 1px solid #c9b89a; }
+html[data-theme="glass"] .bottom-nav a,
+html[data-theme="glass"] .bottom-nav button { color: #5c5346; }
+html[data-theme="glass"] .bottom-nav a.active,
+html[data-theme="glass"] .bottom-nav button.active { color: #2f6b3a; }
+html[data-theme="glass"] .version { color: #5c5346; }
+html[data-theme="glass"] .theme-card.selected { border-color: #2f6b3a; box-shadow: 0 0 0 1px #2f6b3a; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
