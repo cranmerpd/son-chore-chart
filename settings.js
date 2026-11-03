@@ -49,7 +49,9 @@ function personLabel(member) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' ? theme : 'mission';
+  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' ? theme : 'mission';
+  document.documentElement.dataset.theme = name;
+  try { localStorage.setItem('mc-theme', name); } catch (e) {}
 }
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
@@ -61,9 +63,15 @@ const settingsContent = document.getElementById('settings-content');
 let userData = null;
 let familyMembers = [];
 
-document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
 
+let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
+  await auth.authStateReady();
+  user = auth.currentUser;
+  const key = user ? user.uid : 'out';
+  if (seenAuth === key) return;
+  seenAuth = key;
   if (!user) {
     loginRequired.style.display = 'block';
     settingsContent.style.display = 'none';
@@ -478,7 +486,7 @@ async function renderTasks() {
     if (data.audience === 'honey' && data.assigneeUid !== auth.currentUser.uid && data.ownerUid !== auth.currentUser.uid) return;
     if (data.audience === 'mine' && data.assigneeUid !== auth.currentUser.uid) return;
     if (data.kind === 'once') once.push(data);
-    else if (data.ownerUid === auth.currentUser.uid || data.audience === 'child') recurring.push(data);
+    else if (data.audience === 'child') recurring.push(data);
   });
   once.sort((a, b) => String(b.dueDate || '').localeCompare(String(a.dueDate || '')));
   if (!recurring.length) recurringEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.8rem;">No recurring chores yet.</p>';

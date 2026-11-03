@@ -129,7 +129,7 @@ authForm.addEventListener('submit', async (e) => {
   authSubmit.disabled = false;
 });
 
-document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
 document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth));
 
 const collapseToggle = document.getElementById('collapse-toggle');
@@ -245,7 +245,9 @@ function memberName(uid) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' ? theme : 'mission';
+  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' ? theme : 'mission';
+  document.documentElement.dataset.theme = name;
+  try { localStorage.setItem('mc-theme', name); } catch (e) {}
 }
 function freqLabel(task) {
   if (task.kind === 'once') {
@@ -1187,7 +1189,13 @@ async function loadFamily() {
   lookForSnakePass();
 }
 
+let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
+  await auth.authStateReady();
+  user = auth.currentUser;
+  const key = user ? user.uid : 'out';
+  if (seenAuth === key) return;
+  seenAuth = key;
   if (user) {
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists()) {

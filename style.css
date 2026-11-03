@@ -467,7 +467,7 @@ body {
 
 @media (max-width: 640px) {
   .app { padding: 12px 12px 80px; }
-  .header-actions .nav-pill.desktop-only { display: none; }
+  .header-actions { display: none !important; }
   .stats-strip { display: none; }
   .bottom-nav { display: flex; }
   .header { padding-bottom: 10px; }
@@ -919,6 +919,15 @@ button.nav-pill { font-family: inherit; }
 
 .account-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; max-width: 420px; }
 .account-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+}
+.account-form select {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1859,6 +1868,10 @@ html[data-theme="horns"] .bottom-nav button.active { color: #bf5700; }
 html[data-theme="horns"] .version { color: #fff; position: relative; z-index: 50; }
 html[data-theme="horns"] .version::before { content: "Rocky Top remains undefeated. "; }
 html[data-theme="horns"] .theme-card.selected { border-color: #bf5700; }
+
+.app, .bottom-nav, .login-screen { animation: page-in 0.22s ease; }
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+.sign-out-btn { width: 100%; margin: 18px 0 8px; }
 
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }

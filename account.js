@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -26,7 +26,9 @@ function normalizeTheme(theme) {
   return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' ? theme : 'mission';
 }
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = normalizeTheme(theme);
+  const name = normalizeTheme(theme);
+  document.documentElement.dataset.theme = name;
+  try { localStorage.setItem('mc-theme', name); } catch (e) {}
 }
 
 function markTheme(theme) {
@@ -35,7 +37,13 @@ function markTheme(theme) {
   });
 }
 
+let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
+  await auth.authStateReady();
+  user = auth.currentUser;
+  const key = user ? user.uid : 'out';
+  if (seenAuth === key) return;
+  seenAuth = key;
   const content = document.getElementById('account-content');
   const gate = document.getElementById('login-required');
   if (!user) {
@@ -61,10 +69,15 @@ onAuthStateChanged(auth, async (user) => {
   if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
   gate.style.display = 'none';
   content.style.display = 'block';
+  const anchor = document.getElementById('my-task-anchor');
+  if (anchor && !anchor.value) {
+    const n = new Date();
+    anchor.value = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  }
+  loadMyRecurring();
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
-document.getElementById('mobile-logout')?.addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
 
 document.getElementById('name-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -117,6 +130,83 @@ document.getElementById('password-form').addEventListener('submit', async (e) =>
     else if (code === 'auth/weak-password') msg.textContent = 'Use at least 6 characters.';
     else msg.textContent = err.message || 'Could not change the password.';
   }
+});
+
+const FREQ = { daily: 'Daily', weekdays: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Every 3 months', yearly: 'Yearly' };
+
+async function loadMyRecurring() {
+  const list = document.getElementById('my-recurring-list');
+  if (!list || !userData?.familyId || !auth.currentUser) return;
+  list.innerHTML = '';
+  const snap = await getDocs(query(collection(db, 'families', userData.familyId, 'tasks'), where('assigneeUid', '==', auth.currentUser.uid)));
+  const mine = [];
+  snap.forEach(d => {
+    const data = d.data();
+    if (data.audience === 'mine' && data.kind !== 'once') mine.push({ id: d.id, ...data });
+  });
+  if (!mine.length) {
+    list.innerHTML = '<p class="field-help">Nothing repeating on this account yet.</p>';
+    return;
+  }
+  mine.forEach(task => {
+    const row = document.createElement('div');
+    row.className = 'row' + (task.active === false ? ' inactive' : '');
+    const info = document.createElement('div');
+    info.className = 'row-info';
+    const title = document.createElement('div');
+    title.className = 'row-title';
+    title.textContent = task.name || 'Chore';
+    const meta = document.createElement('div');
+    meta.className = 'row-meta';
+    meta.textContent = (FREQ[task.frequency] || task.frequency || '') + (task.anchorDate ? ' • from ' + task.anchorDate : '');
+    info.append(title, meta);
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'icon-btn';
+    toggle.textContent = task.active === false ? '○' : '●';
+    toggle.title = task.active === false ? 'Turn on' : 'Turn off';
+    toggle.addEventListener('click', async () => {
+      await updateDoc(doc(db, 'families', userData.familyId, 'tasks', task.id), { active: task.active === false });
+      loadMyRecurring();
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'icon-btn';
+    remove.textContent = '✕';
+    remove.title = 'Remove';
+    remove.addEventListener('click', async () => {
+      await deleteDoc(doc(db, 'families', userData.familyId, 'tasks', task.id));
+      loadMyRecurring();
+    });
+    actions.append(toggle, remove);
+    row.append(info, actions);
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('my-recurring-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('my-task-name').value.trim();
+  const frequency = document.getElementById('my-task-frequency').value;
+  const anchorDate = document.getElementById('my-task-anchor').value;
+  if (!name || !anchorDate || !userData?.familyId || !auth.currentUser) return;
+  await addDoc(collection(db, 'families', userData.familyId, 'tasks'), {
+    name,
+    kind: 'recurring',
+    audience: 'mine',
+    ownerUid: auth.currentUser.uid,
+    assigneeUid: auth.currentUser.uid,
+    frequency,
+    anchorDate,
+    dueDate: null,
+    amount: null,
+    active: true
+  });
+  e.target.reset();
+  document.getElementById('my-task-anchor').value = anchorDate;
+  loadMyRecurring();
 });
 
 window.addEventListener('offline', () => { document.getElementById('net-status').hidden = false; });
