@@ -943,8 +943,6 @@ function applyView() {
   if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
   if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
   if (resetBtn) resetBtn.style.display = isParentUser() && !mine ? 'inline-block' : 'none';
-  const testSnake = document.getElementById('test-snake-btn');
-  if (testSnake) testSnake.style.display = isParentUser() ? 'inline-block' : 'none';
   if (mine) renderParentProgress();
 }
 
@@ -1693,19 +1691,6 @@ function closeCranmerboy() {
 }
 
 document.getElementById('gb-close')?.addEventListener('click', closeCranmerboy);
-document.getElementById('test-snake-btn')?.addEventListener('click', () => {
-  if (!isParentUser()) return;
-  const kid = familyMembers.find(m => m.role === 'child');
-  const name = kid ? kid.username : 'him';
-  showSnakeOffer({
-    title: 'Chores are done',
-    body: name + ' finished today\'s chores. Hand over the phone, or save Cranmerboy. It stays available for 24 hours. Test only: nothing is saved.',
-    primary: 'Play now',
-    secondary: 'Save for ' + name,
-    onPrimary: () => openCranmerboy(kid ? kid.uid : 'test', true),
-    onSecondary: () => {}
-  });
-});
 document.getElementById('gb-start')?.addEventListener('click', () => {
   if (!gbOpen) return;
   if (gbMode === 'play') gbMode = 'pause';
