@@ -153,7 +153,12 @@ let unsubscribe = null;
 
 const CIRCUMFERENCE = 2 * Math.PI * 52;
 
-function getDateKey(date) { return date.toISOString().split('T')[0]; }
+function getDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 function getWeekStart(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -283,7 +288,7 @@ function getAllTimeStats() {
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
     if (required > 0 && checks >= required) fullDays++;
-    const ws = getWeekStart(d).toISOString().split('T')[0];
+    const ws = getDateKey(getWeekStart(d));
     if (!seenWeeks.has(ws)) {
       seenWeeks.add(ws);
       const stats = getWeekStats(getWeekStart(d));
