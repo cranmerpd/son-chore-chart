@@ -1231,6 +1231,114 @@ html[data-theme="kids"] .version,
 html[data-theme="kids"] .net-status { color: #fff; }
 html[data-theme="kids"] .theme-card.selected { border-color: #ff2d95; box-shadow: 4px 4px 0 #ff2d95; }
 
+.swatch.journal {
+  background:
+    repeating-linear-gradient(#fffdf8, #fffdf8 7px, #c5d8ee 8px),
+    linear-gradient(90deg, #fffdf8 28%, #e25b5b 28%, #e25b5b 32%, #fffdf8 32%);
+}
+
+html[data-theme="journal"] {
+  --bg: #fffdf8;
+  --surface: rgba(255, 253, 248, 0.94);
+  --surface-2: #fff6d8;
+  --border: #1c1c1c;
+  --text: #1c1c1c;
+  --text-dim: #3d3d3d;
+  --accent: #c23b3b;
+  --accent-2: #2b4c7e;
+  --success: #1d6b3a;
+  --warning: #8a5200;
+  --danger: #b42318;
+  --radius: 2px;
+  --shadow: none;
+}
+html[data-theme="journal"] body {
+  background-color: #fffdf8;
+  background-image:
+    repeating-linear-gradient(transparent, transparent 31px, #c5d8ee 32px),
+    linear-gradient(90deg, transparent 16px, #e25b5b 16px, #e25b5b 18px, transparent 18px);
+  background-attachment: local;
+}
+html[data-theme="journal"] h1,
+html[data-theme="journal"] .section-title,
+html[data-theme="journal"] .panel h2,
+html[data-theme="journal"] .modal-box h3,
+html[data-theme="journal"] .level-title,
+html[data-theme="journal"] .theme-card strong,
+html[data-theme="journal"] .primary-btn,
+html[data-theme="journal"] .nav-pill {
+  font-family: 'Patrick Hand', 'Outfit', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1c1c1c;
+}
+html[data-theme="journal"] h1 { font-size: 1.8rem; font-weight: 400; }
+html[data-theme="journal"] .section-title,
+html[data-theme="journal"] .panel h2 { font-size: 1.25rem; font-weight: 400; color: #1c1c1c; }
+html[data-theme="journal"] .header,
+html[data-theme="journal"] .stat-card,
+html[data-theme="journal"] .panel,
+html[data-theme="journal"] .chore-item,
+html[data-theme="journal"] .level-panel,
+html[data-theme="journal"] .week-overview,
+html[data-theme="journal"] .day-nav,
+html[data-theme="journal"] .earnings-panel,
+html[data-theme="journal"] .modal-box,
+html[data-theme="journal"] .login-card,
+html[data-theme="journal"] .nav-pill,
+html[data-theme="journal"] .theme-card {
+  background: rgba(255, 253, 248, 0.92);
+  border: 2px solid #1c1c1c;
+  border-radius: 2px;
+  box-shadow: none;
+}
+html[data-theme="journal"] .app { padding-left: 32px; }
+html[data-theme="journal"] .logo-icon {
+  background: #fffdf8;
+  border: 2px solid #1c1c1c;
+  border-radius: 2px;
+  box-shadow: none;
+}
+html[data-theme="journal"] .form-row input,
+html[data-theme="journal"] .form-row select,
+html[data-theme="journal"] .account-form input {
+  background: #fffdf8;
+  color: #1c1c1c;
+  border: none;
+  border-bottom: 2px solid #1c1c1c;
+  border-radius: 0;
+  font-family: 'Patrick Hand', 'Outfit', sans-serif;
+  font-size: 1.15rem;
+}
+html[data-theme="journal"] .primary-btn,
+html[data-theme="journal"] .approve-btn,
+html[data-theme="journal"] .view-switch button.active {
+  background: #fffdf8;
+  color: #1c1c1c;
+  border: 2px solid #1c1c1c;
+  border-radius: 2px;
+  font-size: 1.05rem;
+}
+html[data-theme="journal"] .ghost-btn,
+html[data-theme="journal"] .schedule-btn,
+html[data-theme="journal"] .view-switch button {
+  color: #1c1c1c;
+  background: transparent;
+  border: 2px dashed #1c1c1c;
+  border-radius: 2px;
+  font-family: 'Patrick Hand', 'Outfit', sans-serif;
+}
+html[data-theme="journal"] .day-pill { background: transparent; color: #1c1c1c; border-radius: 2px; border: 2px solid transparent; }
+html[data-theme="journal"] .day-pill.today { border-color: #c23b3b; }
+html[data-theme="journal"] .xp-fill { background: #2b4c7e; }
+html[data-theme="journal"] .bottom-nav { background: #fffdf8; border-top: 2px solid #1c1c1c; }
+html[data-theme="journal"] .bottom-nav a,
+html[data-theme="journal"] .bottom-nav button { color: #1c1c1c; font-family: 'Patrick Hand', 'Outfit', sans-serif; font-size: 0.85rem; }
+html[data-theme="journal"] .bottom-nav a.active,
+html[data-theme="journal"] .bottom-nav button.active { color: #c23b3b; }
+html[data-theme="journal"] .theme-card.selected { border-color: #c23b3b; box-shadow: none; }
+html[data-theme="journal"] .tagline { font-family: 'Patrick Hand', 'Outfit', sans-serif; letter-spacing: 0.04em; text-transform: none; font-size: 0.95rem; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
