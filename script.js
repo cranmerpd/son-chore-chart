@@ -437,6 +437,7 @@ function checkBadges() {
     }
   });
   if (newlyUnlocked.length) { saveFamily(); showBadgeUnlock(newlyUnlocked[0]); }
+  if (activeView() === 'mine') return;
   const count = (familyData.unlockedBadges || []).length;
   const badgeCount = document.getElementById('badge-count');
   if (badgeCount) badgeCount.textContent = count;
@@ -646,12 +647,7 @@ function renderSpecialTasks() {
   }
 
   const mineList = document.getElementById('mine-list');
-  if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due. Use the button below to add a one-off.');
-  const mineCount = document.getElementById('mine-count');
-  if (mineCount) {
-    const open = mine.filter(t => !taskEntry(t, dateKey).verified).length;
-    mineCount.textContent = !mine.length ? 'Clear' : (open ? `${open} left` : 'All done');
-  }
+  if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due this day.');
   const sentSection = document.getElementById('sent-section');
   const sentList = document.getElementById('sent-list');
   if (sentSection && sentList) {
@@ -840,6 +836,7 @@ function buildParentSummary(uid) {
 let parentCache = null;
 let parentCacheToken = '';
 let seenParentBadges = null;
+let lastParentSummary = null;
 
 function parentSummary(uid) {
   const token = uid + '|' + JSON.stringify(tasks.map(t => [t.id, t.active, t.audience, t.frequency, t.anchorDate, t.dueDate, t.assigneeUid])) + '|' + JSON.stringify(familyData.taskChecks || {});
@@ -878,9 +875,9 @@ function badgeMeter(id, summary) {
 }
 
 function renderParentProgress() {
-  const root = document.getElementById('parent-progress');
-  if (!root || !isParentUser() || !auth.currentUser) return;
+  if (!isParentUser() || !auth.currentUser) return;
   const summary = parentSummary(auth.currentUser.uid);
+  lastParentSummary = summary;
   let current = PARENT_LEVELS[0];
   let next = PARENT_LEVELS[1];
   for (let i = PARENT_LEVELS.length - 1; i >= 0; i--) {
@@ -890,80 +887,34 @@ function renderParentProgress() {
       break;
     }
   }
-  document.getElementById('parent-rank').textContent = current.title;
   const span = Math.max(1, next.xp - current.xp);
   const into = summary.points - current.xp;
   const topped = next === current;
-  document.getElementById('parent-xp').textContent = topped ? summary.points + ' pts' : into + ' / ' + span + ' to ' + next.title;
-  document.getElementById('parent-xp-fill').style.width = ((topped ? 1 : Math.min(1, into / span)) * 100) + '%';
-  const metrics = document.getElementById('parent-metrics');
-  metrics.innerHTML = '';
-  [['Done', summary.completions], ['Streak', summary.streak], ['Best', summary.bestStreak], ['On time', summary.onTime]].forEach(([label, value]) => {
-    const cell = document.createElement('div');
-    cell.className = 'board-metric';
-    cell.innerHTML = '<span class="k"></span><span class="v"></span>';
-    cell.querySelector('.k').textContent = label;
-    cell.querySelector('.v').textContent = String(value);
-    metrics.appendChild(cell);
-  });
-  const earned = PARENT_BADGES.filter(b => summary.badges.includes(b.id));
-  const locked = PARENT_BADGES.filter(b => !summary.badges.includes(b.id));
-  const heading = document.getElementById('parent-badge-heading');
-  if (heading) heading.textContent = `Badges · ${earned.length} of ${PARENT_BADGES.length}`;
-  const list = document.getElementById('parent-badge-list');
-  list.innerHTML = '';
-  earned.forEach(badge => {
-    const chip = document.createElement('span');
-    chip.className = 'parent-chip';
-    chip.textContent = badge.name;
-    chip.title = badge.desc;
-    list.appendChild(chip);
-  });
-  const card = document.getElementById('parent-next-card');
-  const ahead = document.getElementById('parent-next');
-  const afterLabel = document.getElementById('parent-after-label');
-  if (card) {
-    card.innerHTML = '';
-    const first = locked[0];
-    card.hidden = !first;
-    if (first) {
-      const meter = badgeMeter(first.id, summary);
-      const pct = Math.max(0, Math.min(100, Math.round((meter[0] / meter[1]) * 100)));
-      const kicker = document.createElement('div');
-      kicker.className = 'next-kicker';
-      kicker.textContent = 'Next badge';
-      const name = document.createElement('div');
-      name.className = 'next-name';
-      name.textContent = first.name;
-      const desc = document.createElement('div');
-      desc.className = 'next-desc';
-      desc.textContent = first.desc;
-      const bar = document.createElement('div');
-      bar.className = 'xp-bar';
-      const fill = document.createElement('div');
-      fill.className = 'xp-fill';
-      fill.style.width = pct + '%';
-      bar.appendChild(fill);
-      const count = document.createElement('div');
-      count.className = 'next-count';
-      count.textContent = `${meter[0]} / ${meter[1]}`;
-      card.append(kicker, name, desc, bar, count);
-    }
-  }
-  if (ahead) {
-    ahead.innerHTML = '';
-    const rest = locked.slice(1, 3);
-    if (afterLabel) afterLabel.hidden = rest.length === 0;
-    rest.forEach(badge => {
-      const line = document.createElement('p');
-      line.className = 'parent-next';
-      const name = document.createElement('strong');
-      name.textContent = badge.name;
-      line.appendChild(name);
-      line.appendChild(document.createTextNode(' — ' + badge.desc));
-      ahead.appendChild(line);
+  document.getElementById('level-value').textContent = current.level;
+  document.getElementById('level-title').textContent = current.title;
+  document.getElementById('xp-text').textContent = topped ? summary.points + ' pts' : into + ' / ' + span + ' to ' + next.title;
+  document.getElementById('xp-fill').style.width = ((topped ? 1 : Math.min(1, into / span)) * 100) + '%';
+  document.getElementById('streak').textContent = summary.streak;
+  const badgeStrip = document.getElementById('badge-count-strip');
+  if (badgeStrip) badgeStrip.textContent = summary.badges.length;
+  const uid = auth.currentUser.uid;
+  const weekStart = getWeekStart(currentDate);
+  let due = 0;
+  let done = 0;
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    const key = getDateKey(day);
+    tasksForParent(uid).forEach(task => {
+      if (!occursOn(task, day)) return;
+      due++;
+      if (taskEntry(task, key).verified) done++;
     });
   }
+  const pct = due ? done / due : 0;
+  document.getElementById('ring-progress').style.strokeDashoffset = CIRCUMFERENCE - pct * CIRCUMFERENCE;
+  document.getElementById('earned-amount').textContent = due ? done + '/' + due : '–';
+  document.getElementById('earned-label').textContent = 'this week';
   if (seenParentBadges) {
     const fresh = summary.badges.find(id => !seenParentBadges.includes(id));
     const badge = PARENT_BADGES.find(b => b.id === fresh);
@@ -976,23 +927,17 @@ function applyView() {
   const mine = activeView() === 'mine';
   const familyEl = document.getElementById('family-sections');
   const mineEl = document.getElementById('mine-section');
-  const earnings = document.querySelector('.earnings-panel');
   if (familyEl) familyEl.style.display = mine ? 'none' : '';
   if (mineEl) mineEl.style.display = mine ? '' : 'none';
-  if (earnings) earnings.style.display = mine ? 'none' : '';
-  if (collapseToggle) collapseToggle.style.display = mine ? 'none' : '';
-  if (dashboardPanel) dashboardPanel.style.display = mine ? 'none' : '';
   document.querySelectorAll('#view-switch button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === (mine ? 'mine' : 'family'));
   });
   const viewSwitch = document.getElementById('view-switch');
   const scheduleBtn = document.getElementById('schedule-btn');
+  const resetBtn = document.getElementById('reset-btn');
   if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
   if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
-  const slot = document.getElementById(mine ? 'mine-schedule-slot' : 'schedule-home');
-  if (scheduleBtn && slot && scheduleBtn.parentElement !== slot) slot.appendChild(scheduleBtn);
-  const appEl = document.getElementById('main-app');
-  if (appEl) appEl.dataset.view = mine ? 'mine' : 'family';
+  if (resetBtn) resetBtn.style.display = isParentUser() && !mine ? 'inline-block' : 'none';
   if (mine) renderParentProgress();
 }
 
@@ -1016,13 +961,25 @@ function renderWeekGrid() {
   grid.innerHTML = '';
   const weekStart = getWeekStart(currentDate);
   const todayKey = getDateKey(new Date());
+  const parentMode = activeView() === 'mine' && auth.currentUser;
+  const uid = auth.currentUser?.uid;
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
     const key = getDateKey(d);
-    const dayData = familyData.days[key] || {};
-    const dayChores = getChoresForDate(d);
-    const required = dayChores.morning.length + dayChores.evening.length;
-    const done = getVerifiedCount(dayData);
+    let required = 0;
+    let done = 0;
+    if (parentMode) {
+      tasksForParent(uid).forEach(task => {
+        if (!occursOn(task, d)) return;
+        required++;
+        if (taskEntry(task, key).verified) done++;
+      });
+    } else {
+      const dayData = familyData.days[key] || {};
+      const dayChores = getChoresForDate(d);
+      required = dayChores.morning.length + dayChores.evening.length;
+      done = getVerifiedCount(dayData);
+    }
     const pct = required > 0 ? Math.round((done / required) * 100) : 0;
     const pill = document.createElement('div');
     pill.className = 'day-pill';
@@ -1152,7 +1109,8 @@ document.querySelectorAll('#view-switch button').forEach(btn => {
   btn.addEventListener('click', () => {
     viewMode = btn.dataset.view === 'mine' ? 'mine' : 'family';
     localStorage.setItem('chartView', viewMode);
-    applyView();
+    renderAll();
+    updateStats();
   });
 });
 
@@ -1279,6 +1237,32 @@ function openBadgeCase() {
   const modal = document.getElementById('badge-case');
   if (!list || !modal) return;
   list.innerHTML = '';
+  const mine = activeView() === 'mine' && isParentUser();
+  const title = modal.querySelector('h3');
+  if (title) title.textContent = mine ? 'Your badges' : 'Badges';
+  if (mine) {
+    const summary = lastParentSummary || parentSummary(auth.currentUser.uid);
+    const unlocked = new Set(summary.badges);
+    PARENT_BADGES.forEach(badge => {
+      const earned = unlocked.has(badge.id);
+      const row = document.createElement('div');
+      row.className = 'row' + (earned ? '' : ' inactive');
+      const info = document.createElement('div');
+      info.className = 'row-info';
+      const name = document.createElement('div');
+      name.className = 'row-title';
+      name.textContent = badge.name;
+      const meta = document.createElement('div');
+      meta.className = 'row-meta';
+      const meter = badgeMeter(badge.id, summary);
+      meta.textContent = (earned ? 'Earned' : meter[0] + ' / ' + meter[1]) + ' · ' + badge.desc;
+      info.append(name, meta);
+      row.appendChild(info);
+      list.appendChild(row);
+    });
+    modal.classList.remove('hidden');
+    return;
+  }
   const unlocked = new Set(familyData.unlockedBadges || []);
   if (!badgesList.length) {
     const empty = document.createElement('p');

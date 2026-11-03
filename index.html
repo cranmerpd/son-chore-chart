@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Chores">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=113">
+  <link rel="stylesheet" href="style.css?v=114">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -162,36 +162,14 @@
       </div>
 
       <div id="mine-section" style="display: none;">
-        <div class="mine-layout">
-          <section class="mine-work">
-            <header class="mine-work-head">
-              <h2>To do</h2>
-              <p id="mine-count" class="mine-count"></p>
-            </header>
-            <div id="mine-list" class="chore-list"></div>
-            <div class="mine-group" id="sent-section" style="display: none;">
-              <h3>Sent</h3>
-              <p class="mine-note">Only you and the person you assigned can see these.</p>
-              <div id="sent-list" class="chore-list"></div>
-            </div>
-            <div id="mine-schedule-slot"></div>
-          </section>
-          <aside class="mine-side" id="parent-progress">
-            <div class="level-panel">
-              <div class="level-info">
-                <span id="parent-rank" class="level-title">Recruit</span>
-                <span id="parent-xp" class="xp-text">0 / 250</span>
-              </div>
-              <div class="xp-bar"><div id="parent-xp-fill" class="xp-fill"></div></div>
-            </div>
-            <div class="board-metrics" id="parent-metrics"></div>
-            <div id="parent-next-card" class="next-badge" hidden></div>
-            <h2 class="board-head" id="parent-after-label" hidden>After that</h2>
-            <div id="parent-next"></div>
-            <h2 class="board-head" id="parent-badge-heading">Badges</h2>
-            <div id="parent-badge-list"></div>
-          </aside>
-        </div>
+        <section class="section">
+          <h2 class="section-title"><span class="dot mine"></span> Today</h2>
+          <div id="mine-list" class="chore-list"></div>
+        </section>
+        <section class="section" id="sent-section" style="display: none;">
+          <h2 class="section-title"><span class="dot honey"></span> Sent</h2>
+          <div id="sent-list" class="chore-list"></div>
+        </section>
       </div>
     </main>
 
@@ -199,7 +177,7 @@
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
 
-    <p class="version">v1.13</p>
+    <p class="version">v1.14</p>
   </div>
 
   <div id="install-banner" class="install-banner" hidden>
@@ -286,6 +264,6 @@
     </div>
   </div>
 
-  <script type="module" src="script.js?v=113"></script>
+  <script type="module" src="script.js?v=114"></script>
 </body>
 </html>
