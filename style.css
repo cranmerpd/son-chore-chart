@@ -1772,6 +1772,94 @@ html[data-theme="glass"] .bottom-nav button.active { color: #2f6b3a; }
 html[data-theme="glass"] .version { color: #5c5346; }
 html[data-theme="glass"] .theme-card.selected { border-color: #2f6b3a; box-shadow: 0 0 0 1px #2f6b3a; }
 
+.swatch.horns { background: linear-gradient(#bf5700 0 70%, #ffffff 70% 100%); }
+
+html[data-theme="horns"] {
+  --bg: #bf5700;
+  --surface: #fff8f2;
+  --surface-2: #ffe0c2;
+  --border: #1a1a1a;
+  --text: #1a1a1a;
+  --text-dim: #3a2418;
+  --accent: #bf5700;
+  --accent-2: #8c3a00;
+  --success: #1d6b32;
+  --warning: #8a5a00;
+  --danger: #9d1c1c;
+  --radius: 8px;
+  --shadow: none;
+}
+html[data-theme="horns"] body { background: #bf5700; }
+html[data-theme="horns"] body::before {
+  content: "💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩 💩";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: hidden;
+  font-size: 26px;
+  line-height: 1.35;
+  letter-spacing: 0.2em;
+  word-break: break-all;
+}
+html[data-theme="horns"] .theme-panel,
+html[data-theme="horns"] .bottom-nav,
+html[data-theme="horns"] .header-actions {
+  position: relative;
+  z-index: 50;
+}
+html[data-theme="horns"] h1 { font-size: 0; }
+html[data-theme="horns"] h1::after {
+  content: "Horns down";
+  font-size: 1.5rem;
+  color: #fff;
+}
+html[data-theme="horns"] .tagline { font-size: 0; }
+html[data-theme="horns"] .tagline::after {
+  content: "Texas, in one picture 💩";
+  font-size: 0.78rem;
+  color: #fff;
+  letter-spacing: 0;
+  text-transform: none;
+}
+html[data-theme="horns"] .logo-icon { font-size: 0; background: #fff; }
+html[data-theme="horns"] .logo-icon::after { content: "💩"; font-size: 22px; }
+html[data-theme="horns"] .section-title { font-size: 0; }
+html[data-theme="horns"] .section-title::after {
+  content: "Hook 'em? No. 💩";
+  font-size: 1.05rem;
+  color: #fff;
+}
+html[data-theme="horns"] .stat-card,
+html[data-theme="horns"] .panel,
+html[data-theme="horns"] .chore-item,
+html[data-theme="horns"] .level-panel,
+html[data-theme="horns"] .week-overview,
+html[data-theme="horns"] .day-nav,
+html[data-theme="horns"] .earnings-panel,
+html[data-theme="horns"] .modal-box,
+html[data-theme="horns"] .login-card {
+  background: #fff8f2;
+  border: 2px dashed #1a1a1a;
+  color: #1a1a1a;
+}
+html[data-theme="horns"] .primary-btn,
+html[data-theme="horns"] .approve-btn,
+html[data-theme="horns"] .view-switch button.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+html[data-theme="horns"] .primary-btn::before,
+html[data-theme="horns"] .approve-btn::before { content: "💩 "; }
+html[data-theme="horns"] .bottom-nav { background: #1a1a1a; border-top: 4px solid #bf5700; }
+html[data-theme="horns"] .bottom-nav a,
+html[data-theme="horns"] .bottom-nav button { color: #fff; }
+html[data-theme="horns"] .bottom-nav a.active,
+html[data-theme="horns"] .bottom-nav button.active { color: #bf5700; }
+html[data-theme="horns"] .version { color: #fff; position: relative; z-index: 50; }
+html[data-theme="horns"] .version::before { content: "Rocky Top remains undefeated. "; }
+html[data-theme="horns"] .theme-card.selected { border-color: #bf5700; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
