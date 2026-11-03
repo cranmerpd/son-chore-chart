@@ -377,11 +377,17 @@ async function renderTasks() {
   const onceEl = document.getElementById('onetime-list');
   recurringEl.innerHTML = '';
   onceEl.innerHTML = '';
-  const snap = await getDocs(collection(db, 'families', userData.familyId, 'tasks'));
+  const col = collection(db, 'families', userData.familyId, 'tasks');
+  const ownSnap = await getDocs(query(col, where('assigneeUid', '==', auth.currentUser.uid)));
+  const sharedSnap = await getDocs(query(col, where('audience', 'in', ['bonus', 'child'])));
+  const seen = new Map();
+  ownSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
+  sharedSnap.forEach(d => seen.set(d.id, { id: d.id, ...d.data() }));
   const recurring = [];
   const once = [];
-  snap.forEach(d => {
-    const data = { id: d.id, ...d.data() };
+  seen.forEach(data => {
+    if (data.audience === 'honey' && data.assigneeUid !== auth.currentUser.uid) return;
+    if (data.audience === 'mine' && data.assigneeUid !== auth.currentUser.uid) return;
     if (data.kind === 'once') once.push(data);
     else if (data.ownerUid === auth.currentUser.uid || data.audience === 'child') recurring.push(data);
   });

@@ -524,8 +524,7 @@ function renderTaskRow(task, dateKey, mode) {
   else if (entry.checked) item.classList.add('pending');
 
   const bits = [freqLabel(task)];
-  if (task.audience === 'honey' && task.ownerUid !== auth.currentUser?.uid) bits.push('from ' + memberName(task.ownerUid));
-  if (task.audience === 'honey' && task.ownerUid === auth.currentUser?.uid) bits.push('for ' + memberName(task.assigneeUid));
+  if (task.audience === 'honey' && task.assigneeUid === auth.currentUser?.uid) bits.push('from ' + memberName(task.ownerUid));
   if ((task.audience === 'bonus' || task.audience === 'child') && isParentUser()) bits.push(memberName(task.assigneeUid));
 
   let statusHtml = '';
@@ -594,7 +593,6 @@ function renderSpecialTasks() {
   const bonus = due.filter(t => t.audience === 'bonus' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
   const childExtra = due.filter(t => t.audience === 'child' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
   const mine = due.filter(t => t.assigneeUid === myUid && (t.audience === 'mine' || t.audience === 'honey'));
-  const outgoing = due.filter(t => t.audience === 'honey' && t.ownerUid === myUid && t.assigneeUid !== myUid);
 
   const bonusSection = document.getElementById('bonus-section');
   const extraSection = document.getElementById('child-scheduled-section');
@@ -610,16 +608,7 @@ function renderSpecialTasks() {
   }
 
   const mineList = document.getElementById('mine-list');
-  const outgoingList = document.getElementById('outgoing-list');
-  const outgoingTitle = document.getElementById('outgoing-title');
   if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due this day.');
-  if (outgoingList && outgoingTitle) {
-    const showOut = outgoing.length > 0;
-    outgoingTitle.style.display = showOut ? '' : 'none';
-    outgoingList.style.display = showOut ? '' : 'none';
-    if (outgoingList.parentElement) outgoingList.parentElement.style.display = showOut ? '' : 'none';
-    fillTaskList(outgoingList, outgoing.map(t => renderTaskRow(t, dateKey, 'readonly')), '');
-  }
 }
 
 function applyView() {
@@ -727,7 +716,7 @@ function syncScheduleFields() {
   amountWrap.style.display = kind === 'bonus' ? '' : 'none';
   if (kind === 'honey' && !options.length) help.textContent = 'Add another parent in Settings before sending a honey-do.';
   else if (kind === 'bonus' && !options.length) help.textContent = 'Add a child in Settings before scheduling a bonus chore.';
-  else if (kind === 'honey') help.textContent = 'A honey-do is a one-off for another parent. They check it off. Recurring chores stay on your own list or a child\'s.';
+  else if (kind === 'honey') help.textContent = 'Only the parent you assign will see this. It will not show on your list.';
   else if (kind === 'bonus') help.textContent = 'Paid on top of allowance after a parent approves it. It does not change the weekly allowance.';
   else help.textContent = 'This lands on your list for this day only.';
   document.getElementById('schedule-submit').disabled = kind !== 'once-self' && !options.length;
@@ -799,6 +788,40 @@ document.querySelectorAll('#view-switch button').forEach(btn => {
   });
 });
 
+function visibleTask(task, uid) {
+  if (!task || task.audience === 'honey') return task?.assigneeUid === uid;
+  if (task.audience === 'mine') return task.assigneeUid === uid;
+  return task.audience === 'bonus' || task.audience === 'child';
+}
+
+function watchTasks() {
+  const uid = auth.currentUser.uid;
+  const col = collection(db, 'families', userData.familyId, 'tasks');
+  const buckets = { own: [], shared: [] };
+  const publish = () => {
+    const map = new Map();
+    [...buckets.own, ...buckets.shared].forEach(task => {
+      if (visibleTask(task, uid)) map.set(task.id, task);
+    });
+    tasks = [...map.values()];
+    renderAll();
+    updateStats();
+  };
+  const unsubs = [
+    onSnapshot(query(col, where('assigneeUid', '==', uid)), (snap) => {
+      buckets.own = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      publish();
+    })
+  ];
+  if (userData.role === 'parent') {
+    unsubs.push(onSnapshot(query(col, where('audience', 'in', ['bonus', 'child'])), (snap) => {
+      buckets.shared = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      publish();
+    }));
+  }
+  return () => unsubs.forEach(unsub => unsub());
+}
+
 async function loadFamily() {
   if (!userData.familyId) { renderAll(); updateStats(); return; }
   const ref = doc(db, 'families', userData.familyId);
@@ -816,12 +839,7 @@ async function loadFamily() {
     }
   });
   if (unsubscribeTasks) unsubscribeTasks();
-  unsubscribeTasks = onSnapshot(collection(db, 'families', userData.familyId, 'tasks'), (snap) => {
-    tasks = [];
-    snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-    renderAll();
-    updateStats();
-  });
+  unsubscribeTasks = watchTasks();
   renderAll();
   updateStats();
 }
