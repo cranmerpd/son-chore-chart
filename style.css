@@ -2129,6 +2129,179 @@ html[data-theme="doot"] .boot-mark::before { content: '6'; animation: doot-up 0.
 html[data-theme="doot"] .boot-mark::after { content: '7'; animation: doot-down 0.38s ease-in-out infinite alternate; }
 html[data-theme="doot"] .boot-label { font-size: 0; }
 html[data-theme="doot"] .boot-label::after { content: 'six seven'; font-size: 1.6rem; color: #3dfff3; text-shadow: 2px 2px 0 #141014; }
+
+.swatch.brick { background: linear-gradient(90deg, #e3000b 0 25%, #ffd500 25% 50%, #0057a8 50% 75%, #00a651 75% 100%); }
+
+html[data-theme="brick"] {
+  --bg: #d9e2ea;
+  --surface: #ffffff;
+  --surface-2: #f4f7f9;
+  --border: #c5ced6;
+  --text: #1a1c1f;
+  --text-dim: #4e5963;
+  --accent: #e3000b;
+  --accent-2: #0057a8;
+  --success: #00843d;
+  --warning: #9a6b00;
+  --danger: #b00008;
+  --radius: 2px;
+  --shadow: 0 4px 0 #c5ced6;
+}
+html[data-theme="brick"] body {
+  background-color: #d9e2ea;
+  background-image: radial-gradient(circle at 12px 12px, #f7fafc 4px, #c5d0da 4.5px, transparent 5.5px);
+  background-size: 32px 32px;
+}
+html[data-theme="brick"] h1,
+html[data-theme="brick"] .section-title,
+html[data-theme="brick"] .panel h2,
+html[data-theme="brick"] .level-title {
+  color: #1a1c1f;
+  text-transform: none;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+html[data-theme="brick"] .tagline { color: #4e5963; letter-spacing: 0.04em; }
+html[data-theme="brick"] .header { border-bottom: none; }
+html[data-theme="brick"] .logo-icon {
+  width: 36px;
+  height: 26px;
+  border-radius: 2px;
+  font-size: 0;
+  background-color: #e3000b;
+  background-image:
+    radial-gradient(circle at 9px 8px, #ff5a54 2.2px, #fff 2.5px, #c40009 3.6px, transparent 4px),
+    radial-gradient(circle at 27px 8px, #ff5a54 2.2px, #fff 2.5px, #c40009 3.6px, transparent 4px);
+  box-shadow: 0 3px 0 #9a0008;
+}
+html[data-theme="brick"] .stat-card,
+html[data-theme="brick"] .panel,
+html[data-theme="brick"] .chore-item,
+html[data-theme="brick"] .level-panel,
+html[data-theme="brick"] .week-overview,
+html[data-theme="brick"] .day-nav,
+html[data-theme="brick"] .earnings-panel,
+html[data-theme="brick"] .modal-box,
+html[data-theme="brick"] .login-card,
+html[data-theme="brick"] .nav-pill,
+html[data-theme="brick"] .theme-card {
+  position: relative;
+  background-color: #fff;
+  background-image: radial-gradient(circle at 14px 9px, #f3f5f7 3.2px, #d5dbe1 3.6px, transparent 4.6px);
+  background-size: 22px 22px;
+  background-repeat: repeat-x;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 4px 0 #c5ced6;
+  color: #1a1c1f;
+  padding-top: 22px;
+}
+html[data-theme="brick"] .chore-item { padding-top: 20px; }
+html[data-theme="brick"] .theme-card strong,
+html[data-theme="brick"] .theme-card span { color: #1a1c1f; }
+html[data-theme="brick"] .dot {
+  width: 14px;
+  height: 9px;
+  border-radius: 1px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+html[data-theme="brick"] .dot.morning { background: #ffd500; }
+html[data-theme="brick"] .dot.evening { background: #0057a8; }
+html[data-theme="brick"] .dot.weekly { background: #00a651; }
+html[data-theme="brick"] .dot.bonus,
+html[data-theme="brick"] .dot.mine { background: #e3000b; }
+html[data-theme="brick"] .dot.scheduled,
+html[data-theme="brick"] .dot.honey { background: #ff7a00; }
+html[data-theme="brick"] .form-row input,
+html[data-theme="brick"] .form-row select,
+html[data-theme="brick"] .account-form input,
+html[data-theme="brick"] .account-form select {
+  background: #fff;
+  color: #1a1c1f;
+  border: none;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 2px #c5ced6;
+  padding: 12px;
+}
+html[data-theme="brick"] .primary-btn,
+html[data-theme="brick"] .approve-btn,
+html[data-theme="brick"] .view-switch button.active {
+  background-color: #ffd500;
+  background-image: radial-gradient(circle at 12px 8px, #ffe56a 2.4px, #fff 2.7px, #e0b800 3.6px, transparent 4.2px);
+  background-size: 20px 16px;
+  background-repeat: repeat-x;
+  color: #1a1c1f;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 3px 0 #c9a400;
+  font-weight: 700;
+}
+html[data-theme="brick"] .primary-btn:active,
+html[data-theme="brick"] .approve-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9a400; }
+html[data-theme="brick"] .ghost-btn,
+html[data-theme="brick"] .schedule-btn,
+html[data-theme="brick"] .nav-pill,
+html[data-theme="brick"] .view-switch button {
+  color: #1a1c1f;
+  background: #fff;
+  border: none;
+  box-shadow: 0 3px 0 #c5ced6;
+}
+html[data-theme="brick"] .day-pill {
+  background: #fff;
+  color: #1a1c1f;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 3px 0 #c5ced6;
+}
+html[data-theme="brick"] .day-pill.today { background: #e3000b; color: #fff; box-shadow: 0 3px 0 #9a0008; }
+html[data-theme="brick"] .xp-fill { background: #e3000b; }
+html[data-theme="brick"] .stat-card .value,
+html[data-theme="brick"] .link-btn { color: #0057a8; }
+html[data-theme="brick"] .bottom-nav {
+  background-color: #fff;
+  background-image: radial-gradient(circle at 16px 6px, #f3f5f7 2.6px, #d5dbe1 3px, transparent 3.8px);
+  background-size: 28px 14px;
+  background-repeat: repeat-x;
+  border-top: none;
+  box-shadow: 0 -3px 0 #c5ced6;
+}
+html[data-theme="brick"] .bottom-nav a,
+html[data-theme="brick"] .bottom-nav button { color: #4e5963; }
+html[data-theme="brick"] .bottom-nav a.active,
+html[data-theme="brick"] .bottom-nav button.active { color: #e3000b; }
+html[data-theme="brick"] .version,
+html[data-theme="brick"] .net-status { color: #4e5963; }
+html[data-theme="brick"] .theme-card.selected { box-shadow: 0 4px 0 #e3000b; }
+html[data-theme="brick"] .boot {
+  background-color: #d9e2ea;
+  background-image: radial-gradient(circle at 12px 12px, #f7fafc 4px, #c5d0da 4.5px, transparent 5.5px);
+  background-size: 32px 32px;
+}
+html[data-theme="brick"] .boot-mark {
+  width: 48px;
+  height: 58px;
+  border: none;
+  border-radius: 2px;
+  background:
+    linear-gradient(#e3000b, #e3000b) 0 0 / 100% 16px no-repeat,
+    linear-gradient(#ffd500, #ffd500) 0 20px / 100% 16px no-repeat,
+    linear-gradient(#0057a8, #0057a8) 0 40px / 100% 16px no-repeat;
+  animation: brick-drop 0.9s ease-in-out infinite;
+}
+@keyframes brick-drop {
+  0% { transform: translateY(-14px); opacity: 0.4; }
+  45% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+html[data-theme="brick"] .boot-label { font-size: 0; }
+html[data-theme="brick"] .boot-label::after {
+  content: 'Watch your step';
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1a1c1f;
+}
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
 .sign-out-btn { width: 100%; margin: 18px 0 8px; }
 
