@@ -167,6 +167,9 @@ function getWeekStart(date) {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+function getWeekKey(date) {
+  return getDateKey(getWeekStart(date));
+}
 function getDayOfWeek(date) { return date.getDay(); }
 function isWeekday(date) { const day = getDayOfWeek(date); return day >= 1 && day <= 5; }
 
@@ -208,10 +211,13 @@ function getChoresForDate(date) {
   const myUid = auth.currentUser?.uid;
   choresList.forEach(c => {
     if (userData.role === 'child' && c.assignedTo && c.assignedTo !== 'all' && c.assignedTo !== myUid) return;
-    if (c.frequency === 'daily' || (c.frequency === 'weekdays' && isWeekday(date)) || (c.frequency === 'specific' && c.days && c.days.includes(dow)) || c.frequency === 'weekly') {
+    if (c.frequency === 'daily' || (c.frequency === 'weekdays' && isWeekday(date)) || (c.frequency === 'specific' && c.days && c.days.includes(dow))) {
       const section = c.section || 'evening';
       if (!result[section]) result[section] = [];
       result[section].push(c);
+    }
+    if (c.frequency === 'weekly' || (c.frequency === 'specific' && c.section === 'weekly')) {
+      result.weekly.push(c);
     }
   });
   return result;
@@ -255,8 +261,10 @@ function getWeekStats(weekStart) {
     total += required; completed += done;
     if (required > 0 && done >= required) fullDays++;
   }
-  total += choresList.filter(c => c.frequency === 'weekly' || c.frequency === 'specific').length;
-  completed += Object.values(familyData.weekly || {}).filter(isVerified).length;
+  const weekKey = getWeekKey(weekStart);
+  const weekData = (familyData.weekly || {})[weekKey] || {};
+  total += choresList.filter(c => c.frequency === 'weekly' || (c.frequency === 'specific' && c.section === 'weekly')).length;
+  completed += Object.values(weekData).filter(isVerified).length;
   return { total, completed, fullDays, percent: total > 0 ? (completed / total) * 100 : 0 };
 }
 
@@ -288,7 +296,7 @@ function getAllTimeStats() {
     const dayChores = getChoresForDate(d);
     const required = dayChores.morning.length + dayChores.evening.length;
     if (required > 0 && checks >= required) fullDays++;
-    const ws = getDateKey(getWeekStart(d));
+    const ws = getWeekKey(d);
     if (!seenWeeks.has(ws)) {
       seenWeeks.add(ws);
       const stats = getWeekStats(getWeekStart(d));
@@ -332,8 +340,10 @@ function renderList(containerId, list, isWeekly = false) {
   if (!container) return;
   container.innerHTML = '';
   const dateKey = getDateKey(currentDate);
+  const weekKey = getWeekKey(currentDate);
   const dayData = familyData.days[dateKey] || {};
-  const store = isWeekly ? (familyData.weekly || {}) : dayData;
+  const weekData = (familyData.weekly || {})[weekKey] || {};
+  const store = isWeekly ? weekData : dayData;
 
   if (list.length === 0) {
     container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">No chores for this section today.</p>';
@@ -367,7 +377,8 @@ function renderList(containerId, list, isWeekly = false) {
         entry.verifiedBy = auth.currentUser.uid;
         if (isWeekly) {
           if (!familyData.weekly) familyData.weekly = {};
-          familyData.weekly[chore.id] = entry;
+          if (!familyData.weekly[weekKey]) familyData.weekly[weekKey] = {};
+          familyData.weekly[weekKey][chore.id] = entry;
         } else {
           if (!familyData.days[dateKey]) familyData.days[dateKey] = {};
           familyData.days[dateKey][chore.id] = entry;
@@ -393,7 +404,8 @@ function renderList(containerId, list, isWeekly = false) {
 
       if (isWeekly) {
         if (!familyData.weekly) familyData.weekly = {};
-        familyData.weekly[chore.id] = entry;
+        if (!familyData.weekly[weekKey]) familyData.weekly[weekKey] = {};
+        familyData.weekly[weekKey][chore.id] = entry;
       } else {
         if (!familyData.days[dateKey]) familyData.days[dateKey] = {};
         familyData.days[dateKey][chore.id] = entry;
@@ -520,7 +532,8 @@ document.getElementById('reset-btn')?.addEventListener('click', () => {
       d.setDate(weekStart.getDate() + i);
       delete familyData.days[getDateKey(d)];
     }
-    familyData.weekly = {};
+    const weekKey = getWeekKey(weekStart);
+    if (familyData.weekly) delete familyData.weekly[weekKey];
     saveFamily();
     renderAll();
     updateStats();
