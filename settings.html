@@ -2,51 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Settings — Mission Control</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+  <link rel="stylesheet" href="style.css?v=112">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    .settings-page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 40px; }
-    .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
-    .grid { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 20px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .panel h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin: 0; }
-    .list { max-height: 420px; overflow-y: auto; }
-    .list::-webkit-scrollbar { width: 6px; }
-    .list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px; }
-    .row:last-child { border-bottom: none; }
-    .row-info { flex: 1; min-width: 0; }
-    .row-title { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .row-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
-    .row-actions { display: flex; gap: 4px; flex-shrink: 0; }
-    .icon-btn { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: grid; place-items: center; transition: all 0.15s; }
-    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-    .add-btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #0b0f19; border: none; padding: 5px 12px; border-radius: 6px; font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
-    .modal-overlay.hidden { display: none; }
-    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; }
-    .modal-box h3 { margin-bottom: 16px; font-size: 1.1rem; }
-    .form-row { display: flex; flex-direction: column; gap: 10px; }
-    .form-row input, .form-row select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: inherit; }
-    .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--accent); }
-    .form-row input[type="number"] { -moz-appearance: textfield; }
-    .form-row input[type="number"]::-webkit-outer-spin-button,
-    .form-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .day-checks { display: flex; gap: 8px; flex-wrap: wrap; }
-    .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 3px; }
-    .inactive { opacity: 0.45; }
-  </style>
 </head>
 <body>
-  <div class="settings-page">
-    <header class="settings-header">
+  <div class="app">
+    <header class="header">
       <div class="logo">
         <span class="logo-icon">⚡</span>
         <div>
@@ -54,17 +21,13 @@
           <p class="tagline">Family Management</p>
         </div>
       </div>
-      <div class="header-stats">
-        <a href="index.html" class="stat clickable" style="text-decoration: none;">
-          <span class="stat-label">Chart</span>
-          <span class="stat-value">←</span>
-        </a>
-        <div class="stat clickable" id="logout-btn">
-          <span class="stat-label">Out</span>
-          <span class="stat-value">→</span>
-        </div>
+      <div class="header-actions">
+        <a href="index.html" class="nav-pill">Chart</a>
+        <button type="button" class="nav-pill" id="logout-btn">Sign out</button>
       </div>
     </header>
+
+    <p id="net-status" class="net-status" hidden>Offline. Changes will sync when you reconnect.</p>
 
     <div id="login-required" style="text-align: center; padding: 60px 20px; display: none;">
       <p>Sign in as a parent to manage the family.</p>
@@ -72,7 +35,7 @@
     </div>
 
     <div id="settings-content" style="display: none;">
-      <div class="grid">
+      <div class="settings-grid">
         <div class="panel">
           <div class="panel-header">
             <h2>Members</h2>
@@ -98,19 +61,26 @@
         </div>
       </div>
 
-    <div class="panel" style="margin-top: 20px;">
-      <div class="panel-header">
-        <h2>My chores</h2>
-        <button id="open-add-task" class="add-btn" type="button">+ Recurring</button>
+      <div class="settings-split">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Recurring</h2>
+            <button id="open-add-task" class="add-btn" type="button">+ Add</button>
+          </div>
+          <p class="field-help">For you or a child. They show up on the matching day. Another parent gets a one-off honey-do from the chart, not a recurring chore.</p>
+          <div id="recurring-list" class="list"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Scheduled one-offs</h2>
+          </div>
+          <p class="field-help">One-offs, honey-dos, and bonus chores are added from the chart on the day they are due.</p>
+          <div id="onetime-list" class="list"></div>
+        </section>
       </div>
-      <p class="field-help" style="margin-bottom: 10px;">Recurring chores are for you or a child. They show on the matching day. One-offs, honey-dos, and paid bonus chores are scheduled from the chart on the day they are due.</p>
-      <div id="recurring-list" class="list"></div>
-      <h2 style="margin: 16px 0 8px;">Scheduled one-offs</h2>
-      <div id="onetime-list" class="list"></div>
-    </div>
     </div>
 
-    <p class="version">v1.9</p>
+    <p class="version">v1.12</p>
   </div>
 
   <!-- Add Member Modal -->
@@ -229,6 +199,17 @@
     </div>
   </div>
 
-  <script type="module" src="settings.js"></script>
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-body" class="field-help"></p>
+      <div class="confirm-actions">
+        <button type="button" id="confirm-cancel" class="ghost-btn">Cancel</button>
+        <button type="button" id="confirm-ok" class="primary-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="settings.js?v=112"></script>
 </body>
 </html>

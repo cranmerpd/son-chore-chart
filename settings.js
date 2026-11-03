@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -13,7 +13,36 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+let db;
+try {
+  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (err) {
+  db = initializeFirestore(app, { localCache: memoryLocalCache() });
+}
+
+function askConfirm(opts) {
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-title').textContent = opts.title;
+  document.getElementById('confirm-body').textContent = opts.body;
+  const ok = document.getElementById('confirm-ok');
+  const cancel = document.getElementById('confirm-cancel');
+  ok.textContent = opts.confirmLabel || 'Confirm';
+  ok.classList.toggle('danger-btn', !!opts.danger);
+  cancel.hidden = !!opts.hideCancel;
+  modal.classList.remove('hidden');
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      modal.classList.add('hidden');
+      ok.onclick = null;
+      cancel.onclick = null;
+      modal.onclick = null;
+      resolve(value);
+    };
+    ok.onclick = () => finish(true);
+    cancel.onclick = () => finish(false);
+    modal.onclick = (e) => { if (e.target === modal) finish(false); };
+  });
+}
 
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
@@ -160,7 +189,12 @@ document.getElementById('add-member-form').addEventListener('submit', async (e) 
       familyId: userData.familyId,
       weeklyAllowance: role === 'child' ? 5 : null
     });
-    alert(`${role} account created for ${username}. You will be signed out — sign back in.`);
+    await askConfirm({
+      title: 'Account created',
+      body: `${username} can sign in. This browser will sign you out now so you can sign back in.`,
+      confirmLabel: 'Sign out',
+      hideCancel: true
+    });
     await signOut(auth);
   } catch (error) {
     err.textContent = error.message.replace('Firebase: ', '');
@@ -245,7 +279,7 @@ async function renderChores() {
 
   list.querySelectorAll('.delete-chore').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (confirm('Permanently delete this chore?')) {
+      if (await askConfirm({ title: 'Delete this chore?', body: 'This removes it from the chart. Past checks for it go away with it.', confirmLabel: 'Delete', danger: true })) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'chores', btn.dataset.id));
         renderChores();
       }
@@ -322,7 +356,7 @@ async function renderBadges() {
 
   list.querySelectorAll('.delete-badge').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this badge?')) {
+      if (await askConfirm({ title: 'Delete this badge?', body: 'Already earned progress for this badge is removed.', confirmLabel: 'Delete', danger: true })) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'badges', btn.dataset.id));
         renderBadges();
       }
@@ -437,7 +471,7 @@ async function renderTasks() {
   });
   document.querySelectorAll('.delete-task').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this scheduled chore?')) {
+      if (await askConfirm({ title: 'Delete this chore?', body: 'This removes the scheduled chore. It does not change chores already checked off.', confirmLabel: 'Delete', danger: true })) {
         await deleteDoc(doc(db, 'families', userData.familyId, 'tasks', btn.dataset.id));
         renderTasks();
       }
@@ -495,3 +529,14 @@ taskForm.addEventListener('submit', async (e) => {
   taskModal.classList.add('hidden');
   renderTasks();
 });
+
+function renderNet() {
+  const el = document.getElementById('net-status');
+  if (el) el.hidden = navigator.onLine;
+}
+window.addEventListener('online', renderNet);
+window.addEventListener('offline', renderNet);
+renderNet();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}

@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -13,7 +13,36 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+let db;
+try {
+  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (err) {
+  db = initializeFirestore(app, { localCache: memoryLocalCache() });
+}
+
+function askConfirm(opts) {
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-title').textContent = opts.title;
+  document.getElementById('confirm-body').textContent = opts.body;
+  const ok = document.getElementById('confirm-ok');
+  const cancel = document.getElementById('confirm-cancel');
+  ok.textContent = opts.confirmLabel || 'Confirm';
+  ok.classList.toggle('danger-btn', !!opts.danger);
+  cancel.hidden = !!opts.hideCancel;
+  modal.classList.remove('hidden');
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      modal.classList.add('hidden');
+      ok.onclick = null;
+      cancel.onclick = null;
+      modal.onclick = null;
+      resolve(value);
+    };
+    ok.onclick = () => finish(true);
+    cancel.onclick = () => finish(false);
+    modal.onclick = (e) => { if (e.target === modal) finish(false); };
+  });
+}
 
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
@@ -409,8 +438,10 @@ function checkBadges() {
   });
   if (newlyUnlocked.length) { saveFamily(); showBadgeUnlock(newlyUnlocked[0]); }
   const count = (familyData.unlockedBadges || []).length;
-  document.getElementById('badge-count').textContent = count;
-  document.getElementById('badge-count-strip').textContent = count;
+  const badgeCount = document.getElementById('badge-count');
+  if (badgeCount) badgeCount.textContent = count;
+  const badgeStrip = document.getElementById('badge-count-strip');
+  if (badgeStrip) badgeStrip.textContent = count;
 }
 
 function showBadgeUnlock(badge) {
@@ -809,6 +840,34 @@ function parentSummary(uid) {
   return parentCache;
 }
 
+function badgeMeter(id, summary) {
+  const table = {
+    'showed-up': ['completions', 1],
+    'on-schedule': ['onTime', 40],
+    'punctual': ['onTime', 200],
+    'steady-month': ['bestCalendar', 30],
+    'hundred-days': ['bestCalendar', 100],
+    'full-year': ['bestCalendar', 365],
+    'clear-quarter': ['clearQuarters', 1],
+    'clear-year': ['clearYears', 1],
+    'iron-year': ['bestCleanWeeks', 52],
+    'fifty': ['completions', 50],
+    'hundred': ['completions', 100],
+    'five-hundred': ['completions', 500],
+    'thousand': ['completions', 1000],
+    'covered': ['honeyDone', 10],
+    'go-to': ['honeyDone', 40],
+    'reliant': ['honeyDone', 100],
+    'monthly-close': ['monthlyDone', 12],
+    'quarter': ['quarterlyDone', 1],
+    'four-quarters': ['quarterlyDone', 4],
+    'annual': ['yearlyDone', 1],
+    'five-years': ['yearlyDone', 5]
+  };
+  const spec = table[id] || ['completions', 1];
+  return [summary[spec[0]] || 0, spec[1]];
+}
+
 function renderParentProgress() {
   const root = document.getElementById('parent-progress');
   if (!root || !isParentUser() || !auth.currentUser) return;
@@ -840,14 +899,10 @@ function renderParentProgress() {
   });
   const earned = PARENT_BADGES.filter(b => summary.badges.includes(b.id));
   const locked = PARENT_BADGES.filter(b => !summary.badges.includes(b.id));
+  const heading = document.getElementById('parent-badge-heading');
+  if (heading) heading.textContent = `Badges · ${earned.length} of ${PARENT_BADGES.length}`;
   const list = document.getElementById('parent-badge-list');
   list.innerHTML = '';
-  if (!earned.length) {
-    const empty = document.createElement('p');
-    empty.className = 'parent-next';
-    empty.textContent = 'Finish a chore to start.';
-    list.appendChild(empty);
-  }
   earned.forEach(badge => {
     const chip = document.createElement('span');
     chip.className = 'parent-chip';
@@ -855,17 +910,51 @@ function renderParentProgress() {
     chip.title = badge.desc;
     list.appendChild(chip);
   });
+  const card = document.getElementById('parent-next-card');
   const ahead = document.getElementById('parent-next');
-  ahead.innerHTML = '';
-  locked.slice(0, 3).forEach(badge => {
-    const line = document.createElement('p');
-    line.className = 'parent-next';
-    const name = document.createElement('strong');
-    name.textContent = badge.name;
-    line.appendChild(name);
-    line.appendChild(document.createTextNode(' — ' + badge.desc));
-    ahead.appendChild(line);
-  });
+  const afterLabel = document.getElementById('parent-after-label');
+  if (card) {
+    card.innerHTML = '';
+    const first = locked[0];
+    card.hidden = !first;
+    if (first) {
+      const meter = badgeMeter(first.id, summary);
+      const pct = Math.max(0, Math.min(100, Math.round((meter[0] / meter[1]) * 100)));
+      const kicker = document.createElement('div');
+      kicker.className = 'next-kicker';
+      kicker.textContent = 'Next badge';
+      const name = document.createElement('div');
+      name.className = 'next-name';
+      name.textContent = first.name;
+      const desc = document.createElement('div');
+      desc.className = 'next-desc';
+      desc.textContent = first.desc;
+      const bar = document.createElement('div');
+      bar.className = 'xp-bar';
+      const fill = document.createElement('div');
+      fill.className = 'xp-fill';
+      fill.style.width = pct + '%';
+      bar.appendChild(fill);
+      const count = document.createElement('div');
+      count.className = 'next-count';
+      count.textContent = `${meter[0]} / ${meter[1]}`;
+      card.append(kicker, name, desc, bar, count);
+    }
+  }
+  if (ahead) {
+    ahead.innerHTML = '';
+    const rest = locked.slice(1, 3);
+    if (afterLabel) afterLabel.hidden = rest.length === 0;
+    rest.forEach(badge => {
+      const line = document.createElement('p');
+      line.className = 'parent-next';
+      const name = document.createElement('strong');
+      name.textContent = badge.name;
+      line.appendChild(name);
+      line.appendChild(document.createTextNode(' — ' + badge.desc));
+      ahead.appendChild(line);
+    });
+  }
   if (seenParentBadges) {
     const fresh = summary.badges.find(id => !seenParentBadges.includes(id));
     const badge = PARENT_BADGES.find(b => b.id === fresh);
@@ -903,6 +992,8 @@ function renderAll() {
   document.getElementById('day-name').textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
   document.getElementById('day-date').textContent = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   renderWeekGrid();
+  const todayBtn = document.getElementById('today-btn');
+  if (todayBtn) todayBtn.hidden = getDateKey(currentDate) === getDateKey(new Date());
   applyView();
 }
 
@@ -1140,21 +1231,27 @@ onAuthStateChanged(auth, async (user) => {
 
 document.getElementById('prev-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() - 1); renderAll(); updateStats(); });
 document.getElementById('next-day')?.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() + 1); renderAll(); updateStats(); });
-document.getElementById('reset-btn')?.addEventListener('click', () => {
+document.getElementById('today-btn')?.addEventListener('click', () => { currentDate = new Date(); renderAll(); updateStats(); });
+document.getElementById('reset-btn')?.addEventListener('click', async () => {
   if (userData.role !== 'parent') return;
-  if (confirm('Reset all progress for this week? This does not remove scheduled chores.')) {
-    const weekStart = getWeekStart(currentDate);
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + i);
-      delete familyData.days[getDateKey(d)];
-    }
-    const weekKey = getWeekKey(weekStart);
-    if (familyData.weekly) delete familyData.weekly[weekKey];
-    saveFamily();
-    renderAll();
-    updateStats();
+  const ok = await askConfirm({
+    title: 'Reset this week?',
+    body: 'This clears the family chart for the week you are viewing. Your own chores and scheduled one-offs stay.',
+    confirmLabel: 'Reset week',
+    danger: true
+  });
+  if (!ok) return;
+  const weekStart = getWeekStart(currentDate);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    delete familyData.days[getDateKey(d)];
   }
+  const weekKey = getWeekKey(weekStart);
+  if (familyData.weekly) delete familyData.weekly[weekKey];
+  saveFamily();
+  renderAll();
+  updateStats();
 });
 
 const svg = document.querySelector('.progress-ring');
@@ -1162,4 +1259,91 @@ if (svg) {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   defs.innerHTML = `<linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00e5ff" /><stop offset="100%" stop-color="#00e676" /></linearGradient>`;
   svg.appendChild(defs);
+}
+
+function openBadgeCase() {
+  const list = document.getElementById('badge-case-list');
+  const modal = document.getElementById('badge-case');
+  if (!list || !modal) return;
+  list.innerHTML = '';
+  const unlocked = new Set(familyData.unlockedBadges || []);
+  if (!badgesList.length) {
+    const empty = document.createElement('p');
+    empty.className = 'field-help';
+    empty.textContent = 'No badges yet.';
+    list.appendChild(empty);
+  }
+  badgesList.forEach(badge => {
+    const row = document.createElement('div');
+    row.className = 'row' + (unlocked.has(badge.id) ? '' : ' inactive');
+    const info = document.createElement('div');
+    info.className = 'row-info';
+    const title = document.createElement('div');
+    title.className = 'row-title';
+    title.textContent = badge.name;
+    const meta = document.createElement('div');
+    meta.className = 'row-meta';
+    meta.textContent = unlocked.has(badge.id) ? 'Earned' : 'Locked';
+    if (badge.desc) meta.textContent += ' · ' + badge.desc;
+    info.append(title, meta);
+    row.appendChild(info);
+    list.appendChild(row);
+  });
+  modal.classList.remove('hidden');
+}
+document.getElementById('badges-btn')?.addEventListener('click', openBadgeCase);
+document.getElementById('badges-btn-strip')?.addEventListener('click', openBadgeCase);
+document.getElementById('mobile-badges')?.addEventListener('click', openBadgeCase);
+document.getElementById('close-badge-case')?.addEventListener('click', () => {
+  document.getElementById('badge-case')?.classList.add('hidden');
+});
+document.getElementById('badge-case')?.addEventListener('click', (e) => {
+  if (e.target.id === 'badge-case') e.currentTarget.classList.add('hidden');
+});
+
+function renderNet() {
+  const el = document.getElementById('net-status');
+  if (el) el.hidden = navigator.onLine;
+}
+window.addEventListener('online', renderNet);
+window.addEventListener('offline', renderNet);
+renderNet();
+
+function setupInstall() {
+  const banner = document.getElementById('install-banner');
+  if (!banner) return;
+  const go = document.getElementById('install-go');
+  const dismiss = document.getElementById('install-dismiss');
+  const copy = document.getElementById('install-copy');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (standalone || localStorage.getItem('installDismissed') === '1') return;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferred = null;
+  const show = () => { banner.hidden = false; };
+  if (ios) {
+    if (copy) copy.textContent = 'In Safari, tap Share, then Add to Home Screen.';
+    if (go) go.hidden = true;
+    show();
+  }
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferred = event;
+    if (go) go.hidden = false;
+    show();
+  });
+  go?.addEventListener('click', async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    await deferred.userChoice;
+    deferred = null;
+    banner.hidden = true;
+  });
+  dismiss?.addEventListener('click', () => {
+    localStorage.setItem('installDismissed', '1');
+    banner.hidden = true;
+  });
+}
+setupInstall();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
