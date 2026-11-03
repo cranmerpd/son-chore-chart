@@ -497,6 +497,27 @@ body {
   border-color: transparent;
   font-weight: 600;
 }
+.board-note { color: var(--text-dim); font-size: 0.8rem; margin: 0 0 8px; }
+.board-head { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin: 16px 0 8px; }
+.board-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.board-card.unranked { opacity: 0.72; }
+.board-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.board-place { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 0.78rem; margin-right: 8px; }
+.board-name { font-weight: 600; }
+.board-role { color: var(--text-dim); font-size: 0.75rem; margin-left: 6px; }
+.board-rank { font-size: 0.8rem; color: #b388ff; }
+.board-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.board-metric .k { display: block; color: var(--text-dim); font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.board-metric .v { font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; }
+.board-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+.board-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.board-badges { margin-top: 8px; color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
 .schedule-btn {
   width: 100%;
   margin: -4px 0 16px;
