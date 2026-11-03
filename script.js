@@ -943,6 +943,8 @@ function applyView() {
   if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
   if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
   if (resetBtn) resetBtn.style.display = isParentUser() && !mine ? 'inline-block' : 'none';
+  const testSnake = document.getElementById('test-snake-btn');
+  if (testSnake) testSnake.style.display = isParentUser() ? 'inline-block' : 'none';
   if (mine) renderParentProgress();
 }
 
@@ -1556,10 +1558,17 @@ function gbStart() {
   gbRan = false;
 }
 
+let gbTest = false;
+let gbTestStats = { best: 0, games: 0, apples: 0, days: [], unlocked: [] };
+
+function liveSnakeStats() {
+  return gbTest ? gbTestStats : snakeStats(gbChildUid);
+}
+
 function gbFinish() {
   if (gbRan) return;
   gbRan = true;
-  const stats = snakeStats(gbChildUid);
+  const stats = liveSnakeStats();
   stats.games += 1;
   stats.apples += gbScore;
   stats.best = Math.max(stats.best || 0, gbScore);
@@ -1567,7 +1576,7 @@ function gbFinish() {
   if (!(stats.days || []).includes(today)) stats.days.push(today);
   const had = new Set(stats.unlocked || []);
   stats.unlocked = SNAKE_BADGES.filter(b => b.test(stats)).map(b => b.id);
-  saveFamily();
+  if (!gbTest) saveFamily();
   const fresh = SNAKE_BADGES.find(b => stats.unlocked.includes(b.id) && !had.has(b.id));
   gbFresh = fresh ? fresh.name : '';
   const bestEl = document.getElementById('gb-best');
@@ -1607,7 +1616,7 @@ function gbDraw() {
     return;
   }
   if (gbMode === 'awards') {
-    const stats = snakeStats(gbChildUid);
+    const stats = liveSnakeStats();
     ctx.fillText('BADGES', 60, 14);
     SNAKE_BADGES.forEach((badge, i) => {
       const on = (stats.unlocked || []).includes(badge.id);
@@ -1656,13 +1665,15 @@ function gbFrame(t) {
   gbLoop = requestAnimationFrame(gbFrame);
 }
 
-function openCranmerboy(uid) {
+function openCranmerboy(uid, test) {
   gbChildUid = uid;
+  gbTest = !!test;
+  gbTestStats = { best: 0, games: 0, apples: 0, days: [], unlocked: [] };
   gbOpen = true;
   gbMode = 'title';
   gbFresh = '';
   gbLast = 0;
-  const best = (snakeStats(uid).best) || 0;
+  const best = gbTest ? 0 : ((snakeStats(uid).best) || 0);
   document.getElementById('gb-best').textContent = String(best);
   document.getElementById('gb-score').textContent = '0';
   document.getElementById('cranmerboy').classList.remove('hidden');
@@ -1682,6 +1693,19 @@ function closeCranmerboy() {
 }
 
 document.getElementById('gb-close')?.addEventListener('click', closeCranmerboy);
+document.getElementById('test-snake-btn')?.addEventListener('click', () => {
+  if (!isParentUser()) return;
+  const kid = familyMembers.find(m => m.role === 'child');
+  const name = kid ? kid.username : 'him';
+  showSnakeOffer({
+    title: 'Chores are done',
+    body: name + ' finished today\'s chores. Hand over the phone, or save Cranmerboy. It stays available for 24 hours. Test only: nothing is saved.',
+    primary: 'Play now',
+    secondary: 'Save for ' + name,
+    onPrimary: () => openCranmerboy(kid ? kid.uid : 'test', true),
+    onSecondary: () => {}
+  });
+});
 document.getElementById('gb-start')?.addEventListener('click', () => {
   if (!gbOpen) return;
   if (gbMode === 'play') gbMode = 'pause';
