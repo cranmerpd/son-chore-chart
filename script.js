@@ -556,6 +556,7 @@ function renderTaskRow(task, dateKey, mode) {
 
   const bits = [freqLabel(task)];
   if (task.audience === 'honey' && task.assigneeUid === auth.currentUser?.uid) bits.push('from ' + memberName(task.ownerUid));
+  if (mode === 'readonly' && task.audience === 'honey') bits.push('for ' + memberName(task.assigneeUid));
   if ((task.audience === 'bonus' || task.audience === 'child') && isParentUser()) bits.push(memberName(task.assigneeUid));
 
   let statusHtml = '';
@@ -612,7 +613,7 @@ function renderTaskRow(task, dateKey, mode) {
 function fillTaskList(container, rows, emptyText) {
   container.innerHTML = '';
   if (!rows.length) {
-    container.innerHTML = `<p style="color: var(--text-dim); font-size: 0.85rem; padding: 8px 0;">${emptyText}</p>`;
+    container.innerHTML = `<p class="empty-note">${emptyText}</p>`;
     return;
   }
   rows.forEach(row => container.appendChild(row));
@@ -627,6 +628,9 @@ function renderSpecialTasks() {
   const childExtra = due.filter(t => t.audience === 'child' && (userData.role === 'child' ? t.assigneeUid === myUid : true));
   const mine = due.filter(t => t.assigneeUid === myUid && (t.audience === 'mine' || t.audience === 'honey'));
   const sent = due.filter(t => t.audience === 'honey' && t.ownerUid === myUid && t.assigneeUid !== myUid);
+  const doneFirst = (a, b) => Number(taskEntry(a, dateKey).verified) - Number(taskEntry(b, dateKey).verified);
+  mine.sort(doneFirst);
+  sent.sort(doneFirst);
 
   const bonusSection = document.getElementById('bonus-section');
   const extraSection = document.getElementById('child-scheduled-section');
@@ -642,7 +646,12 @@ function renderSpecialTasks() {
   }
 
   const mineList = document.getElementById('mine-list');
-  if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due this day.');
+  if (mineList) fillTaskList(mineList, mine.map(t => renderTaskRow(t, dateKey, 'self')), 'Nothing due. Use the button below to add a one-off.');
+  const mineCount = document.getElementById('mine-count');
+  if (mineCount) {
+    const open = mine.filter(t => !taskEntry(t, dateKey).verified).length;
+    mineCount.textContent = !mine.length ? 'Clear' : (open ? `${open} left` : 'All done');
+  }
   const sentSection = document.getElementById('sent-section');
   const sentList = document.getElementById('sent-list');
   if (sentSection && sentList) {
@@ -980,6 +989,10 @@ function applyView() {
   const scheduleBtn = document.getElementById('schedule-btn');
   if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
   if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
+  const slot = document.getElementById(mine ? 'mine-schedule-slot' : 'schedule-home');
+  if (scheduleBtn && slot && scheduleBtn.parentElement !== slot) slot.appendChild(scheduleBtn);
+  const appEl = document.getElementById('main-app');
+  if (appEl) appEl.dataset.view = mine ? 'mine' : 'family';
   if (mine) renderParentProgress();
 }
 

@@ -713,3 +713,80 @@ button.nav-pill { font-family: inherit; }
 .day-checks label { font-size: 0.75rem; display: flex; align-items: center; gap: 3px; }
 .inactive { opacity: 0.45; }
 
+.mine-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .mine-layout { grid-template-columns: 1fr; }
+}
+.mine-work, .mine-side {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+}
+.mine-work-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.mine-work-head h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.mine-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+.mine-group {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.mine-group h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.mine-note {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.empty-note {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 18px 8px;
+  text-align: center;
+}
+#mine-section .level-title { font-size: 1.35rem; }
+#mine-section .board-head { margin-top: 18px; }
+#mine-section .next-badge { margin-top: 16px; }
+#parent-badge-list { display: flex; flex-wrap: wrap; gap: 6px; }
+#mine-section .parent-chip { margin: 0; }
+#main-app[data-view="mine"] #mine-schedule-slot .schedule-btn {
+  margin: 14px 0 0;
+  border-style: solid;
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 12px;
+}
+#main-app[data-view="mine"] #mine-schedule-slot .schedule-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 229, 255, 0.06);
+}
+#main-app[data-view="mine"] .compact-row { margin-bottom: 14px; }
+
+
