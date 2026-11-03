@@ -1543,6 +1543,131 @@ html[data-theme="skol"] .theme-card.selected { border-color: #ffc62f; box-shadow
 html[data-theme="skol"] .theme-card strong,
 html[data-theme="skol"] .theme-card span { color: #2a1248; }
 
+.swatch.channel { background: linear-gradient(90deg, #07080c 0 18%, #ff3d9a 18% 28%, #07080c 28% 72%, #3ee0ff 72% 82%, #07080c 82% 100%); }
+
+html[data-theme="channel"] {
+  --bg: #07080c;
+  --surface: #12141c;
+  --surface-2: #1c2030;
+  --border: #2a3148;
+  --text: #f4f7fb;
+  --text-dim: #b7c0d0;
+  --accent: #3ee0ff;
+  --accent-2: #ff3d9a;
+  --success: #3dff9a;
+  --warning: #ffd15c;
+  --danger: #ff5b7a;
+  --radius: 4px;
+  --shadow: 0 0 0 1px #3ee0ff, 6px 0 0 #ff3d9a;
+}
+html[data-theme="channel"] body { background: #07080c; }
+html[data-theme="channel"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.045),
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  animation: channel-roll 9s linear infinite;
+}
+@keyframes channel-roll {
+  from { background-position: 0 0; }
+  to { background-position: 0 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="channel"] body::after { animation: none; }
+}
+html[data-theme="channel"] h1,
+html[data-theme="channel"] .section-title,
+html[data-theme="channel"] .panel h2,
+html[data-theme="channel"] .level-title {
+  font-family: 'VT323', monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f4fbff;
+}
+html[data-theme="channel"] h1 {
+  font-size: 2rem;
+  text-shadow: -2px 0 #ff3d9a, 2px 0 #3ee0ff;
+}
+html[data-theme="channel"] .section-title { font-size: 1.35rem; text-shadow: none; }
+html[data-theme="channel"] .header { border-bottom: none; }
+html[data-theme="channel"] .tagline { color: #3ee0ff; letter-spacing: 0.16em; }
+html[data-theme="channel"] .logo-icon {
+  background: #07080c;
+  border-radius: 4px;
+  box-shadow: -3px 0 0 #ff3d9a, 3px 0 0 #3ee0ff;
+}
+html[data-theme="channel"] .stat-card,
+html[data-theme="channel"] .panel,
+html[data-theme="channel"] .chore-item,
+html[data-theme="channel"] .level-panel,
+html[data-theme="channel"] .week-overview,
+html[data-theme="channel"] .day-nav,
+html[data-theme="channel"] .earnings-panel,
+html[data-theme="channel"] .modal-box,
+html[data-theme="channel"] .login-card,
+html[data-theme="channel"] .nav-pill,
+html[data-theme="channel"] .theme-card {
+  background: #12141c;
+  border: 1px solid #3ee0ff;
+  border-radius: 4px;
+  box-shadow: 4px 0 0 #ff3d9a;
+  color: #f4f7fb;
+}
+html[data-theme="channel"] .theme-card strong,
+html[data-theme="channel"] .theme-card span,
+html[data-theme="channel"] .panel h2,
+html[data-theme="channel"] .level-title { color: #f4f7fb; }
+html[data-theme="channel"] .theme-card span,
+html[data-theme="channel"] .field-help,
+html[data-theme="channel"] .row-meta { color: #b7c0d0; }
+html[data-theme="channel"] .form-row input,
+html[data-theme="channel"] .form-row select,
+html[data-theme="channel"] .account-form input {
+  background: #07080c;
+  color: #f4f7fb;
+  border: 1px solid #3ee0ff;
+  border-radius: 4px;
+  padding: 12px;
+}
+html[data-theme="channel"] .primary-btn,
+html[data-theme="channel"] .approve-btn,
+html[data-theme="channel"] .view-switch button.active {
+  background: #3ee0ff;
+  color: #07080c;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  box-shadow: 4px 0 0 #ff3d9a;
+}
+html[data-theme="channel"] .ghost-btn,
+html[data-theme="channel"] .schedule-btn,
+html[data-theme="channel"] .nav-pill,
+html[data-theme="channel"] .view-switch button {
+  color: #f4f7fb;
+  background: transparent;
+  border-color: #3ee0ff;
+}
+html[data-theme="channel"] .day-pill { background: #07080c; color: #f4f7fb; border-radius: 4px; }
+html[data-theme="channel"] .day-pill.today { box-shadow: inset 0 0 0 2px #ff3d9a; }
+html[data-theme="channel"] .xp-fill { background: #3ee0ff; }
+html[data-theme="channel"] .bottom-nav { background: #07080c; border-top: 1px solid #3ee0ff; }
+html[data-theme="channel"] .bottom-nav a,
+html[data-theme="channel"] .bottom-nav button { color: #b7c0d0; }
+html[data-theme="channel"] .bottom-nav a.active,
+html[data-theme="channel"] .bottom-nav button.active { color: #3ee0ff; }
+html[data-theme="channel"] .version,
+html[data-theme="channel"] .net-status { color: #b7c0d0; }
+html[data-theme="channel"] .theme-card.selected { border-color: #ff3d9a; }
+
 @media (max-width: 640px) {
   .account-page .header-actions { display: none; }
 }
