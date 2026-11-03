@@ -61,7 +61,6 @@
     <div class="view-switch" id="view-switch" style="display: none;">
       <button type="button" data-view="family" class="active">Family</button>
       <button type="button" data-view="mine">My Chores</button>
-      <button type="button" data-view="board">Board</button>
     </div>
 
     <button id="collapse-toggle" class="collapse-toggle">
@@ -159,6 +158,20 @@
       </div>
 
       <div id="mine-section" style="display: none;">
+        <section class="section" id="parent-progress">
+          <div class="level-panel">
+            <div class="level-info">
+              <span id="parent-rank" class="level-title">Recruit</span>
+              <span id="parent-xp" class="xp-text">0 / 250</span>
+            </div>
+            <div class="xp-bar"><div id="parent-xp-fill" class="xp-fill"></div></div>
+          </div>
+          <div class="board-metrics" id="parent-metrics"></div>
+          <h2 class="board-head">Badges</h2>
+          <div id="parent-badge-list"></div>
+          <h2 class="board-head">Still ahead</h2>
+          <div id="parent-next"></div>
+        </section>
         <section class="section">
           <h2 class="section-title"><span class="dot mine"></span> Due today</h2>
           <div id="mine-list" class="chore-list"></div>
@@ -168,21 +181,13 @@
           <div id="sent-list" class="chore-list"></div>
         </section>
       </div>
-
-      <div id="board-section" style="display: none;">
-        <p id="board-week" class="board-note"></p>
-        <h2 class="board-head">This week</h2>
-        <div id="board-list"></div>
-        <h2 class="board-head">All time</h2>
-        <div id="board-lifetime"></div>
-      </div>
     </main>
 
     <footer class="footer">
       <button id="reset-btn" class="ghost-btn" style="display: none;">Reset Week</button>
     </footer>
 
-    <p class="version">v1.10</p>
+    <p class="version">v1.11</p>
   </div>
 
   <!-- Mobile bottom nav -->

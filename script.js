@@ -150,7 +150,7 @@ let choresList = [];
 let badgesList = [];
 let tasks = [];
 let familyMembers = [];
-let viewMode = ['mine', 'board', 'family'].includes(localStorage.getItem('chartView')) ? localStorage.getItem('chartView') : 'family';
+let viewMode = localStorage.getItem('chartView') === 'mine' ? 'mine' : 'family';
 let unsubscribe = null;
 let unsubscribeTasks = null;
 
@@ -223,11 +223,7 @@ function freqLabel(task) {
   return map[task.frequency] || 'Recurring';
 }
 function isParentUser() { return userData.role === 'parent'; }
-function activeView() {
-  if (viewMode === 'board') return 'board';
-  if (isParentUser() && viewMode === 'mine') return 'mine';
-  return 'family';
-}
+function activeView() { return isParentUser() && viewMode === 'mine' ? 'mine' : 'family'; }
 
 async function loadChores() {
   if (!userData.familyId) return;
@@ -517,7 +513,6 @@ function writeTaskEntry(task, dateKey, entry) {
   if (!familyData.taskChecks[task.id]) familyData.taskChecks[task.id] = {};
   familyData.taskChecks[task.id][dateKey] = entry;
   saveFamily();
-  if (isParentUser() && task.assigneeUid === auth.currentUser?.uid && (task.audience === 'mine' || task.audience === 'honey')) syncMyRank();
 }
 
 function renderTaskRow(task, dateKey, mode) {
@@ -625,39 +620,57 @@ function renderSpecialTasks() {
   }
 }
 
+const PARENT_LEVELS = [
+  { level: 1, xp: 0, title: 'Recruit' },
+  { level: 2, xp: 250, title: 'Trainee' },
+  { level: 3, xp: 750, title: 'Operator' },
+  { level: 4, xp: 1800, title: 'Specialist' },
+  { level: 5, xp: 3500, title: 'Agent' },
+  { level: 6, xp: 6000, title: 'Veteran' },
+  { level: 7, xp: 9000, title: 'Elite' },
+  { level: 8, xp: 13000, title: 'Commander' },
+  { level: 9, xp: 18000, title: 'Director' },
+  { level: 10, xp: 24000, title: 'Legend' },
+  { level: 11, xp: 32000, title: 'Mythic' },
+  { level: 12, xp: 42000, title: 'Apex' }
+];
+
 const PARENT_BADGES = [
   { id: 'showed-up', name: 'Showed Up', desc: 'First chore done', test: s => s.completions >= 1 },
-  { id: 'on-schedule', name: 'On Schedule', desc: '5 chores done the day they were due', test: s => s.onTime >= 5 },
-  { id: 'reliable', name: 'Reliable', desc: '4 straight weeks with every due chore done', test: s => s.bestCleanWeeks >= 4 },
-  { id: 'clear-month', name: 'Clear Month', desc: 'A full month with nothing missed', test: s => s.clearMonths >= 1 },
-  { id: 'ten', name: 'Ten', desc: '10 chores done', test: s => s.completions >= 10 },
+  { id: 'on-schedule', name: 'On Schedule', desc: '40 chores done the day they were due', test: s => s.onTime >= 40 },
+  { id: 'punctual', name: 'Punctual', desc: '200 chores done the day they were due', test: s => s.onTime >= 200 },
+  { id: 'steady-month', name: 'Steady Month', desc: '30 days in a row with nothing missed', test: s => s.bestCalendar >= 30 },
+  { id: 'hundred-days', name: 'Hundred Days', desc: '100 days in a row with nothing missed', test: s => s.bestCalendar >= 100 },
+  { id: 'full-year', name: 'Full Year', desc: '365 days in a row with nothing missed', test: s => s.bestCalendar >= 365 },
+  { id: 'clear-quarter', name: 'Clear Quarter', desc: 'A finished quarter with nothing missed', test: s => s.clearQuarters >= 1 },
+  { id: 'clear-year', name: 'Clear Year', desc: 'A finished calendar year with nothing missed', test: s => s.clearYears >= 1 },
+  { id: 'iron-year', name: 'Iron Year', desc: '52 straight weeks with every due chore done', test: s => s.bestCleanWeeks >= 52 },
   { id: 'fifty', name: 'Fifty', desc: '50 chores done', test: s => s.completions >= 50 },
   { id: 'hundred', name: 'Hundred', desc: '100 chores done', test: s => s.completions >= 100 },
-  { id: 'covered', name: 'Covered', desc: 'First honey-do finished', test: s => s.honeyDone >= 1 },
-  { id: 'go-to', name: 'Go-to', desc: '10 honey-dos finished', test: s => s.honeyDone >= 10 },
-  { id: 'monthly-close', name: 'Monthly Close', desc: 'First monthly chore done', test: s => s.monthlyDone >= 1 },
+  { id: 'five-hundred', name: 'Five Hundred', desc: '500 chores done', test: s => s.completions >= 500 },
+  { id: 'thousand', name: 'Thousand', desc: '1,000 chores done', test: s => s.completions >= 1000 },
+  { id: 'covered', name: 'Covered', desc: '10 honey-dos finished', test: s => s.honeyDone >= 10 },
+  { id: 'go-to', name: 'Go-to', desc: '40 honey-dos finished', test: s => s.honeyDone >= 40 },
+  { id: 'reliant', name: 'Reliant', desc: '100 honey-dos finished', test: s => s.honeyDone >= 100 },
+  { id: 'monthly-close', name: 'Monthly Close', desc: '12 monthly chores done', test: s => s.monthlyDone >= 12 },
   { id: 'quarter', name: 'Quarter', desc: 'First quarterly chore done', test: s => s.quarterlyDone >= 1 },
-  { id: 'annual', name: 'Annual', desc: 'First yearly chore done', test: s => s.yearlyDone >= 1 }
+  { id: 'four-quarters', name: 'Four Quarters', desc: '4 quarterly chores done', test: s => s.quarterlyDone >= 4 },
+  { id: 'annual', name: 'Annual', desc: 'First yearly chore done', test: s => s.yearlyDone >= 1 },
+  { id: 'five-years', name: 'Five Years', desc: '5 yearly chores done', test: s => s.yearlyDone >= 5 }
 ];
+
+const PARENT_HISTORY_DAYS = 366 * 8;
 
 function eachDay(from, to, fn) {
   const end = startOfDay(to);
   let d = startOfDay(from);
   const earliest = new Date(end);
-  earliest.setDate(earliest.getDate() - 799);
+  earliest.setDate(earliest.getDate() - (PARENT_HISTORY_DAYS - 1));
   if (d < earliest) d = earliest;
-  for (let guard = 0; d <= end && guard < 800; guard++) {
+  for (let guard = 0; d <= end && guard < PARENT_HISTORY_DAYS; guard++) {
     fn(new Date(d));
     d.setDate(d.getDate() + 1);
   }
-}
-
-function titleForPoints(points) {
-  let current = levels[0];
-  for (let i = levels.length - 1; i >= 0; i--) {
-    if (points >= levels[i].xp) { current = levels[i]; break; }
-  }
-  return current.title;
 }
 
 function pointsForTask(task) {
@@ -670,43 +683,11 @@ function tasksForParent(uid) {
   return tasks.filter(t => t.assigneeUid === uid && (t.audience === 'mine' || t.audience === 'honey') && t.active !== false);
 }
 
-function weekThrough(weekStart) {
-  const start = startOfDay(weekStart);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-  const today = startOfDay(new Date());
-  if (start > today) return null;
-  return { start, through: end > today ? today : end };
-}
-
-function assignedToChild(chore, uid) {
-  return !chore.assignedTo || chore.assignedTo === 'all' || chore.assignedTo === uid;
-}
-
-function childDayRequired(date, uid) {
-  const dow = date.getDay();
-  return choresList.filter(c => {
-    if (!assignedToChild(c, uid)) return false;
-    if (c.frequency === 'daily') return true;
-    if (c.frequency === 'weekdays' && dow >= 1 && dow <= 5) return true;
-    if (c.frequency === 'specific' && c.section !== 'weekly' && (c.days || []).includes(dow)) return true;
-    return false;
-  });
-}
-
-function childWeeklyChores(uid) {
-  return choresList.filter(c => assignedToChild(c, uid) && (c.frequency === 'weekly' || (c.frequency === 'specific' && c.section === 'weekly')));
-}
-
-function childTasksOn(date, uid) {
-  return tasks.filter(t => t.audience === 'child' && t.assigneeUid === uid && t.active !== false && occursOn(t, date));
-}
-
 function buildParentSummary(uid) {
   const list = tasksForParent(uid);
   const today = startOfDay(new Date());
+  const todayKey = getDateKey(today);
   let from = new Date(today);
-  from.setDate(from.getDate() - 120);
   list.forEach(task => {
     const anchor = parseLocalDate(task.kind === 'once' ? task.dueDate : task.anchorDate);
     if (anchor && anchor < from) from = startOfDay(anchor);
@@ -714,11 +695,15 @@ function buildParentSummary(uid) {
   const stats = {
     points: 0, completions: 0, honeyDone: 0, onTime: 0,
     monthlyDone: 0, quarterlyDone: 0, yearlyDone: 0,
-    clearMonths: 0, bestCleanWeeks: 0, streak: 0, bestStreak: 0, badges: []
+    clearQuarters: 0, clearYears: 0, bestCleanWeeks: 0,
+    streak: 0, bestStreak: 0, bestCalendar: 0, badges: []
   };
   const weekStats = {};
-  const monthStats = {};
+  const quarterStats = {};
+  const yearStats = {};
   let run = 0;
+  let started = false;
+  let calRun = 0;
   eachDay(from, today, (day) => {
     const key = getDateKey(day);
     let due = 0;
@@ -733,23 +718,38 @@ function buildParentSummary(uid) {
       stats.points += pointsForTask(task);
       if (!entry.checkedOn || entry.checkedOn === key) stats.onTime++;
       if (task.audience === 'honey') stats.honeyDone++;
-      if (task.frequency === 'monthly') stats.monthlyDone++;
-      if (task.frequency === 'quarterly') stats.quarterlyDone++;
-      if (task.frequency === 'yearly') stats.yearlyDone++;
+      if (task.kind !== 'once') {
+        if (task.frequency === 'monthly') stats.monthlyDone++;
+        if (task.frequency === 'quarterly') stats.quarterlyDone++;
+        if (task.frequency === 'yearly') stats.yearlyDone++;
+      }
     });
     const weekKey = getWeekKey(day);
     if (!weekStats[weekKey]) weekStats[weekKey] = { done: 0, due: 0 };
     weekStats[weekKey].done += done;
     weekStats[weekKey].due += due;
-    const monthKey = key.slice(0, 7);
-    if (!monthStats[monthKey]) monthStats[monthKey] = { done: 0, due: 0 };
-    monthStats[monthKey].done += done;
-    monthStats[monthKey].due += due;
-    if (due === 0) return;
-    if (done >= due) { run++; stats.bestStreak = Math.max(stats.bestStreak, run); }
-    else run = 0;
+    const qKey = day.getFullYear() + '-Q' + (Math.floor(day.getMonth() / 3) + 1);
+    const yKey = String(day.getFullYear());
+    if (!quarterStats[qKey]) quarterStats[qKey] = { done: 0, due: 0 };
+    if (!yearStats[yKey]) yearStats[yKey] = { done: 0, due: 0 };
+    quarterStats[qKey].done += done;
+    quarterStats[qKey].due += due;
+    yearStats[yKey].done += done;
+    yearStats[yKey].due += due;
+    if (due > 0) {
+      started = true;
+      if (done >= due) { run++; stats.bestStreak = Math.max(stats.bestStreak, run); }
+      else run = 0;
+    }
+    if (started) {
+      const missed = due > 0 && done < due;
+      if (missed && key !== todayKey) calRun = 0;
+      else if (!missed) {
+        calRun++;
+        stats.bestCalendar = Math.max(stats.bestCalendar, calRun);
+      }
+    }
   });
-  stats.streak = 0;
   for (let i = 0; i < 500; i++) {
     const day = new Date(today);
     day.setDate(today.getDate() - i);
@@ -767,12 +767,11 @@ function buildParentSummary(uid) {
     else break;
   }
   stats.bestStreak = Math.max(stats.bestStreak, stats.streak);
-  const thisWeek = getWeekStart(today);
-  const lastFull = new Date(thisWeek);
+  const lastFull = getWeekStart(today);
   lastFull.setDate(lastFull.getDate() - 7);
   let cleanRun = 0;
   const earliestWeek = new Date(today);
-  earliestWeek.setDate(earliestWeek.getDate() - 799);
+  earliestWeek.setDate(earliestWeek.getDate() - (PARENT_HISTORY_DAYS - 1));
   const cursor = getWeekStart(from < earliestWeek ? earliestWeek : from);
   while (cursor <= lastFull) {
     const bucket = weekStats[getDateKey(cursor)] || { done: 0, due: 0 };
@@ -782,252 +781,117 @@ function buildParentSummary(uid) {
     } else cleanRun = 0;
     cursor.setDate(cursor.getDate() + 7);
   }
-  const currentMonth = getDateKey(today).slice(0, 7);
-  Object.keys(monthStats).forEach(monthKey => {
-    if (monthKey >= currentMonth) return;
-    const bucket = monthStats[monthKey];
-    if (bucket.due > 0 && bucket.done >= bucket.due) stats.clearMonths++;
+  const currentQuarter = today.getFullYear() + '-Q' + (Math.floor(today.getMonth() / 3) + 1);
+  const currentYear = String(today.getFullYear());
+  Object.keys(quarterStats).forEach(key => {
+    if (key >= currentQuarter) return;
+    const bucket = quarterStats[key];
+    if (bucket.due > 0 && bucket.done >= bucket.due) stats.clearQuarters++;
+  });
+  Object.keys(yearStats).forEach(key => {
+    if (key >= currentYear) return;
+    const bucket = yearStats[key];
+    if (bucket.due > 0 && bucket.done >= bucket.due) stats.clearYears++;
   });
   stats.badges = PARENT_BADGES.filter(b => b.test(stats)).map(b => b.id);
-  const weeks = {};
-  Object.keys(weekStats).sort().slice(-20).forEach(key => { weeks[key] = weekStats[key]; });
-  return {
-    points: stats.points,
-    completions: stats.completions,
-    honeyDone: stats.honeyDone,
-    streak: stats.streak,
-    bestStreak: stats.bestStreak,
-    badges: stats.badges,
-    weeks
-  };
+  return stats;
 }
 
-function syncMyRank() {
-  if (!isParentUser() || !auth.currentUser || !userData.familyId) return;
-  const uid = auth.currentUser.uid;
-  const summary = buildParentSummary(uid);
-  const prev = (familyData.ranks || {})[uid];
-  if (JSON.stringify(prev) === JSON.stringify(summary)) return;
-  const prevBadges = (prev && prev.badges) || [];
-  const fresh = summary.badges.filter(id => !prevBadges.includes(id));
-  if (!familyData.ranks) familyData.ranks = {};
-  familyData.ranks[uid] = summary;
-  saveFamily();
-  if (fresh.length) {
-    const badge = PARENT_BADGES.find(b => b.id === fresh[0]);
+let parentCache = null;
+let parentCacheToken = '';
+let seenParentBadges = null;
+
+function parentSummary(uid) {
+  const token = uid + '|' + JSON.stringify(tasks.map(t => [t.id, t.active, t.audience, t.frequency, t.anchorDate, t.dueDate, t.assigneeUid])) + '|' + JSON.stringify(familyData.taskChecks || {});
+  if (parentCache && parentCacheToken === token) return parentCache;
+  parentCache = buildParentSummary(uid);
+  parentCacheToken = token;
+  return parentCache;
+}
+
+function renderParentProgress() {
+  const root = document.getElementById('parent-progress');
+  if (!root || !isParentUser() || !auth.currentUser) return;
+  const summary = parentSummary(auth.currentUser.uid);
+  let current = PARENT_LEVELS[0];
+  let next = PARENT_LEVELS[1];
+  for (let i = PARENT_LEVELS.length - 1; i >= 0; i--) {
+    if (summary.points >= PARENT_LEVELS[i].xp) {
+      current = PARENT_LEVELS[i];
+      next = PARENT_LEVELS[i + 1] || PARENT_LEVELS[i];
+      break;
+    }
+  }
+  document.getElementById('parent-rank').textContent = current.title;
+  const span = Math.max(1, next.xp - current.xp);
+  const into = summary.points - current.xp;
+  const topped = next === current;
+  document.getElementById('parent-xp').textContent = topped ? summary.points + ' pts' : into + ' / ' + span + ' to ' + next.title;
+  document.getElementById('parent-xp-fill').style.width = ((topped ? 1 : Math.min(1, into / span)) * 100) + '%';
+  const metrics = document.getElementById('parent-metrics');
+  metrics.innerHTML = '';
+  [['Done', summary.completions], ['Streak', summary.streak], ['Best', summary.bestStreak], ['On time', summary.onTime]].forEach(([label, value]) => {
+    const cell = document.createElement('div');
+    cell.className = 'board-metric';
+    cell.innerHTML = '<span class="k"></span><span class="v"></span>';
+    cell.querySelector('.k').textContent = label;
+    cell.querySelector('.v').textContent = String(value);
+    metrics.appendChild(cell);
+  });
+  const earned = PARENT_BADGES.filter(b => summary.badges.includes(b.id));
+  const locked = PARENT_BADGES.filter(b => !summary.badges.includes(b.id));
+  const list = document.getElementById('parent-badge-list');
+  list.innerHTML = '';
+  if (!earned.length) {
+    const empty = document.createElement('p');
+    empty.className = 'parent-next';
+    empty.textContent = 'Finish a chore to start.';
+    list.appendChild(empty);
+  }
+  earned.forEach(badge => {
+    const chip = document.createElement('span');
+    chip.className = 'parent-chip';
+    chip.textContent = badge.name;
+    chip.title = badge.desc;
+    list.appendChild(chip);
+  });
+  const ahead = document.getElementById('parent-next');
+  ahead.innerHTML = '';
+  locked.slice(0, 3).forEach(badge => {
+    const line = document.createElement('p');
+    line.className = 'parent-next';
+    const name = document.createElement('strong');
+    name.textContent = badge.name;
+    line.appendChild(name);
+    line.appendChild(document.createTextNode(' — ' + badge.desc));
+    ahead.appendChild(line);
+  });
+  if (seenParentBadges) {
+    const fresh = summary.badges.find(id => !seenParentBadges.includes(id));
+    const badge = PARENT_BADGES.find(b => b.id === fresh);
     if (badge) showBadgeUnlock(badge);
   }
-}
-
-function childWeekStats(uid, weekStart) {
-  const range = weekThrough(weekStart);
-  if (!range) return { done: 0, due: 0 };
-  let due = 0;
-  let done = 0;
-  eachDay(range.start, range.through, (day) => {
-    const key = getDateKey(day);
-    childDayRequired(day, uid).forEach(chore => {
-      due++;
-      if (isVerified((familyData.days[key] || {})[chore.id])) done++;
-    });
-    childTasksOn(day, uid).forEach(task => {
-      due++;
-      if (taskEntry(task, key).verified) done++;
-    });
-  });
-  const weekKey = getDateKey(range.start);
-  childWeeklyChores(uid).forEach(chore => {
-    due++;
-    if (isVerified(((familyData.weekly || {})[weekKey] || {})[chore.id])) done++;
-  });
-  return { done, due };
-}
-
-function childLifetime(uid) {
-  let completions = 0;
-  let best = 0;
-  let run = 0;
-  const today = startOfDay(new Date());
-  const from = new Date(today);
-  from.setDate(from.getDate() - 400);
-  eachDay(from, today, (day) => {
-    const key = getDateKey(day);
-    const required = childDayRequired(day, uid);
-    const extra = childTasksOn(day, uid);
-    const due = required.length + extra.length;
-    required.forEach(chore => { if (isVerified((familyData.days[key] || {})[chore.id])) completions++; });
-    extra.forEach(task => { if (taskEntry(task, key).verified) completions++; });
-    if (!due) return;
-    let done = 0;
-    required.forEach(chore => { if (isVerified((familyData.days[key] || {})[chore.id])) done++; });
-    extra.forEach(task => { if (taskEntry(task, key).verified) done++; });
-    if (done >= due) { run++; best = Math.max(best, run); }
-    else run = 0;
-  });
-  Object.keys(familyData.weekly || {}).forEach(weekKey => {
-    childWeeklyChores(uid).forEach(chore => {
-      if (isVerified((familyData.weekly[weekKey] || {})[chore.id])) completions++;
-    });
-  });
-  let streak = 0;
-  for (let i = 0; i < 400; i++) {
-    const day = new Date(today);
-    day.setDate(today.getDate() - i);
-    const key = getDateKey(day);
-    const required = childDayRequired(day, uid);
-    const extra = childTasksOn(day, uid);
-    const due = required.length + extra.length;
-    if (!due) continue;
-    let done = 0;
-    required.forEach(chore => { if (isVerified((familyData.days[key] || {})[chore.id])) done++; });
-    extra.forEach(task => { if (taskEntry(task, key).verified) done++; });
-    if (done >= due) streak++;
-    else if (i === 0) continue;
-    else break;
-  }
-  return { completions, streak, bestStreak: Math.max(best, streak), points: completions * XP_PER_CHORE };
-}
-
-function renderBoard() {
-  const weekEl = document.getElementById('board-week');
-  const listEl = document.getElementById('board-list');
-  const lifeEl = document.getElementById('board-lifetime');
-  if (!weekEl || !listEl || !lifeEl) return;
-  const weekStart = getWeekStart(currentDate);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  weekEl.textContent = fmt(weekStart) + ' – ' + fmt(weekEnd) + ' · through today · counts only';
-  const weekKey = getDateKey(weekStart);
-  const myUid = auth.currentUser?.uid;
-  const rows = familyMembers.map(member => {
-    if (member.role === 'child') {
-      const week = childWeekStats(member.uid, weekStart);
-      const life = childLifetime(member.uid);
-      const names = (familyData.unlockedBadges || []).map(id => badgesList.find(b => b.id === id)?.name).filter(Boolean);
-      return {
-        name: member.username || 'Child',
-        role: 'Child',
-        title: titleForPoints(life.points),
-        done: week.done,
-        due: week.due,
-        streak: life.streak,
-        completions: life.completions,
-        bestStreak: life.bestStreak,
-        badges: names,
-        pending: false
-      };
-    }
-    const live = member.uid === myUid ? buildParentSummary(member.uid) : null;
-    const stored = live || (familyData.ranks || {})[member.uid];
-    if (!stored) {
-      return { name: member.username || 'Parent', role: 'Parent', title: 'Recruit', done: 0, due: 0, streak: 0, completions: 0, bestStreak: 0, badges: [], pending: true };
-    }
-    const week = (stored.weeks || {})[weekKey] || { done: 0, due: 0 };
-    return {
-      name: member.username || 'Parent',
-      role: 'Parent',
-      title: titleForPoints(stored.points || 0),
-      done: week.done || 0,
-      due: week.due || 0,
-      streak: stored.streak || 0,
-      completions: stored.completions || 0,
-      bestStreak: stored.bestStreak || 0,
-      badges: (stored.badges || []).map(id => PARENT_BADGES.find(b => b.id === id)?.name).filter(Boolean),
-      pending: false
-    };
-  });
-  rows.sort((a, b) => {
-    const aRanked = a.due > 0;
-    const bRanked = b.due > 0;
-    if (aRanked !== bRanked) return aRanked ? -1 : 1;
-    const aRate = a.due ? a.done / a.due : 0;
-    const bRate = b.due ? b.done / b.due : 0;
-    if (aRate !== bRate) return bRate - aRate;
-    if (a.done !== b.done) return b.done - a.done;
-    return a.name.localeCompare(b.name);
-  });
-  let place = 0;
-  listEl.innerHTML = '';
-  lifeEl.innerHTML = '';
-  if (!rows.length) {
-    listEl.innerHTML = '<p class="board-note">No family members yet.</p>';
-    return;
-  }
-  rows.forEach(row => {
-    const ranked = row.due > 0;
-    if (ranked) place++;
-    const card = document.createElement('article');
-    card.className = 'board-card' + (ranked ? '' : ' unranked');
-    const rate = ranked ? Math.round((row.done / row.due) * 100) : 0;
-    card.innerHTML = `
-      <div class="board-top">
-        <div>
-          <span class="board-place">${ranked ? place : '–'}</span>
-          <span class="board-name"></span>
-          <span class="board-role"></span>
-        </div>
-        <span class="board-rank"></span>
-      </div>
-      <div class="board-metrics">
-        <div class="board-metric"><span class="k">Done</span><span class="v"></span></div>
-        <div class="board-metric"><span class="k">Rate</span><span class="v"></span></div>
-        <div class="board-metric"><span class="k">Streak</span><span class="v"></span></div>
-      </div>
-      <div class="board-bar"><span></span></div>`;
-    card.querySelector('.board-name').textContent = row.name;
-    card.querySelector('.board-role').textContent = row.role;
-    card.querySelector('.board-rank').textContent = row.title;
-    card.querySelectorAll('.board-metric .v')[0].textContent = row.pending ? '—' : row.done + ' / ' + row.due;
-    card.querySelectorAll('.board-metric .v')[1].textContent = row.pending ? 'Not synced' : (ranked ? rate + '%' : '—');
-    card.querySelectorAll('.board-metric .v')[2].textContent = row.pending ? '—' : String(row.streak);
-    card.querySelector('.board-bar span').style.width = rate + '%';
-    listEl.appendChild(card);
-
-    const life = document.createElement('article');
-    life.className = 'board-card';
-    life.innerHTML = `
-      <div class="board-top"><span class="board-name"></span><span class="board-rank"></span></div>
-      <div class="board-metrics">
-        <div class="board-metric"><span class="k">Done</span><span class="v"></span></div>
-        <div class="board-metric"><span class="k">Best streak</span><span class="v"></span></div>
-        <div class="board-metric"><span class="k">Badges</span><span class="v"></span></div>
-      </div>
-      <p class="board-badges"></p>`;
-    life.querySelector('.board-name').textContent = row.name;
-    life.querySelector('.board-rank').textContent = row.title;
-    const vals = life.querySelectorAll('.board-metric .v');
-    vals[0].textContent = row.pending ? '—' : String(row.completions);
-    vals[1].textContent = row.pending ? '—' : String(row.bestStreak);
-    vals[2].textContent = row.pending ? '—' : String(row.badges.length);
-    life.querySelector('.board-badges').textContent = row.badges.length ? row.badges.join(' · ') : (row.pending ? 'Opens once they sign in on this version.' : 'No badges yet.');
-    lifeEl.appendChild(life);
-  });
+  seenParentBadges = summary.badges.slice();
 }
 
 function applyView() {
-  const view = activeView();
+  const mine = activeView() === 'mine';
   const familyEl = document.getElementById('family-sections');
   const mineEl = document.getElementById('mine-section');
-  const boardEl = document.getElementById('board-section');
   const earnings = document.querySelector('.earnings-panel');
-  if (familyEl) familyEl.style.display = view === 'family' ? '' : 'none';
-  if (mineEl) mineEl.style.display = view === 'mine' ? '' : 'none';
-  if (boardEl) boardEl.style.display = view === 'board' ? '' : 'none';
-  if (earnings) earnings.style.display = view === 'family' ? '' : 'none';
-  if (collapseToggle) collapseToggle.style.display = view === 'family' ? '' : 'none';
-  if (dashboardPanel) dashboardPanel.style.display = view === 'family' ? '' : 'none';
+  if (familyEl) familyEl.style.display = mine ? 'none' : '';
+  if (mineEl) mineEl.style.display = mine ? '' : 'none';
+  if (earnings) earnings.style.display = mine ? 'none' : '';
+  if (collapseToggle) collapseToggle.style.display = mine ? 'none' : '';
+  if (dashboardPanel) dashboardPanel.style.display = mine ? 'none' : '';
   document.querySelectorAll('#view-switch button').forEach(btn => {
-    const mineBtn = btn.dataset.view === 'mine';
-    if (mineBtn) btn.style.display = isParentUser() ? '' : 'none';
-    if (btn.dataset.view === 'family') btn.textContent = isParentUser() ? 'Family' : 'Chart';
-    btn.classList.toggle('active', btn.dataset.view === view);
+    btn.classList.toggle('active', btn.dataset.view === (mine ? 'mine' : 'family'));
   });
   const viewSwitch = document.getElementById('view-switch');
   const scheduleBtn = document.getElementById('schedule-btn');
-  if (viewSwitch) viewSwitch.style.display = 'flex';
-  if (scheduleBtn) scheduleBtn.style.display = isParentUser() && view !== 'board' ? 'block' : 'none';
-  if (view === 'board') renderBoard();
+  if (viewSwitch) viewSwitch.style.display = isParentUser() ? 'flex' : 'none';
+  if (scheduleBtn) scheduleBtn.style.display = isParentUser() ? 'block' : 'none';
+  if (mine) renderParentProgress();
 }
 
 function renderAll() {
@@ -1182,9 +1046,7 @@ document.getElementById('schedule-form')?.addEventListener('submit', async (e) =
 
 document.querySelectorAll('#view-switch button').forEach(btn => {
   btn.addEventListener('click', () => {
-    const next = btn.dataset.view;
-    if (next === 'mine' && !isParentUser()) return;
-    viewMode = next === 'mine' || next === 'board' ? next : 'family';
+    viewMode = btn.dataset.view === 'mine' ? 'mine' : 'family';
     localStorage.setItem('chartView', viewMode);
     applyView();
   });
@@ -1209,7 +1071,6 @@ function watchTasks() {
     tasks = [...map.values()];
     renderAll();
     updateStats();
-    syncMyRank();
   };
   const unsubs = [
     onSnapshot(query(col, where('assigneeUid', '==', uid)), (snap) => {
