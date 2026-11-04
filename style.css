@@ -3298,3 +3298,117 @@ html[data-theme="maxq"] .gb-brand::after {
 }
 html[data-theme="maxq"] .gb-dpad button { background: #1a1a1c; border-radius: 2px; }
 @keyframes maxq-drift { to { background-position: 40px 220px, -20px 140px; } }
+
+.swatch.beach { background: linear-gradient(180deg, #7ec8e3 0 42%, #f6d56a 42% 58%, #f3e2c4 58% 100%); }
+
+html[data-theme="beach"] {
+  --bg: #f6ead4;
+  --surface: #fffaf3;
+  --surface-2: #f3e7d2;
+  --border: #e2cfb0;
+  --text: #1b3a4b;
+  --text-dim: #5d7380;
+  --accent: #0e86a8;
+  --accent-2: #f0b429;
+  --success: #2f8f6b;
+  --warning: #c4841d;
+  --danger: #c45b4a;
+  --radius: 18px;
+  --shadow: none;
+}
+html[data-theme="beach"] body {
+  background:
+    radial-gradient(circle at 100% 0, #f6d56a 0 46px, transparent 48px),
+    linear-gradient(180deg, #d7f2f8 0, #f6ead4 180px);
+}
+html[data-theme="beach"] h1,
+html[data-theme="beach"] .panel h2,
+html[data-theme="beach"] .section-title,
+html[data-theme="beach"] .level-title { color: #1b3a4b; }
+html[data-theme="beach"] .tagline { color: #0e86a8; letter-spacing: 0.08em; }
+html[data-theme="beach"] .header { border-bottom: none; }
+html[data-theme="beach"] .logo-icon {
+  background: radial-gradient(circle at 40% 40%, #ffe9a0, #f0b429);
+  box-shadow: none;
+  border-radius: 50%;
+  font-size: 0;
+}
+html[data-theme="beach"] .stat-card,
+html[data-theme="beach"] .panel,
+html[data-theme="beach"] .chore-item,
+html[data-theme="beach"] .level-panel,
+html[data-theme="beach"] .week-overview,
+html[data-theme="beach"] .earnings-panel,
+html[data-theme="beach"] .modal-box,
+html[data-theme="beach"] .login-card,
+html[data-theme="beach"] .day-nav,
+html[data-theme="beach"] .theme-card,
+html[data-theme="beach"] .nav-pill {
+  background: #fffaf3;
+  color: #1b3a4b;
+  border: 1px solid #e2cfb0;
+  border-radius: 18px;
+  box-shadow: 0 8px 0 rgba(14, 134, 168, 0.06);
+}
+html[data-theme="beach"] .chore-item.completed { background: #e7f6ef; }
+html[data-theme="beach"] .chore-item.pending { background: #fff3d8; }
+html[data-theme="beach"] .theme-card strong,
+html[data-theme="beach"] .theme-card span,
+html[data-theme="beach"] .theme-copy span { color: #1b3a4b; }
+html[data-theme="beach"] .primary-btn,
+html[data-theme="beach"] .approve-btn,
+html[data-theme="beach"] .view-switch button.active {
+  background: #0e86a8;
+  color: #fffaf3;
+  border: none;
+  border-radius: 999px;
+}
+html[data-theme="beach"] .ghost-btn,
+html[data-theme="beach"] .schedule-btn,
+html[data-theme="beach"] .view-switch button {
+  color: #0e86a8;
+  background: transparent;
+  border: 1px solid #0e86a8;
+  border-radius: 999px;
+}
+html[data-theme="beach"] .form-row input,
+html[data-theme="beach"] .form-row select,
+html[data-theme="beach"] .account-form input,
+html[data-theme="beach"] .account-form select {
+  background: #fff;
+  color: #1b3a4b;
+  border: 1px solid #e2cfb0;
+  border-radius: 12px;
+  padding: 12px;
+}
+html[data-theme="beach"] .day-pill { background: #fffaf3; color: #1b3a4b; border-radius: 14px; border: 1px solid #e2cfb0; }
+html[data-theme="beach"] .day-pill.today { background: #0e86a8; color: #fffaf3; border-color: #0e86a8; }
+html[data-theme="beach"] .xp-fill { background: linear-gradient(90deg, #7ec8e3, #0e86a8); }
+html[data-theme="beach"] .stat-card .value,
+html[data-theme="beach"] .link-btn { color: #0e86a8; }
+html[data-theme="beach"] .bottom-nav { background: #14556c; border-top: none; }
+html[data-theme="beach"] .bottom-nav a,
+html[data-theme="beach"] .bottom-nav button { color: #d7f2f8; }
+html[data-theme="beach"] .bottom-nav a.active,
+html[data-theme="beach"] .bottom-nav button.active { color: #f6d56a; }
+html[data-theme="beach"] .version,
+html[data-theme="beach"] .net-status { color: #5d7380; }
+html[data-theme="beach"] .boot { background: #f6ead4; }
+html[data-theme="beach"] .boot-mark {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #ffe9a0, #f0b429);
+  animation: beach-rise 1.1s ease-in-out infinite;
+}
+html[data-theme="beach"] .boot-label { font-size: 0; }
+html[data-theme="beach"] .boot-label::after {
+  content: "THE BEACH";
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #1b3a4b;
+}
+@keyframes beach-rise { 50% { transform: translateY(-6px); } }

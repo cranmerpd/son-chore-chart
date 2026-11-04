@@ -23,7 +23,7 @@ try {
 let userData = null;
 
 function normalizeTheme(theme) {
-  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' || theme === 'pea' || theme === 'maxq' ? theme : 'mission';
+  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' || theme === 'pea' || theme === 'maxq' || theme === 'beach' ? theme : 'mission';
 }
 function applyTheme(theme) {
   const name = normalizeTheme(theme);
@@ -254,22 +254,6 @@ document.getElementById('glow-range')?.addEventListener('input', (e) => {
     } catch (err) {
       const msg = document.getElementById('theme-msg');
       if (msg) msg.textContent = err.message || 'Could not save the gradient.';
-    }
-  }, 280);
-});
-
-document.getElementById('signal-range')?.addEventListener('input', (e) => {
-  const v = Number(e.target.value);
-  applySignal(v);
-  clearTimeout(applySignal._timer);
-  applySignal._timer = setTimeout(async () => {
-    if (!auth.currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), { signal: v });
-      if (userData) userData.signal = v;
-    } catch (err) {
-      const msg = document.getElementById('theme-msg');
-      if (msg) msg.textContent = err.message || 'Could not save the status light.';
     }
   }, 280);
 });
