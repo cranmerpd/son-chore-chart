@@ -29,8 +29,6 @@ function applyTheme(theme) {
   const name = normalizeTheme(theme);
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('mc-theme', name); } catch (e) {}
-  const box = document.getElementById('gleam-slider');
-  if (box) box.hidden = name !== 'gleam';
 }
 
 function metalName(n) {
@@ -54,9 +52,36 @@ function applyMetal(n) {
   if (range && document.activeElement !== range) range.value = String(v);
 }
 
+function inkName(n) {
+  n = Number(n) || 0;
+  if (n < 11) return 'Burgundy';
+  if (n < 31) return 'Pine';
+  if (n < 51) return 'Navy';
+  if (n < 71) return 'Clay';
+  if (n < 91) return 'Plum';
+  return 'Olive';
+}
+
+function applyAtelier(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintAtelier === 'function') paintAtelier(v);
+  try { localStorage.setItem('mc-atelier', String(v)); } catch (e) {}
+  const name = document.getElementById('atelier-name');
+  const range = document.getElementById('atelier-range');
+  if (name) name.textContent = inkName(v);
+  if (range && document.activeElement !== range) range.value = String(v);
+}
+
 function markTheme(theme) {
+  const name = normalizeTheme(theme);
   document.querySelectorAll('.theme-card').forEach(btn => {
-    btn.classList.toggle('selected', btn.dataset.theme === normalizeTheme(theme));
+    btn.classList.toggle('selected', btn.dataset.theme === name);
+  });
+  document.querySelectorAll('.theme-row').forEach(row => {
+    row.classList.toggle('selected', row.dataset.theme === name);
+  });
+  document.querySelectorAll('.theme-tune').forEach(el => {
+    el.hidden = el.dataset.tune !== name;
   });
 }
 
@@ -94,6 +119,7 @@ onAuthStateChanged(auth, async (user) => {
   userData = snap.data();
   applyTheme(userData.theme);
   applyMetal(userData.metal);
+  applyAtelier(userData.ink);
   markTheme(userData.theme);
   document.getElementById('display-name').value = userData.displayName || '';
   document.getElementById('login-name').textContent = 'Signs in as ' + (userData.username || '');
@@ -141,8 +167,6 @@ document.querySelectorAll('.theme-card').forEach(btn => {
     try {
       await updateDoc(doc(db, 'users', auth.currentUser.uid), { theme });
       userData.theme = theme;
-      const box = document.getElementById('gleam-slider');
-      if (box) box.hidden = theme !== 'gleam';
     } catch (err) {
       applyTheme(previous);
       markTheme(previous);
@@ -163,6 +187,22 @@ document.getElementById('metal-range')?.addEventListener('input', (e) => {
     } catch (err) {
       const msg = document.getElementById('theme-msg');
       if (msg) msg.textContent = err.message || 'Could not save the metal.';
+    }
+  }, 280);
+});
+
+document.getElementById('atelier-range')?.addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  applyAtelier(v);
+  clearTimeout(applyAtelier._timer);
+  applyAtelier._timer = setTimeout(async () => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { ink: v });
+      if (userData) userData.ink = v;
+    } catch (err) {
+      const msg = document.getElementById('theme-msg');
+      if (msg) msg.textContent = err.message || 'Could not save the ink.';
     }
   }, 280);
 });

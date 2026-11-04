@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>function paintMetal(n){n=Math.max(0,Math.min(100,+n||0));var s=[[0,43,70,50],[15,40,35,72],[30,350,45,62],[45,18,55,46],[60,220,8,78],[75,215,12,42],[88,214,72,48],[100,272,60,52]],a=s[0],b=s[7],i,t,d,h,sat,l;for(i=0;i<7;i++)if(n>=s[i][0]&&n<=s[i+1][0]){a=s[i];b=s[i+1];break;}t=(n-a[0])/(b[0]-a[0]||1);d=((b[1]-a[1]+540)%360)-180;h=(a[1]+d*t+360)%360;sat=a[2]+(b[2]-a[2])*t;l=a[3]+(b[3]-a[3])*t;var r=document.documentElement.style;r.setProperty('--gleam','hsl('+h+' '+sat+'% '+l+'%)');r.setProperty('--gleam-sheen','hsl('+h+' '+Math.max(sat-12,6)+'% '+Math.min(l+22,94)+'%)');r.setProperty('--gleam-deep','hsl('+h+' '+Math.min(sat,48)+'% '+Math.max(l-24,7)+'%)');}try{var t=localStorage.getItem('mc-theme');if(t)document.documentElement.dataset.theme=t;paintMetal(localStorage.getItem('mc-metal')||0);}catch(e){}</script>
+  <script>function paintMetal(n){n=Math.max(0,Math.min(100,+n||0));var s=[[0,43,70,50],[15,40,35,72],[30,350,45,62],[45,18,55,46],[60,220,8,78],[75,215,12,42],[88,214,72,48],[100,272,60,52]],a=s[0],b=s[7],i,t,d,h,sat,l;for(i=0;i<7;i++)if(n>=s[i][0]&&n<=s[i+1][0]){a=s[i];b=s[i+1];break;}t=(n-a[0])/(b[0]-a[0]||1);d=((b[1]-a[1]+540)%360)-180;h=(a[1]+d*t+360)%360;sat=a[2]+(b[2]-a[2])*t;l=a[3]+(b[3]-a[3])*t;var r=document.documentElement.style;r.setProperty('--gleam','hsl('+h+' '+sat+'% '+l+'%)');r.setProperty('--gleam-sheen','hsl('+h+' '+Math.max(sat-12,6)+'% '+Math.min(l+22,94)+'%)');r.setProperty('--gleam-deep','hsl('+h+' '+Math.min(sat,48)+'% '+Math.max(l-24,7)+'%)');}function paintAtelier(n){n=Math.max(0,Math.min(100,+n||0));var s=[[0,[244,239,228],[28,25,21],[122,46,58]],[20,[236,239,234],[24,32,28],[36,74,58]],[40,[236,237,239],[22,26,32],[36,52,74]],[60,[242,236,228],[36,28,22],[122,74,48]],[80,[241,236,238],[32,24,28],[90,52,72]],[100,[239,238,228],[30,32,22],[78,82,42]]],a=s[0],b=s[5],i,t;for(i=0;i<5;i++)if(n>=s[i][0]&&n<=s[i+1][0]){a=s[i];b=s[i+1];break;}t=(n-a[0])/(b[0]-a[0]||1);function mix(x,y){return 'rgb('+x.map(function(v,k){return Math.round(v+(y[k]-v)*t);}).join(',')+')';}var r=document.documentElement.style;r.setProperty('--paper',mix(a[1],b[1]));r.setProperty('--ink',mix(a[2],b[2]));r.setProperty('--mark',mix(a[3],b[3]));}try{var t=localStorage.getItem('mc-theme');if(t)document.documentElement.dataset.theme=t;paintMetal(localStorage.getItem('mc-metal')||0);paintAtelier(localStorage.getItem('mc-atelier')||0);}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Account — Mission Control</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0f19">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=138">
+  <link rel="stylesheet" href="style.css?v=139">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@600&family=VT323&family=Patrick+Hand&family=Fredoka:wght@500;700&family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -58,94 +58,99 @@
       <section class="panel theme-panel">
         <h2>Theme</h2>
         <p class="field-help">Only your screens change. Everyone else keeps their own.</p>
-        <div class="theme-pick">
-          <button type="button" class="theme-card" data-theme="atelier">
-            <span class="swatch atelier"></span>
-            <strong>Atelier <em class="premium-tag">Premium</em></strong>
-            <span>Set by hand</span>
-          </button>
-          <button type="button" class="theme-card" data-theme="gleam">
-            <span class="swatch gleam"></span>
-            <strong>Gleam <em class="premium-tag">Premium</em></strong>
-            <span>Eli's metals</span>
-          </button>
+        <p class="theme-group-label">Premium</p>
+        <div class="theme-list">
+          <div class="theme-row" data-theme="atelier">
+            <button type="button" class="theme-card" data-theme="atelier">
+              <span class="swatch atelier"></span>
+              <span class="theme-copy">
+                <strong>Atelier <em class="premium-tag">Premium</em></strong>
+                <span>Paper and ink</span>
+              </span>
+            </button>
+            <div class="theme-tune" data-tune="atelier" hidden>
+              <div class="tune-top">
+                <label for="atelier-range">Ink</label>
+                <span id="atelier-name">Burgundy</span>
+              </div>
+              <input class="tune-atelier" type="range" id="atelier-range" min="0" max="100" value="0" aria-label="Atelier ink">
+            </div>
+          </div>
+          <div class="theme-row" data-theme="gleam">
+            <button type="button" class="theme-card" data-theme="gleam">
+              <span class="swatch gleam"></span>
+              <span class="theme-copy">
+                <strong>Gleam <em class="premium-tag">Premium</em></strong>
+                <span>Eli's metals</span>
+              </span>
+            </button>
+            <div class="theme-tune" data-tune="gleam" hidden>
+              <div class="tune-top">
+                <label for="metal-range">Metal</label>
+                <span id="metal-name">Gold</span>
+              </div>
+              <input class="tune-gleam" type="range" id="metal-range" min="0" max="100" value="0" aria-label="Metal color">
+            </div>
+          </div>
+        </div>
+        <p class="theme-group-label">Included</p>
+        <div class="theme-list included">
           <button type="button" class="theme-card" data-theme="mission">
             <span class="swatch mission"></span>
-            <strong>Mission Control</strong>
-            <span>Dark chart</span>
+            <span class="theme-copy"><strong>Mission Control</strong><span>Dark chart</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="block">
             <span class="swatch block"></span>
-            <strong>Blocks</strong>
-            <span>Dirt, stone, pixels</span>
+            <span class="theme-copy"><strong>Blocks</strong><span>Dirt, stone, pixels</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="pink">
             <span class="swatch pink"></span>
-            <strong>Swifty</strong>
-            <span>Pink, gold, and glitter</span>
+            <span class="theme-copy"><strong>Swifty</strong><span>Pink, gold, and glitter</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="rocky">
             <span class="swatch rocky"></span>
-            <strong>Rocky Top</strong>
-            <span>White and orange</span>
+            <span class="theme-copy"><strong>Rocky Top</strong><span>White and orange</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="ledger">
             <span class="swatch ledger"></span>
-            <strong>Ledger</strong>
-            <span>Business dashboard</span>
+            <span class="theme-copy"><strong>Ledger</strong><span>Business dashboard</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="kids">
             <span class="swatch kids"></span>
-            <strong>Ultimate Kids</strong>
-            <span>Bright and loud</span>
+            <span class="theme-copy"><strong>Ultimate Kids</strong><span>Bright and loud</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="journal">
             <span class="swatch journal"></span>
-            <strong>Dear Journal</strong>
-            <span>Lined paper and pencil</span>
+            <span class="theme-copy"><strong>Dear Journal</strong><span>Lined paper and pencil</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="pocket">
             <span class="swatch pocket"></span>
-            <strong>Pocket</strong>
-            <span>Made for one hand</span>
+            <span class="theme-copy"><strong>Pocket</strong><span>Made for one hand</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="skol">
             <span class="swatch skol"></span>
-            <strong>Skol</strong>
-            <span>Purple and gold</span>
+            <span class="theme-copy"><strong>Skol</strong><span>Purple and gold</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="channel">
             <span class="swatch channel"></span>
-            <strong>Channel 3</strong>
-            <span>The set is still on</span>
+            <span class="theme-copy"><strong>Channel 3</strong><span>The set is still on</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="glass">
             <span class="swatch glass"></span>
-            <strong>Glasshouse</strong>
-            <span>Sun on the potting bench</span>
+            <span class="theme-copy"><strong>Glasshouse</strong><span>Sun on the potting bench</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="horns">
             <span class="swatch horns"></span>
-            <strong>Horns Up?</strong>
-            <span>A Texas theme</span>
+            <span class="theme-copy"><strong>Horns Up?</strong><span>A Texas theme</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="doot">
             <span class="swatch doot"></span>
-            <strong>Doot Doot</strong>
-            <span>Head empty. Six seven.</span>
+            <span class="theme-copy"><strong>Doot Doot</strong><span>Head empty. Six seven.</span></span>
           </button>
           <button type="button" class="theme-card" data-theme="brick">
             <span class="swatch brick"></span>
-            <strong>Barefoot</strong>
-            <span>There's a brick down there</span>
+            <span class="theme-copy"><strong>Barefoot</strong><span>There's a brick down there</span></span>
           </button>
-        </div>
-        <div id="gleam-slider" class="gleam-slider" hidden>
-          <div class="gleam-slider-top">
-            <label for="metal-range">Metal</label>
-            <span id="metal-name">Gold</span>
-          </div>
-          <input type="range" id="metal-range" min="0" max="100" value="0" aria-label="Metal color">
         </div>
         <p id="theme-msg" class="field-help"></p>
       </section>
@@ -187,7 +192,7 @@
       <button type="button" id="logout-btn" class="ghost-btn sign-out-btn">Sign out</button>
     </div>
 
-    <p class="version">v1.38</p>
+    <p class="version">v1.39</p>
   </div>
 
   <nav class="bottom-nav">
@@ -208,6 +213,6 @@
       <span>Settings</span>
     </a>
   </nav>
-  <script type="module" src="account.js?v=138"></script>
+  <script type="module" src="account.js?v=139"></script>
 </body>
 </html>

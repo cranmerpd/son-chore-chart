@@ -254,6 +254,11 @@ function applyMetal(n) {
   if (typeof paintMetal === 'function') paintMetal(v);
   try { localStorage.setItem('mc-metal', String(v)); } catch (e) {}
 }
+function applyAtelier(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintAtelier === 'function') paintAtelier(v);
+  try { localStorage.setItem('mc-atelier', String(v)); } catch (e) {}
+}
 function freqLabel(task) {
   if (task.kind === 'once') {
     if (task.audience === 'honey') return 'Honey-do';
@@ -1234,6 +1239,7 @@ onAuthStateChanged(auth, async (user) => {
       userData = userSnap.data();
       applyTheme(userData.theme);
       applyMetal(userData.metal);
+      applyAtelier(userData.ink);
       const isParent = userData.role === 'parent';
       const settingsLink = document.getElementById('settings-link');
       if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
