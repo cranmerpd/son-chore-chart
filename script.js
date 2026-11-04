@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, setDoc, onSnapshot, collection, getDocs, addDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -1247,6 +1247,8 @@ onAuthStateChanged(auth, async (user) => {
       if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
+      const testBtn = document.getElementById('gb-test');
+      if (testBtn) testBtn.hidden = (userData.username || '').toLowerCase() !== 'cranmerpd';
       currentDate = new Date();
       try { await loadFamily(); } catch (e) {}
       loginScreen.style.display = 'none';
@@ -1437,7 +1439,7 @@ let gbMode = 'title';
 let gbChildUid = null;
 let gbSnake = [];
 let gbDir = { x: 1, y: 0 };
-let gbNext = { x: 1, y: 0 };
+let gbQueue = [];
 let gbFood = { x: 10, y: 8 };
 let gbScore = 0;
 let gbAcc = 0;
@@ -1598,7 +1600,7 @@ function gbPlaceFood() {
 function gbReset() {
   gbSnake = [{ x: 6, y: 9 }, { x: 5, y: 9 }, { x: 4, y: 9 }];
   gbDir = { x: 1, y: 0 };
-  gbNext = { x: 1, y: 0 };
+  gbQueue = [];
   gbScore = 0;
   gbAcc = 0;
   gbPlaceFood();
@@ -1609,10 +1611,13 @@ function gbReset() {
 function gbTurn(dir) {
   const map = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const next = map[dir];
-  if (!next) return;
-  if (next.x === -gbDir.x && next.y === -gbDir.y) return;
-  gbNext = next;
-  if (gbMode === 'title') gbStart();
+  if (!next || gbMode === 'awards' || gbMode === 'scores') return;
+  if (gbMode === 'title' || gbMode === 'over') gbStart();
+  const last = gbQueue.length ? gbQueue[gbQueue.length - 1] : gbDir;
+  if (next.x === -last.x && next.y === -last.y) return;
+  if (next.x === last.x && next.y === last.y) return;
+  if (gbQueue.length >= 2) return;
+  gbQueue.push(next);
 }
 
 function gbStart() {
@@ -1640,6 +1645,7 @@ function gbFinish() {
   const had = new Set(stats.unlocked || []);
   stats.unlocked = SNAKE_BADGES.filter(b => b.test(stats)).map(b => b.id);
   if (!gbTest) saveFamily();
+  if (!gbTest) recordSnakeScore();
   const fresh = SNAKE_BADGES.find(b => stats.unlocked.includes(b.id) && !had.has(b.id));
   gbFresh = fresh ? fresh.name : '';
   const bestEl = document.getElementById('gb-best');
@@ -1649,7 +1655,7 @@ function gbFinish() {
 let gbFresh = '';
 
 function gbStep() {
-  gbDir = gbNext;
+  if (gbQueue.length) gbDir = gbQueue.shift();
   const head = { x: gbSnake[0].x + gbDir.x, y: gbSnake[0].y + gbDir.y };
   if (head.x < 0 || head.y < 0 || head.x >= GB_COLS || head.y >= GB_ROWS || gbSnake.some(p => p.x === head.x && p.y === head.y)) {
     gbMode = 'over';
@@ -1675,7 +1681,21 @@ function gbDraw() {
   if (gbMode === 'title') {
     ctx.fillText('CRANMERBOY', 36, 48);
     ctx.fillText('PRESS START', 36, 78);
-    ctx.fillText('SELECT  BADGES', 28, 96);
+    ctx.fillText('SELECT SCORES', 32, 96);
+    return;
+  }
+  if (gbMode === 'scores') {
+    ctx.fillText('TOP SCORES', 44, 14);
+    if (!gbBoard.length) {
+      ctx.fillText('NONE YET', 48, 48);
+      return;
+    }
+    gbBoard.slice(0, 10).forEach((row, i) => {
+      const when = row.at ? new Date(row.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      const name = String(row.name || 'Someone').slice(0, 9);
+      ctx.fillText(String(row.score).padStart(3, ' ') + ' ' + name, 8, 28 + i * 11);
+      ctx.fillText(when, 112, 28 + i * 11);
+    });
     return;
   }
   if (gbMode === 'awards') {
@@ -1719,7 +1739,8 @@ function gbFrame(t) {
   if (gbMode === 'play') {
     gbAcc += delta;
     const speed = Math.max(70, 180 - gbScore * 4);
-    while (gbAcc >= speed) {
+    if (gbAcc > speed) gbAcc = speed;
+    if (gbAcc >= speed) {
       gbAcc -= speed;
       gbStep();
     }
@@ -1744,6 +1765,7 @@ function openCranmerboy(uid, test) {
   gbDraw();
   cancelAnimationFrame(gbLoop);
   gbLoop = requestAnimationFrame(gbFrame);
+  loadSnakeBoard();
 }
 
 function closeCranmerboy() {
@@ -1755,24 +1777,64 @@ function closeCranmerboy() {
   document.body.style.overflow = '';
 }
 
+let gbBoard = [];
+
+function paintSnakeBoard() {
+  if (gbOpen && (gbMode === 'scores' || gbMode === 'title')) gbDraw();
+}
+
+async function loadSnakeBoard() {
+  try {
+    const snap = await getDocs(query(collection(db, 'snakeScores'), orderBy('score', 'desc'), limit(10)));
+    gbBoard = snap.docs.map(d => d.data());
+  } catch (e) {}
+  paintSnakeBoard();
+}
+
+function recordSnakeScore() {
+  if (gbTest || gbScore <= 0 || !gbChildUid) return;
+  addDoc(collection(db, 'snakeScores'), {
+    score: gbScore,
+    at: Date.now(),
+    name: memberName(gbChildUid),
+    uid: gbChildUid,
+    familyId: userData.familyId || ''
+  }).then(() => loadSnakeBoard()).catch(() => {});
+}
+
+function bindGbPress(id, fn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', (e) => {
+    if (!gbOpen) return;
+    e.preventDefault();
+    fn();
+  });
+}
+
 document.getElementById('gb-close')?.addEventListener('click', closeCranmerboy);
-document.getElementById('gb-start')?.addEventListener('click', () => {
-  if (!gbOpen) return;
+bindGbPress('gb-start', () => {
   if (gbMode === 'play') gbMode = 'pause';
   else if (gbMode === 'pause') gbMode = 'play';
   else gbStart();
 });
-document.getElementById('gb-select')?.addEventListener('click', () => {
-  if (!gbOpen) return;
-  gbMode = gbMode === 'awards' ? (gbSnake.length ? 'pause' : 'title') : 'awards';
+bindGbPress('gb-select', () => {
+  if (gbMode === 'awards') gbMode = 'scores';
+  else if (gbMode === 'scores') gbMode = gbSnake.length ? 'pause' : 'title';
+  else gbMode = 'awards';
 });
-document.getElementById('gb-a')?.addEventListener('click', () => { if (gbMode !== 'play') gbStart(); });
-document.getElementById('gb-b')?.addEventListener('click', () => { if (gbMode === 'play') gbMode = 'pause'; });
+bindGbPress('gb-a', () => { if (gbMode !== 'play') gbStart(); });
+bindGbPress('gb-b', () => { if (gbMode === 'play') gbMode = 'pause'; });
 document.querySelectorAll('.gb-dpad button').forEach(btn => {
   btn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     gbTurn(btn.dataset.dir);
   });
+});
+
+document.getElementById('gb-test')?.addEventListener('click', () => {
+  if ((userData.username || '').toLowerCase() !== 'cranmerpd') return;
+  openCranmerboy(auth.currentUser?.uid, true);
 });
 
 let gbTouch = null;

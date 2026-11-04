@@ -870,6 +870,13 @@ button.nav-pill { font-family: inherit; }
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
 }
+.gb-dpad button,
+.gb-round,
+.gb-pills button,
+.gb-close {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 .gb-dpad button {
   background: #2c2f2a;
   border: none;
