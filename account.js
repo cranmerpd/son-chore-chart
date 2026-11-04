@@ -62,6 +62,26 @@ function inkName(n) {
   return 'Olive';
 }
 
+function glowName(n) {
+  n = Number(n) || 0;
+  if (n < 13) return 'Signal';
+  if (n < 29) return 'Glacier';
+  if (n < 45) return 'Aurora';
+  if (n < 61) return 'Comet';
+  if (n < 79) return 'Flare';
+  return 'Plasma';
+}
+
+function applyMission(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintMission === 'function') paintMission(v);
+  try { localStorage.setItem('mc-glow', String(v)); } catch (e) {}
+  const name = document.getElementById('glow-name');
+  const range = document.getElementById('glow-range');
+  if (name) name.textContent = glowName(v);
+  if (range && document.activeElement !== range) range.value = String(v);
+}
+
 function applyAtelier(n) {
   const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
   if (typeof paintAtelier === 'function') paintAtelier(v);
@@ -120,6 +140,7 @@ onAuthStateChanged(auth, async (user) => {
   applyTheme(userData.theme);
   applyMetal(userData.metal);
   applyAtelier(userData.ink);
+  applyMission(userData.glow);
   markTheme(userData.theme);
   document.getElementById('display-name').value = userData.displayName || '';
   document.getElementById('login-name').textContent = 'Signs in as ' + (userData.username || '');
@@ -203,6 +224,22 @@ document.getElementById('atelier-range')?.addEventListener('input', (e) => {
     } catch (err) {
       const msg = document.getElementById('theme-msg');
       if (msg) msg.textContent = err.message || 'Could not save the ink.';
+    }
+  }, 280);
+});
+
+document.getElementById('glow-range')?.addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  applyMission(v);
+  clearTimeout(applyMission._timer);
+  applyMission._timer = setTimeout(async () => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { glow: v });
+      if (userData) userData.glow = v;
+    } catch (err) {
+      const msg = document.getElementById('theme-msg');
+      if (msg) msg.textContent = err.message || 'Could not save the gradient.';
     }
   }, 280);
 });

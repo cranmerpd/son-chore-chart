@@ -259,6 +259,11 @@ function applyAtelier(n) {
   if (typeof paintAtelier === 'function') paintAtelier(v);
   try { localStorage.setItem('mc-atelier', String(v)); } catch (e) {}
 }
+function applyMission(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintMission === 'function') paintMission(v);
+  try { localStorage.setItem('mc-glow', String(v)); } catch (e) {}
+}
 function freqLabel(task) {
   if (task.kind === 'once') {
     if (task.audience === 'honey') return 'Honey-do';
@@ -1240,6 +1245,7 @@ onAuthStateChanged(auth, async (user) => {
       applyTheme(userData.theme);
       applyMetal(userData.metal);
       applyAtelier(userData.ink);
+      applyMission(userData.glow);
       const isParent = userData.role === 'parent';
       const settingsLink = document.getElementById('settings-link');
       if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
@@ -1302,7 +1308,7 @@ document.getElementById('reset-btn')?.addEventListener('click', async () => {
 const svg = document.querySelector('.progress-ring');
 if (svg) {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.innerHTML = `<linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00e5ff" /><stop offset="100%" stop-color="#00e676" /></linearGradient>`;
+  defs.innerHTML = `<linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop id="ring-a" offset="0%" stop-color="#00e5ff" /><stop id="ring-b" offset="100%" stop-color="#7c4dff" /></linearGradient>`;
   svg.appendChild(defs);
 }
 
