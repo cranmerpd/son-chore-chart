@@ -8,10 +8,10 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0f19">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=144">
+  <link rel="stylesheet" href="style.css?v=145">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@600&family=VT323&family=Patrick+Hand&family=Fredoka:wght@500;700&family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@600&family=VT323&family=Patrick+Hand&family=Fredoka:wght@500;700&family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
 </head>
 <body class="account-page">
   <div id="boot" class="boot" role="status" aria-live="polite">
@@ -107,6 +107,15 @@
               </div>
               <input class="tune-mission" type="range" id="glow-range" min="0" max="100" value="0" aria-label="Mission gradient">
             </div>
+          </div>
+          <div class="theme-row" data-theme="maxq">
+            <button type="button" class="theme-card" data-theme="maxq">
+              <span class="swatch maxq"></span>
+              <span class="theme-copy">
+                <strong>Max Q <em class="premium-tag">Premium</em></strong>
+                <span>Steel, black, countdown</span>
+              </span>
+            </button>
           </div>
         </div>
         <p class="theme-group-label">Included</p>
@@ -208,7 +217,7 @@
       <button type="button" id="logout-btn" class="ghost-btn sign-out-btn">Sign out</button>
     </div>
 
-    <p class="version">v1.44</p>
+    <p class="version">v1.45</p>
   </div>
 
   <nav class="bottom-nav">
@@ -229,6 +238,6 @@
       <span>Settings</span>
     </a>
   </nav>
-  <script type="module" src="account.js?v=144"></script>
+  <script type="module" src="account.js?v=145"></script>
 </body>
 </html>

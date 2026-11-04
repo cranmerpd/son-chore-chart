@@ -3113,3 +3113,164 @@ html[data-theme="doot"] .gb-round { background: #ffe600; color: #141014; box-sha
     flex: none;
   }
 }
+
+.swatch.maxq { background: linear-gradient(160deg, #050505 0 58%, #d5d8de 58% 78%, #f7f7f8 78% 100%); }
+
+html[data-theme="maxq"] {
+  --bg: #050505;
+  --surface: #0c0c0d;
+  --surface-2: #141416;
+  --border: rgba(255, 255, 255, 0.14);
+  --text: #f5f6f7;
+  --text-dim: #8e9298;
+  --accent: #f5f6f7;
+  --accent-2: #b7bcc4;
+  --success: #d7ddd4;
+  --warning: #c8b89a;
+  --danger: #e7b4b0;
+  --radius: 0;
+  --shadow: none;
+}
+html[data-theme="maxq"] body { background: #050505; }
+html[data-theme="maxq"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.85) 0 0.6px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.45) 0 0.5px, transparent 0.9px);
+  background-size: 240px 320px, 140px 180px;
+  animation: maxq-drift 80s linear infinite;
+  opacity: 0.35;
+}
+html[data-theme="maxq"] .app { position: relative; z-index: 1; }
+html[data-theme="maxq"] h1,
+html[data-theme="maxq"] .panel h2,
+html[data-theme="maxq"] .section-title,
+html[data-theme="maxq"] .level-title {
+  font-family: 'Barlow Condensed', 'Outfit', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f5f6f7;
+}
+html[data-theme="maxq"] h1 { font-size: 1.15rem; letter-spacing: 0.14em; }
+html[data-theme="maxq"] .section-title { font-size: 0.95rem; color: #b7bcc4; }
+html[data-theme="maxq"] .tagline { letter-spacing: 0.22em; text-transform: uppercase; color: #8e9298; }
+html[data-theme="maxq"] .header { border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 12px; }
+html[data-theme="maxq"] .logo-icon {
+  background: transparent;
+  border: 1px solid #f5f6f7;
+  border-radius: 50%;
+  box-shadow: none;
+  font-size: 0;
+}
+html[data-theme="maxq"] .logo-icon::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5f6f7;
+}
+html[data-theme="maxq"] .stat-card,
+html[data-theme="maxq"] .panel,
+html[data-theme="maxq"] .chore-item,
+html[data-theme="maxq"] .level-panel,
+html[data-theme="maxq"] .week-overview,
+html[data-theme="maxq"] .earnings-panel,
+html[data-theme="maxq"] .modal-box,
+html[data-theme="maxq"] .login-card,
+html[data-theme="maxq"] .day-nav,
+html[data-theme="maxq"] .theme-card,
+html[data-theme="maxq"] .nav-pill {
+  background: rgba(8, 8, 9, 0.86);
+  color: #f5f6f7;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  box-shadow: none;
+}
+html[data-theme="maxq"] .chore-item.completed { border-color: rgba(255, 255, 255, 0.55); }
+html[data-theme="maxq"] .chore-item.pending { border-color: rgba(200, 184, 154, 0.7); }
+html[data-theme="maxq"] .theme-card strong,
+html[data-theme="maxq"] .theme-card span,
+html[data-theme="maxq"] .theme-copy span { color: #f5f6f7; }
+html[data-theme="maxq"] .primary-btn,
+html[data-theme="maxq"] .approve-btn,
+html[data-theme="maxq"] .view-switch button.active {
+  background: #f5f6f7;
+  color: #050505;
+  border: none;
+  border-radius: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[data-theme="maxq"] .ghost-btn,
+html[data-theme="maxq"] .schedule-btn,
+html[data-theme="maxq"] .view-switch button,
+html[data-theme="maxq"] .nav-pill {
+  color: #f5f6f7;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="maxq"] .form-row input,
+html[data-theme="maxq"] .form-row select,
+html[data-theme="maxq"] .account-form input,
+html[data-theme="maxq"] .account-form select {
+  background: #050505;
+  color: #f5f6f7;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0;
+  padding: 12px;
+}
+html[data-theme="maxq"] .day-pill { background: transparent; color: #f5f6f7; border-radius: 0; border: 1px solid rgba(255, 255, 255, 0.2); }
+html[data-theme="maxq"] .day-pill.today { background: #f5f6f7; color: #050505; border-color: #f5f6f7; }
+html[data-theme="maxq"] .xp-fill { background: linear-gradient(90deg, #8d929a, #f5f6f7); }
+html[data-theme="maxq"] .stat-card .value,
+html[data-theme="maxq"] .link-btn { color: #f5f6f7; }
+html[data-theme="maxq"] .bottom-nav { background: #050505; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+html[data-theme="maxq"] .bottom-nav a,
+html[data-theme="maxq"] .bottom-nav button { color: #8e9298; letter-spacing: 0.12em; }
+html[data-theme="maxq"] .bottom-nav a.active,
+html[data-theme="maxq"] .bottom-nav button.active { color: #f5f6f7; }
+html[data-theme="maxq"] .version,
+html[data-theme="maxq"] .net-status { color: #8e9298; letter-spacing: 0.16em; }
+html[data-theme="maxq"] .boot { background: #050505; }
+html[data-theme="maxq"] .boot-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #f5f6f7;
+  background: transparent;
+}
+html[data-theme="maxq"] .boot-label { font-size: 0; }
+html[data-theme="maxq"] .boot-label::after {
+  content: "MAX Q";
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #f5f6f7;
+}
+html[data-theme="maxq"] .gb-shell {
+  background: #0a0a0b;
+  color: #f5f6f7;
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+html[data-theme="maxq"] .gb-brand { font-size: 0; }
+html[data-theme="maxq"] .gb-brand::after {
+  content: "MAX Q";
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.22em;
+  color: #f5f6f7;
+}
+html[data-theme="maxq"] .gb-dpad button { background: #1a1a1c; border-radius: 2px; }
+@keyframes maxq-drift { to { background-position: 40px 220px, -20px 140px; } }
