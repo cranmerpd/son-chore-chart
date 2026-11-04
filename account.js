@@ -72,6 +72,19 @@ function glowName(n) {
   return 'Plasma';
 }
 
+function signalName(n) {
+  return ['Nominal', 'Coast', 'Hold', 'Go'][Math.max(0, Math.min(3, Math.round(Number(n) || 0)))];
+}
+
+function applySignal(n) {
+  const v = Math.max(0, Math.min(3, Math.round(Number(n) || 0)));
+  if (typeof paintSignal === 'function') paintSignal(v);
+  try { localStorage.setItem('mc-signal', String(v)); } catch (e) {}
+  const name = document.getElementById('signal-name');
+  const range = document.getElementById('signal-range');
+  if (name) name.textContent = signalName(v);
+  if (range && document.activeElement !== range) range.value = String(v);
+}
 function applyMission(n) {
   const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
   if (typeof paintMission === 'function') paintMission(v);
@@ -141,6 +154,7 @@ onAuthStateChanged(auth, async (user) => {
   applyMetal(userData.metal);
   applyAtelier(userData.ink);
   applyMission(userData.glow);
+  applySignal(userData.signal);
   markTheme(userData.theme);
   document.getElementById('display-name').value = userData.displayName || '';
   document.getElementById('login-name').textContent = 'Signs in as ' + (userData.username || '');
@@ -240,6 +254,22 @@ document.getElementById('glow-range')?.addEventListener('input', (e) => {
     } catch (err) {
       const msg = document.getElementById('theme-msg');
       if (msg) msg.textContent = err.message || 'Could not save the gradient.';
+    }
+  }, 280);
+});
+
+document.getElementById('signal-range')?.addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  applySignal(v);
+  clearTimeout(applySignal._timer);
+  applySignal._timer = setTimeout(async () => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { signal: v });
+      if (userData) userData.signal = v;
+    } catch (err) {
+      const msg = document.getElementById('theme-msg');
+      if (msg) msg.textContent = err.message || 'Could not save the status light.';
     }
   }, 280);
 });

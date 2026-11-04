@@ -68,6 +68,11 @@ function applyMission(n) {
   if (typeof paintMission === 'function') paintMission(v);
   try { localStorage.setItem('mc-glow', String(v)); } catch (e) {}
 }
+function applySignal(n) {
+  const v = Math.max(0, Math.min(3, Math.round(Number(n) || 0)));
+  if (typeof paintSignal === 'function') paintSignal(v);
+  try { localStorage.setItem('mc-signal', String(v)); } catch (e) {}
+}
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
   return clean + '@son-chore-chart.firebaseapp.com';
@@ -114,6 +119,7 @@ onAuthStateChanged(auth, async (user) => {
   applyMetal(userData.metal);
   applyAtelier(userData.ink);
   applyMission(userData.glow);
+  applySignal(userData.signal);
   await loadMembers();
   await renderChores();
   await renderBadges();
