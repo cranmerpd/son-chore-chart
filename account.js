@@ -23,7 +23,7 @@ try {
 let userData = null;
 
 function normalizeTheme(theme) {
-  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' || theme === 'pea' || theme === 'maxq' || theme === 'beach' ? theme : 'mission';
+  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'atelier' || theme === 'gleam' || theme === 'pea' || theme === 'maxq' || theme === 'beach' ? theme : 'mission';
 }
 function applyTheme(theme) {
   const name = normalizeTheme(theme);
