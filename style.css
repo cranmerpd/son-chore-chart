@@ -2920,46 +2920,44 @@ html .theme-row > .theme-card {
   animation: none;
 }
 
-.swatch.pea { background: linear-gradient(180deg, #9bbc0f 0 25%, #8bac0f 25% 50%, #306230 50% 75%, #0f380f 75% 100%); }
+.swatch.pea { background: linear-gradient(180deg, #d4d1dc 0 62%, #3d3a48 62% 78%, #8bac0f 78% 100%); }
 
 html[data-theme="pea"] {
-  --bg: #0f380f;
-  --surface: #9bbc0f;
-  --surface-2: #8bac0f;
-  --border: #0f380f;
-  --text: #0f380f;
-  --text-dim: #1e4a1e;
-  --accent: #0f380f;
-  --accent-2: #306230;
-  --success: #0f380f;
-  --warning: #306230;
-  --danger: #0f380f;
-  --radius: 2px;
+  --bg: #c9c6d2;
+  --surface: #eceaf1;
+  --surface-2: #dddbe6;
+  --border: #8d879c;
+  --text: #2a2733;
+  --text-dim: #5c5868;
+  --accent: #6f9a0c;
+  --accent-2: #3d3a48;
+  --success: #3d6b28;
+  --warning: #7a5b20;
+  --danger: #8a3048;
+  --radius: 12px;
   --shadow: none;
 }
-html[data-theme="pea"] body { background: #0f380f; }
-html[data-theme="pea"] h1,
-html[data-theme="pea"] .section-title,
-html[data-theme="pea"] .panel h2 {
+html[data-theme="pea"] body { background: #c9c6d2; }
+html[data-theme="pea"] h1 {
   font-family: 'Press Start 2P', monospace;
   font-weight: 400;
+  font-size: 0.72rem;
+  line-height: 1.6;
   letter-spacing: 0;
   text-transform: none;
-  color: #9bbc0f;
-  line-height: 1.5;
+  color: #2a2733;
 }
-html[data-theme="pea"] h1 { font-size: 0.85rem; }
 html[data-theme="pea"] .section-title,
-html[data-theme="pea"] .panel h2 { font-size: 0.62rem; }
-html[data-theme="pea"] .tagline { color: #8bac0f; letter-spacing: 0.08em; }
-html[data-theme="pea"] .header { border-bottom: 2px solid #306230; }
+html[data-theme="pea"] .panel h2,
+html[data-theme="pea"] .level-title { color: #3d3a48; text-transform: none; letter-spacing: 0; }
+html[data-theme="pea"] .tagline { color: #5c5868; }
+html[data-theme="pea"] .header { border-bottom: 2px solid #8d879c; }
 html[data-theme="pea"] .logo-icon {
-  background: #9bbc0f;
-  border-radius: 2px;
-  box-shadow: inset 0 0 0 3px #0f380f;
+  background: #3d3a48;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 4px #3d3a48, inset 0 0 0 6px #8bac0f;
   font-size: 0;
 }
-html[data-theme="pea"] .logo-icon::after { content: "▣"; font-size: 16px; color: #0f380f; }
 html[data-theme="pea"] .stat-card,
 html[data-theme="pea"] .panel,
 html[data-theme="pea"] .chore-item,
@@ -2971,72 +2969,74 @@ html[data-theme="pea"] .login-card,
 html[data-theme="pea"] .day-nav,
 html[data-theme="pea"] .theme-card,
 html[data-theme="pea"] .nav-pill {
-  background: #9bbc0f;
-  color: #0f380f;
-  border: 2px solid #0f380f;
-  border-radius: 2px;
-  box-shadow: 3px 3px 0 #071a07;
+  background: #eceaf1;
+  color: #2a2733;
+  border: 1px solid #8d879c;
+  border-radius: 12px;
+  box-shadow: 0 3px 0 #a29eae;
 }
-html[data-theme="pea"] .chore-item.completed { background: #8bac0f; }
-html[data-theme="pea"] .chore-item.pending { background: #c4d66a; }
+html[data-theme="pea"] .chore-item.completed { background: #e4ecd4; }
+html[data-theme="pea"] .chore-item.pending { background: #f3ead8; }
 html[data-theme="pea"] .theme-card strong,
 html[data-theme="pea"] .theme-card span,
-html[data-theme="pea"] .theme-copy span { color: #0f380f; }
+html[data-theme="pea"] .theme-copy span { color: #2a2733; }
 html[data-theme="pea"] .primary-btn,
 html[data-theme="pea"] .approve-btn,
 html[data-theme="pea"] .view-switch button.active {
-  background: #0f380f;
-  color: #9bbc0f;
+  background: #3d3a48;
+  color: #f4f2f8;
   border: none;
-  border-radius: 2px;
+  border-radius: 12px;
 }
 html[data-theme="pea"] .ghost-btn,
 html[data-theme="pea"] .schedule-btn,
 html[data-theme="pea"] .view-switch button {
-  color: #0f380f;
+  color: #2a2733;
   background: transparent;
-  border: 2px solid #0f380f;
-  border-radius: 2px;
+  border: 1px solid #3d3a48;
+  border-radius: 12px;
 }
 html[data-theme="pea"] .form-row input,
 html[data-theme="pea"] .form-row select,
 html[data-theme="pea"] .account-form input,
 html[data-theme="pea"] .account-form select {
-  background: #8bac0f;
-  color: #0f380f;
-  border: 2px solid #0f380f;
-  border-radius: 2px;
+  background: #fff;
+  color: #2a2733;
+  border: 1px solid #8d879c;
+  border-radius: 10px;
   padding: 12px;
 }
-html[data-theme="pea"] .day-pill { background: #8bac0f; color: #0f380f; border-radius: 2px; border: 2px solid #0f380f; }
-html[data-theme="pea"] .day-pill.today { background: #0f380f; color: #9bbc0f; }
-html[data-theme="pea"] .xp-fill { background: #0f380f; }
-html[data-theme="pea"] .bottom-nav { background: #0f380f; border-top: 2px solid #306230; }
+html[data-theme="pea"] .day-pill { background: #dddbe6; color: #2a2733; border-radius: 8px; border: 1px solid #8d879c; }
+html[data-theme="pea"] .day-pill.today { background: #8bac0f; color: #1a2408; border-color: #1a2408; }
+html[data-theme="pea"] .xp-fill { background: #8bac0f; }
+html[data-theme="pea"] .link-btn,
+html[data-theme="pea"] .stat-card .value { color: #4d6d12; }
+html[data-theme="pea"] .bottom-nav { background: #3d3a48; border-top: none; }
 html[data-theme="pea"] .bottom-nav a,
-html[data-theme="pea"] .bottom-nav button { color: #8bac0f; }
+html[data-theme="pea"] .bottom-nav button { color: #c9c6d2; }
 html[data-theme="pea"] .bottom-nav a.active,
-html[data-theme="pea"] .bottom-nav button.active { color: #9bbc0f; }
+html[data-theme="pea"] .bottom-nav button.active { color: #8bac0f; }
 html[data-theme="pea"] .version,
-html[data-theme="pea"] .net-status { color: #8bac0f; }
-html[data-theme="pea"] .boot { background: #9bbc0f; }
+html[data-theme="pea"] .net-status { color: #5c5868; }
+html[data-theme="pea"] .boot { background: #c9c6d2; }
 html[data-theme="pea"] .boot-mark {
-  width: 18px;
-  height: 18px;
-  border: 3px solid #0f380f;
-  border-radius: 0;
-  background: #0f380f;
-  animation: pea-blink 0.7s steps(2) infinite;
+  width: 54px;
+  height: 40px;
+  border: 6px solid #3d3a48;
+  border-radius: 4px;
+  background: #8bac0f;
+  animation: pea-blink 0.8s steps(2) infinite;
 }
 html[data-theme="pea"] .boot-label { font-size: 0; }
 html[data-theme="pea"] .boot-label::after {
   content: "PEA SOUP";
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   letter-spacing: 0;
   text-transform: none;
-  color: #0f380f;
+  color: #2a2733;
 }
-@keyframes pea-blink { 50% { background: #9bbc0f; } }
+@keyframes pea-blink { 50% { background: #c5d67a; } }
 
 html[data-theme="channel"] .gb-shell {
   background: #12141a;
