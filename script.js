@@ -1612,7 +1612,11 @@ function gbTurn(dir) {
   const map = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const next = map[dir];
   if (!next || gbMode === 'awards' || gbMode === 'scores') return;
-  if (gbMode === 'title' || gbMode === 'over') gbStart();
+  if (gbMode === 'title' || gbMode === 'over') {
+    if (!gbTest && gbLives <= 0) return;
+    gbStart();
+    if (gbMode !== 'play') return;
+  }
   const last = gbQueue.length ? gbQueue[gbQueue.length - 1] : gbDir;
   if (next.x === -last.x && next.y === -last.y) return;
   if (next.x === last.x && next.y === last.y) return;
@@ -1621,11 +1625,15 @@ function gbTurn(dir) {
 }
 
 function gbStart() {
+  if (!gbTest && gbLives <= 0) return;
   gbReset();
   gbMode = 'play';
   gbRan = false;
+  paintLives();
 }
 
+const GB_CHANCES = 3;
+let gbLives = GB_CHANCES;
 let gbTest = false;
 let gbTestStats = { best: 0, games: 0, apples: 0, days: [], unlocked: [] };
 
@@ -1644,8 +1652,12 @@ function gbFinish() {
   if (!(stats.days || []).includes(today)) stats.days.push(today);
   const had = new Set(stats.unlocked || []);
   stats.unlocked = SNAKE_BADGES.filter(b => b.test(stats)).map(b => b.id);
-  if (!gbTest) saveFamily();
-  if (!gbTest) recordSnakeScore();
+  if (!gbTest) {
+    gbLives = Math.max(0, gbLives - 1);
+    saveFamily();
+    recordSnakeScore();
+    paintLives();
+  }
   const fresh = SNAKE_BADGES.find(b => stats.unlocked.includes(b.id) && !had.has(b.id));
   gbFresh = fresh ? fresh.name : '';
   const bestEl = document.getElementById('gb-best');
@@ -1680,8 +1692,9 @@ function gbDraw() {
   ctx.font = '8px monospace';
   if (gbMode === 'title') {
     ctx.fillText('CRANMERBOY', 36, 48);
-    ctx.fillText('PRESS START', 36, 78);
-    ctx.fillText('SELECT SCORES', 32, 96);
+    ctx.fillText('PRESS START', 36, 70);
+    ctx.fillText(gbTest ? 'TEST PLAY' : '3 CHANCES', 40, 88);
+    ctx.fillText('SELECT SCORES', 32, 106);
     return;
   }
   if (gbMode === 'scores') {
@@ -1725,9 +1738,9 @@ function gbDraw() {
     ctx.fillStyle = '#9bbc0f';
     ctx.fillRect(28, 48, 104, 48);
     ctx.fillStyle = '#0f380f';
-    ctx.fillText('GAME OVER', 48, 64);
-    ctx.fillText('START RETRIES', 36, 80);
-    if (gbFresh) ctx.fillText(gbFresh.toUpperCase().slice(0, 16), 32, 92);
+    ctx.fillText('GAME OVER', 48, 62);
+    ctx.fillText(gbTest ? 'START RETRIES' : (gbLives > 0 ? gbLives + ' LEFT' : 'NO CHANCES'), 40, 78);
+    ctx.fillText(gbTest || gbLives > 0 ? 'START AGAIN' : 'NEXT CHORES', 36, 90);
   }
 }
 
@@ -1757,6 +1770,8 @@ function openCranmerboy(uid, test) {
   gbMode = 'title';
   gbFresh = '';
   gbLast = 0;
+  gbLives = GB_CHANCES;
+  paintLives();
   const best = gbTest ? 0 : ((snakeStats(uid).best) || 0);
   document.getElementById('gb-best').textContent = String(best);
   document.getElementById('gb-score').textContent = '0';
@@ -1777,7 +1792,14 @@ function closeCranmerboy() {
   document.body.style.overflow = '';
 }
 
+let gbHeld = 'title';
 let gbBoard = [];
+
+function paintLives() {
+  const el = document.getElementById('gb-left');
+  if (!el) return;
+  el.textContent = gbTest ? '—' : String(gbLives);
+}
 
 function paintSnakeBoard() {
   if (gbOpen && (gbMode === 'scores' || gbMode === 'title')) gbDraw();
@@ -1820,8 +1842,11 @@ bindGbPress('gb-start', () => {
 });
 bindGbPress('gb-select', () => {
   if (gbMode === 'awards') gbMode = 'scores';
-  else if (gbMode === 'scores') gbMode = gbSnake.length ? 'pause' : 'title';
-  else gbMode = 'awards';
+  else if (gbMode === 'scores') gbMode = gbHeld;
+  else {
+    gbHeld = gbMode === 'play' ? 'pause' : gbMode;
+    gbMode = 'awards';
+  }
 });
 bindGbPress('gb-a', () => { if (gbMode !== 'play') gbStart(); });
 bindGbPress('gb-b', () => { if (gbMode === 'play') gbMode = 'pause'; });
