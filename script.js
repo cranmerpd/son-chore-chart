@@ -983,7 +983,27 @@ function renderAll() {
   const todayBtn = document.getElementById('today-btn');
   if (todayBtn) todayBtn.hidden = getDateKey(currentDate) === getDateKey(new Date());
   applyView();
+  refreshMaxq();
 }
+
+function refreshMaxq() {
+  const bar = document.getElementById('maxq-bar');
+  if (!bar) return;
+  const on = document.documentElement.dataset.theme === 'maxq';
+  bar.hidden = !on;
+  if (!on) return;
+  const clock = document.getElementById('maxq-clock');
+  if (clock) clock.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const items = [...document.querySelectorAll('#main-app .chore-item')].filter(el => el.offsetParent !== null);
+  const closed = items.filter(el => el.classList.contains('completed')).length;
+  const openEl = document.getElementById('maxq-open');
+  const closedEl = document.getElementById('maxq-closed');
+  if (openEl) openEl.textContent = String(items.length - closed);
+  if (closedEl) closedEl.textContent = String(closed);
+}
+setInterval(() => {
+  if (document.documentElement.dataset.theme === 'maxq') refreshMaxq();
+}, 1000);
 
 function renderWeekGrid() {
   const grid = document.getElementById('week-grid');

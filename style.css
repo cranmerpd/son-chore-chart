@@ -3114,9 +3114,30 @@ html[data-theme="doot"] .gb-round { background: #ffe600; color: #141014; box-sha
   }
 }
 
-.swatch.maxq { background: linear-gradient(160deg, #050505 0 68%, var(--signal, #f5f6f7) 68% 100%); }
-.tune-maxq {
-  background: linear-gradient(90deg, #f5f6f7 0 25%, #c5ddff 25% 50%, #f0c36a 50% 75%, #b6f5c8 75% 100%);
+.swatch.maxq { background: linear-gradient(160deg, #050505 0 62%, #d5d8de 62% 100%); }
+.maxq-bar {
+  display: none;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+html[data-theme="maxq"] .maxq-bar { display: grid; }
+.maxq-bar[hidden] { display: none !important; }
+.maxq-bar span {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8e9298;
+}
+.maxq-bar b {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #f5f6f7;
 }
 
 html[data-theme="maxq"] {
@@ -3126,7 +3147,7 @@ html[data-theme="maxq"] {
   --border: rgba(255, 255, 255, 0.14);
   --text: #f5f6f7;
   --text-dim: #8e9298;
-  --accent: var(--signal, #f5f6f7);
+  --accent: #f5f6f7;
   --accent-2: #b7bcc4;
   --success: #d7ddd4;
   --warning: #c8b89a;
@@ -3175,7 +3196,7 @@ html[data-theme="maxq"] .logo-icon::after {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--signal, #f5f6f7);
+  background: #f5f6f7;
 }
 html[data-theme="maxq"] .stat-card,
 html[data-theme="maxq"] .panel,
@@ -3231,15 +3252,15 @@ html[data-theme="maxq"] .account-form select {
   padding: 12px;
 }
 html[data-theme="maxq"] .day-pill { background: transparent; color: #f5f6f7; border-radius: 0; border: 1px solid rgba(255, 255, 255, 0.2); }
-html[data-theme="maxq"] .day-pill.today { background: var(--signal, #f5f6f7); color: #050505; border-color: var(--signal, #f5f6f7); }
-html[data-theme="maxq"] .xp-fill { background: var(--signal, #f5f6f7); }
+html[data-theme="maxq"] .day-pill.today { background: #f5f6f7; color: #050505; border-color: #f5f6f7; }
+html[data-theme="maxq"] .xp-fill { background: linear-gradient(90deg, #8d929a, #f5f6f7); }
 html[data-theme="maxq"] .stat-card .value,
 html[data-theme="maxq"] .link-btn { color: #f5f6f7; }
 html[data-theme="maxq"] .bottom-nav { background: #050505; border-top: 1px solid rgba(255, 255, 255, 0.2); }
 html[data-theme="maxq"] .bottom-nav a,
 html[data-theme="maxq"] .bottom-nav button { color: #8e9298; letter-spacing: 0.12em; }
 html[data-theme="maxq"] .bottom-nav a.active,
-html[data-theme="maxq"] .bottom-nav button.active { color: var(--signal, #f5f6f7); }
+html[data-theme="maxq"] .bottom-nav button.active { color: #f5f6f7; }
 html[data-theme="maxq"] .version,
 html[data-theme="maxq"] .net-status { color: #8e9298; letter-spacing: 0.16em; }
 html[data-theme="maxq"] .boot { background: #050505; }
@@ -3248,7 +3269,7 @@ html[data-theme="maxq"] .boot-mark {
   height: 46px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-top-color: var(--signal, #f5f6f7);
+  border-top-color: #f5f6f7;
   background: transparent;
 }
 html[data-theme="maxq"] .boot-label { font-size: 0; }

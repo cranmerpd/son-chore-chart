@@ -1,13 +1,13 @@
-const CACHE = 'mission-control-v1.46';
+const CACHE = 'mission-control-v1.47';
 const SHELL = [
   './',
   './index.html',
   './settings.html',
   './account.html',
-  './style.css?v=146',
-  './script.js?v=146',
-  './settings.js?v=146',
-  './account.js?v=146',
+  './style.css?v=147',
+  './script.js?v=147',
+  './settings.js?v=147',
+  './account.js?v=147',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
