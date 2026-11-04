@@ -23,12 +23,35 @@ try {
 let userData = null;
 
 function normalizeTheme(theme) {
-  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' ? theme : 'mission';
+  return theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' ? theme : 'mission';
 }
 function applyTheme(theme) {
   const name = normalizeTheme(theme);
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('mc-theme', name); } catch (e) {}
+  const box = document.getElementById('gleam-slider');
+  if (box) box.hidden = name !== 'gleam';
+}
+
+function metalName(n) {
+  n = Number(n) || 0;
+  if (n < 13) return 'Gold';
+  if (n < 29) return 'Rose';
+  if (n < 45) return 'Copper';
+  if (n < 63) return 'Silver';
+  if (n < 79) return 'Steel';
+  if (n < 91) return 'Blue';
+  return 'Violet';
+}
+
+function applyMetal(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintMetal === 'function') paintMetal(v);
+  try { localStorage.setItem('mc-metal', String(v)); } catch (e) {}
+  const name = document.getElementById('metal-name');
+  const range = document.getElementById('metal-range');
+  if (name) name.textContent = metalName(v);
+  if (range && document.activeElement !== range) range.value = String(v);
 }
 
 function markTheme(theme) {
@@ -70,6 +93,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   userData = snap.data();
   applyTheme(userData.theme);
+  applyMetal(userData.metal);
   markTheme(userData.theme);
   document.getElementById('display-name').value = userData.displayName || '';
   document.getElementById('login-name').textContent = 'Signs in as ' + (userData.username || '');
@@ -117,12 +141,30 @@ document.querySelectorAll('.theme-card').forEach(btn => {
     try {
       await updateDoc(doc(db, 'users', auth.currentUser.uid), { theme });
       userData.theme = theme;
+      const box = document.getElementById('gleam-slider');
+      if (box) box.hidden = theme !== 'gleam';
     } catch (err) {
       applyTheme(previous);
       markTheme(previous);
       msg.textContent = err.message || 'Could not save.';
     }
   });
+});
+
+document.getElementById('metal-range')?.addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  applyMetal(v);
+  clearTimeout(applyMetal._timer);
+  applyMetal._timer = setTimeout(async () => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { metal: v });
+      if (userData) userData.metal = v;
+    } catch (err) {
+      const msg = document.getElementById('theme-msg');
+      if (msg) msg.textContent = err.message || 'Could not save the metal.';
+    }
+  }, 280);
 });
 
 document.getElementById('password-form').addEventListener('submit', async (e) => {

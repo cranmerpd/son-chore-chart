@@ -49,9 +49,14 @@ function personLabel(member) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' ? theme : 'mission';
+  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' ? theme : 'mission';
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('mc-theme', name); } catch (e) {}
+}
+function applyMetal(n) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  if (typeof paintMetal === 'function') paintMetal(v);
+  try { localStorage.setItem('mc-metal', String(v)); } catch (e) {}
 }
 function usernameToEmail(username) {
   const clean = username.toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
@@ -96,6 +101,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   userData = snap.data();
   applyTheme(userData.theme);
+  applyMetal(userData.metal);
   await loadMembers();
   await renderChores();
   await renderBadges();

@@ -2509,6 +2509,339 @@ html[data-theme="pink"] .stat-card .value,
 html[data-theme="pink"] .link-btn { color: #d01270; }
 html[data-theme="pink"] .tagline { letter-spacing: 0.12em; }
 
+.premium-tag {
+  font-style: normal;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b8923a;
+  margin-left: 4px;
+}
+.swatch.atelier { background: linear-gradient(160deg, #1c1b18 0 58%, #c6a15b 58% 100%); }
+.swatch.gleam { background: linear-gradient(115deg, #e6c15a 0%, #f4f6f8 42%, #3f74c4 100%); }
+.gleam-slider { margin-top: 16px; }
+.gleam-slider[hidden] { display: none; }
+.gleam-slider-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 0.85rem; }
+.gleam-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(90deg, #e6c15a 0%, #efc7b4 16%, #c9844a 34%, #ece7e2 52%, #c5ccd3 64%, #6e8eae 76%, #3f74c4 88%, #8b6cff 100%);
+  outline: none;
+}
+.gleam-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #161616;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+.gleam-slider input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #161616;
+}
+
+html[data-theme="atelier"] {
+  --bg: #141311;
+  --surface: #1c1b18;
+  --surface-2: #24221d;
+  --border: rgba(198, 161, 91, 0.28);
+  --text: #f4efe6;
+  --text-dim: #b7ad9e;
+  --accent: #c6a15b;
+  --accent-2: #e8d5a3;
+  --success: #8fb58a;
+  --warning: #e0b15a;
+  --danger: #d47a6a;
+  --radius: 18px;
+  --shadow: none;
+}
+html[data-theme="atelier"] body { background: #141311; }
+html[data-theme="atelier"] h1,
+html[data-theme="atelier"] .panel h2,
+html[data-theme="atelier"] .section-title,
+html[data-theme="atelier"] .level-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  color: #f4efe6;
+}
+html[data-theme="atelier"] h1 { font-size: 1.7rem; }
+html[data-theme="atelier"] .section-title { font-size: 1.05rem; color: #e8d5a3; }
+html[data-theme="atelier"] .tagline { letter-spacing: 0.16em; color: #b7ad9e; }
+html[data-theme="atelier"] .header { border-bottom: 1px solid rgba(198, 161, 91, 0.35); padding-bottom: 12px; }
+html[data-theme="atelier"] .logo-icon {
+  background: transparent;
+  border: 1px solid #c6a15b;
+  border-radius: 50%;
+  box-shadow: none;
+  font-size: 0;
+}
+html[data-theme="atelier"] .logo-icon::after {
+  content: "A";
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  color: #e8d5a3;
+}
+html[data-theme="atelier"] .stat-card,
+html[data-theme="atelier"] .panel,
+html[data-theme="atelier"] .chore-item,
+html[data-theme="atelier"] .level-panel,
+html[data-theme="atelier"] .week-overview,
+html[data-theme="atelier"] .earnings-panel,
+html[data-theme="atelier"] .modal-box,
+html[data-theme="atelier"] .login-card,
+html[data-theme="atelier"] .day-nav {
+  background: #1c1b18;
+  border: 1px solid rgba(198, 161, 91, 0.22);
+  border-radius: 18px;
+  box-shadow: none;
+  color: #f4efe6;
+  animation: atelier-in 0.55s ease both;
+}
+html[data-theme="atelier"] .chore-item:nth-child(2) { animation-delay: 0.04s; }
+html[data-theme="atelier"] .chore-item:nth-child(3) { animation-delay: 0.08s; }
+html[data-theme="atelier"] .chore-item:nth-child(4) { animation-delay: 0.12s; }
+html[data-theme="atelier"] .chore-item:nth-child(5) { animation-delay: 0.16s; }
+html[data-theme="atelier"] .chore-item.completed { background: #1a2118; }
+html[data-theme="atelier"] .chore-item.pending { background: #262015; }
+html[data-theme="atelier"] .theme-card,
+html[data-theme="atelier"] .nav-pill,
+html[data-theme="atelier"] .ghost-btn,
+html[data-theme="atelier"] .schedule-btn,
+html[data-theme="atelier"] .view-switch button {
+  background: #24221d;
+  color: #f4efe6;
+  border: 1px solid rgba(198, 161, 91, 0.28);
+  border-radius: 999px;
+}
+html[data-theme="atelier"] .theme-card strong,
+html[data-theme="atelier"] .theme-card span { color: #f4efe6; }
+html[data-theme="atelier"] .primary-btn,
+html[data-theme="atelier"] .approve-btn,
+html[data-theme="atelier"] .view-switch button.active {
+  background: #c6a15b;
+  color: #1a160f;
+  border: none;
+  border-radius: 999px;
+}
+html[data-theme="atelier"] .form-row input,
+html[data-theme="atelier"] .form-row select,
+html[data-theme="atelier"] .account-form input,
+html[data-theme="atelier"] .account-form select {
+  background: #141311;
+  color: #f4efe6;
+  border: 1px solid rgba(198, 161, 91, 0.35);
+  border-radius: 12px;
+  padding: 12px;
+}
+html[data-theme="atelier"] .day-pill { background: #24221d; color: #f4efe6; border-radius: 12px; }
+html[data-theme="atelier"] .day-pill.today { background: #c6a15b; color: #1a160f; }
+html[data-theme="atelier"] .xp-fill {
+  background: linear-gradient(90deg, #8c7340, #e8d5a3, #c6a15b);
+  background-size: 200% 100%;
+  animation: atelier-gold 3.6s ease-in-out infinite;
+}
+html[data-theme="atelier"] .bottom-nav {
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+  width: auto;
+  border-radius: 22px;
+  background: rgba(22, 21, 18, 0.92);
+  border: 1px solid rgba(198, 161, 91, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(18px);
+}
+html[data-theme="atelier"] .bottom-nav a,
+html[data-theme="atelier"] .bottom-nav button { color: #b7ad9e; text-transform: none; letter-spacing: 0; }
+html[data-theme="atelier"] .bottom-nav a.active,
+html[data-theme="atelier"] .bottom-nav button.active { color: #e8d5a3; }
+html[data-theme="atelier"] .version { color: #8c8274; }
+html[data-theme="atelier"] .boot { background: #141311; }
+html[data-theme="atelier"] .boot-mark {
+  width: 84px;
+  height: 1px;
+  border: none;
+  border-radius: 0;
+  background: #c6a15b;
+  transform-origin: left center;
+  animation: atelier-rule 1.3s ease infinite;
+}
+html[data-theme="atelier"] .boot-label { font-size: 0; }
+html[data-theme="atelier"] .boot-label::after {
+  content: "Atelier";
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #f4efe6;
+}
+@keyframes atelier-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes atelier-gold { 50% { background-position: 100% 50%; } }
+@keyframes atelier-rule { from { transform: scaleX(0.15); } to { transform: scaleX(1); } }
+
+html[data-theme="gleam"] {
+  --bg: #090a0e;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --border: color-mix(in srgb, var(--gleam, #e6c15a) 45%, transparent);
+  --text: #f7f4ee;
+  --text-dim: #c8c2b6;
+  --accent: var(--gleam, #e6c15a);
+  --accent-2: var(--gleam-sheen, #fff4d2);
+  --success: #8dcea8;
+  --warning: #e6c15a;
+  --danger: #e08b86;
+  --radius: 16px;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+html[data-theme="gleam"] body { background: radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--gleam, #e6c15a) 22%, transparent), #090a0e 55%); }
+html[data-theme="gleam"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, var(--gleam-sheen, #fff) 0 1px, transparent 1.6px),
+    radial-gradient(circle, #fff 0 0.8px, transparent 1.3px);
+  background-size: 160px 210px, 90px 130px;
+  animation: gleam-drift 16s linear infinite;
+  opacity: 0.55;
+}
+html[data-theme="gleam"] .app { position: relative; z-index: 1; }
+html[data-theme="gleam"] h1,
+html[data-theme="gleam"] .panel h2,
+html[data-theme="gleam"] .section-title {
+  background: linear-gradient(100deg, var(--gleam-sheen, #fff), var(--gleam, #e6c15a) 40%, #fff 70%, var(--gleam, #e6c15a));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+html[data-theme="gleam"] .tagline { color: var(--gleam-sheen, #fff4d2); }
+html[data-theme="gleam"] .logo-icon {
+  background: radial-gradient(circle at 35% 30%, var(--gleam-sheen, #fff), var(--gleam, #e6c15a) 45%, var(--gleam-deep, #8a6a2a));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--gleam, #e6c15a) 70%, transparent);
+  border-radius: 50%;
+  font-size: 0;
+  animation: gleam-pulse 2.8s ease-in-out infinite;
+}
+html[data-theme="gleam"] .stat-card,
+html[data-theme="gleam"] .panel,
+html[data-theme="gleam"] .chore-item,
+html[data-theme="gleam"] .level-panel,
+html[data-theme="gleam"] .week-overview,
+html[data-theme="gleam"] .day-nav,
+html[data-theme="gleam"] .earnings-panel,
+html[data-theme="gleam"] .modal-box,
+html[data-theme="gleam"] .login-card,
+html[data-theme="gleam"] .theme-card,
+html[data-theme="gleam"] .nav-pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border: 1px solid color-mix(in srgb, var(--gleam, #e6c15a) 50%, transparent);
+  color: #f7f4ee;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+html[data-theme="gleam"] .theme-card strong,
+html[data-theme="gleam"] .theme-card span { color: #f7f4ee; }
+html[data-theme="gleam"] .chore-item { overflow: hidden; }
+html[data-theme="gleam"] .chore-item::after,
+html[data-theme="gleam"] .primary-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 255, 255, 0.35) 50%, transparent 62%);
+  transform: translateX(-130%);
+  animation: gleam-sheen 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+html[data-theme="gleam"] .primary-btn,
+html[data-theme="gleam"] .approve-btn,
+html[data-theme="gleam"] .view-switch button.active {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(100deg, var(--gleam-deep, #8a6a2a), var(--gleam, #e6c15a), var(--gleam-sheen, #fff));
+  color: #16130c;
+  border: none;
+  font-weight: 700;
+}
+html[data-theme="gleam"] .ghost-btn,
+html[data-theme="gleam"] .schedule-btn,
+html[data-theme="gleam"] .view-switch button {
+  color: var(--gleam-sheen, #fff);
+  border-color: color-mix(in srgb, var(--gleam, #e6c15a) 50%, transparent);
+  background: transparent;
+}
+html[data-theme="gleam"] .form-row input,
+html[data-theme="gleam"] .form-row select,
+html[data-theme="gleam"] .account-form input,
+html[data-theme="gleam"] .account-form select {
+  background: #101116;
+  color: #f7f4ee;
+  border: 1px solid color-mix(in srgb, var(--gleam, #e6c15a) 45%, transparent);
+  border-radius: 12px;
+  padding: 12px;
+}
+html[data-theme="gleam"] .day-pill { background: rgba(255, 255, 255, 0.05); color: #f7f4ee; border: 1px solid transparent; }
+html[data-theme="gleam"] .day-pill.today {
+  background: var(--gleam, #e6c15a);
+  color: #16130c;
+}
+html[data-theme="gleam"] .xp-fill { background: linear-gradient(90deg, var(--gleam-deep, #8a6a2a), var(--gleam-sheen, #fff)); }
+html[data-theme="gleam"] .bottom-nav {
+  background: rgba(9, 10, 14, 0.9);
+  border-top: 1px solid color-mix(in srgb, var(--gleam, #e6c15a) 40%, transparent);
+  backdrop-filter: blur(16px);
+}
+html[data-theme="gleam"] .bottom-nav a,
+html[data-theme="gleam"] .bottom-nav button { color: #c8c2b6; }
+html[data-theme="gleam"] .bottom-nav a.active,
+html[data-theme="gleam"] .bottom-nav button.active { color: var(--gleam-sheen, #fff); }
+html[data-theme="gleam"] .version,
+html[data-theme="gleam"] .gleam-slider { color: #f7f4ee; }
+html[data-theme="gleam"] .boot { background: #090a0e; overflow: hidden; }
+html[data-theme="gleam"] .boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, var(--gleam-sheen, #fff) 0 1.2px, transparent 1.8px);
+  background-size: 72px 96px;
+  animation: gleam-drift 8s linear infinite;
+  opacity: 0.8;
+}
+html[data-theme="gleam"] .boot-stage { position: relative; z-index: 1; }
+html[data-theme="gleam"] .boot-mark {
+  width: 58px;
+  height: 58px;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gleam-sheen, #fff), var(--gleam, #e6c15a) 46%, var(--gleam-deep, #8a6a2a));
+  box-shadow: 0 0 28px var(--gleam, #e6c15a);
+  animation: gleam-pulse 1.8s ease-in-out infinite;
+}
+html[data-theme="gleam"] .boot-label { font-size: 0; }
+html[data-theme="gleam"] .boot-label::after {
+  content: "Gleam";
+  font-size: 1.3rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gleam-sheen, #fff);
+}
+@keyframes gleam-drift { to { background-position: 80px 200px, -30px 140px; } }
+@keyframes gleam-sheen { 0%, 55% { transform: translateX(-130%); } 80%, 100% { transform: translateX(130%); } }
+@keyframes gleam-pulse { 50% { transform: scale(1.05); filter: brightness(1.08); } }
+
+
 
 @media (max-width: 720px) {
   .gb-overlay {
