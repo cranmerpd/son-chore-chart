@@ -245,7 +245,7 @@ function memberName(uid) {
   return (member.displayName || '').trim() || member.username || 'Someone';
 }
 function applyTheme(theme) {
-  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' ? theme : 'mission';
+  const name = theme === 'block' || theme === 'pink' || theme === 'rocky' || theme === 'ledger' || theme === 'kids' || theme === 'journal' || theme === 'pocket' || theme === 'skol' || theme === 'channel' || theme === 'glass' || theme === 'horns' || theme === 'doot' || theme === 'brick' || theme === 'atelier' || theme === 'gleam' || theme === 'pea' ? theme : 'mission';
   document.documentElement.dataset.theme = name;
   try { localStorage.setItem('mc-theme', name); } catch (e) {}
 }

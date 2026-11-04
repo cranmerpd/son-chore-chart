@@ -2920,6 +2920,175 @@ html .theme-row > .theme-card {
   animation: none;
 }
 
+.swatch.pea { background: linear-gradient(180deg, #9bbc0f 0 25%, #8bac0f 25% 50%, #306230 50% 75%, #0f380f 75% 100%); }
+
+html[data-theme="pea"] {
+  --bg: #0f380f;
+  --surface: #9bbc0f;
+  --surface-2: #8bac0f;
+  --border: #0f380f;
+  --text: #0f380f;
+  --text-dim: #1e4a1e;
+  --accent: #0f380f;
+  --accent-2: #306230;
+  --success: #0f380f;
+  --warning: #306230;
+  --danger: #0f380f;
+  --radius: 2px;
+  --shadow: none;
+}
+html[data-theme="pea"] body { background: #0f380f; }
+html[data-theme="pea"] h1,
+html[data-theme="pea"] .section-title,
+html[data-theme="pea"] .panel h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #9bbc0f;
+  line-height: 1.5;
+}
+html[data-theme="pea"] h1 { font-size: 0.85rem; }
+html[data-theme="pea"] .section-title,
+html[data-theme="pea"] .panel h2 { font-size: 0.62rem; }
+html[data-theme="pea"] .tagline { color: #8bac0f; letter-spacing: 0.08em; }
+html[data-theme="pea"] .header { border-bottom: 2px solid #306230; }
+html[data-theme="pea"] .logo-icon {
+  background: #9bbc0f;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 3px #0f380f;
+  font-size: 0;
+}
+html[data-theme="pea"] .logo-icon::after { content: "▣"; font-size: 16px; color: #0f380f; }
+html[data-theme="pea"] .stat-card,
+html[data-theme="pea"] .panel,
+html[data-theme="pea"] .chore-item,
+html[data-theme="pea"] .level-panel,
+html[data-theme="pea"] .week-overview,
+html[data-theme="pea"] .earnings-panel,
+html[data-theme="pea"] .modal-box,
+html[data-theme="pea"] .login-card,
+html[data-theme="pea"] .day-nav,
+html[data-theme="pea"] .theme-card,
+html[data-theme="pea"] .nav-pill {
+  background: #9bbc0f;
+  color: #0f380f;
+  border: 2px solid #0f380f;
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 #071a07;
+}
+html[data-theme="pea"] .chore-item.completed { background: #8bac0f; }
+html[data-theme="pea"] .chore-item.pending { background: #c4d66a; }
+html[data-theme="pea"] .theme-card strong,
+html[data-theme="pea"] .theme-card span,
+html[data-theme="pea"] .theme-copy span { color: #0f380f; }
+html[data-theme="pea"] .primary-btn,
+html[data-theme="pea"] .approve-btn,
+html[data-theme="pea"] .view-switch button.active {
+  background: #0f380f;
+  color: #9bbc0f;
+  border: none;
+  border-radius: 2px;
+}
+html[data-theme="pea"] .ghost-btn,
+html[data-theme="pea"] .schedule-btn,
+html[data-theme="pea"] .view-switch button {
+  color: #0f380f;
+  background: transparent;
+  border: 2px solid #0f380f;
+  border-radius: 2px;
+}
+html[data-theme="pea"] .form-row input,
+html[data-theme="pea"] .form-row select,
+html[data-theme="pea"] .account-form input,
+html[data-theme="pea"] .account-form select {
+  background: #8bac0f;
+  color: #0f380f;
+  border: 2px solid #0f380f;
+  border-radius: 2px;
+  padding: 12px;
+}
+html[data-theme="pea"] .day-pill { background: #8bac0f; color: #0f380f; border-radius: 2px; border: 2px solid #0f380f; }
+html[data-theme="pea"] .day-pill.today { background: #0f380f; color: #9bbc0f; }
+html[data-theme="pea"] .xp-fill { background: #0f380f; }
+html[data-theme="pea"] .bottom-nav { background: #0f380f; border-top: 2px solid #306230; }
+html[data-theme="pea"] .bottom-nav a,
+html[data-theme="pea"] .bottom-nav button { color: #8bac0f; }
+html[data-theme="pea"] .bottom-nav a.active,
+html[data-theme="pea"] .bottom-nav button.active { color: #9bbc0f; }
+html[data-theme="pea"] .version,
+html[data-theme="pea"] .net-status { color: #8bac0f; }
+html[data-theme="pea"] .boot { background: #9bbc0f; }
+html[data-theme="pea"] .boot-mark {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #0f380f;
+  border-radius: 0;
+  background: #0f380f;
+  animation: pea-blink 0.7s steps(2) infinite;
+}
+html[data-theme="pea"] .boot-label { font-size: 0; }
+html[data-theme="pea"] .boot-label::after {
+  content: "PEA SOUP";
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0f380f;
+}
+@keyframes pea-blink { 50% { background: #9bbc0f; } }
+
+html[data-theme="channel"] .gb-shell {
+  background: #12141a;
+  color: #d5deea;
+  border-radius: 16px;
+  box-shadow: 0 0 0 8px #2a303c, 0 0 36px rgba(90, 170, 255, 0.28);
+}
+html[data-theme="channel"] .gb-bezel { position: relative; }
+html[data-theme="channel"] #gb-screen { filter: hue-rotate(80deg) saturate(0.5) contrast(1.3); }
+html[data-theme="channel"] .gb-bezel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+}
+html[data-theme="channel"] .gb-brand { font-size: 0; }
+html[data-theme="channel"] .gb-brand::after { content: "CH 3"; font-size: 0.95rem; letter-spacing: 0.22em; color: #9ad7ff; }
+
+html[data-theme="block"] .gb-shell {
+  background: #6b4f2a;
+  color: #f3e6c4;
+  border-radius: 0;
+  box-shadow: inset 0 10px 0 #5d9c2a, 0 8px 0 #3a2612;
+}
+html[data-theme="block"] .gb-dpad button,
+html[data-theme="block"] .gb-pills button { border-radius: 0; background: #3a2612; }
+
+html[data-theme="horns"] .gb-shell { background: #bf5700; color: #fff; border-radius: 14px; }
+html[data-theme="horns"] .gb-brand { font-size: 0; }
+html[data-theme="horns"] .gb-brand::after { content: "HORNS DOWN"; font-size: 0.68rem; letter-spacing: 0.08em; }
+html[data-theme="horns"] .gb-dpad button { background: #1a1a1a; }
+
+html[data-theme="doot"] .gb-shell {
+  background: #14081f;
+  color: #ffe600;
+  border: 3px solid #ffe600;
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 #ff2bd6;
+}
+html[data-theme="doot"] .gb-brand { font-size: 0; }
+html[data-theme="doot"] .gb-brand::after {
+  content: "6 7";
+  font-family: 'Bangers', cursive;
+  font-size: 1.7rem;
+  letter-spacing: 0.06em;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #ff2bd6;
+}
+html[data-theme="doot"] .gb-dpad button { background: #ff2bd6; color: #fff; }
+html[data-theme="doot"] .gb-round { background: #ffe600; color: #141014; box-shadow: 0 4px 0 #3dfff3; }
+
 
 
 @media (max-width: 720px) {
