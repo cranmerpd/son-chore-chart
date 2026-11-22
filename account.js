@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { initializeAuth, browserLocalPersistence, indexedDBLocalPersistence, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, memoryLocalCache, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, doc, getDoc, updateDoc, addDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNkDUfccxK3sSfgf5nrOp-efQoNj68G80",
@@ -12,10 +12,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] });
+const auth = getAuth(app);
 let db;
 try {
-  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }) });
+  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 } catch (err) {
   db = initializeFirestore(app, { localCache: memoryLocalCache() });
 }
@@ -152,6 +152,11 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
     showForm();
+    const signedInAs = (user.email || '').split('@')[0];
+    const loginNameEarly = document.getElementById('login-name');
+    if (loginNameEarly && signedInAs) loginNameEarly.textContent = 'Signs in as ' + signedInAs;
+    const tagEarly = document.getElementById('account-tag');
+    if (tagEarly) tagEarly.textContent = 'Signed in';
     const snap = await Promise.race([
       getDoc(doc(db, 'users', user.uid)),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
