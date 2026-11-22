@@ -1,4 +1,4 @@
-const CACHE = 'mission-control-v1.53';
+const CACHE = 'mission-control-v1.58';
 const SHELL = [
   './',
   './index.html',
@@ -30,11 +30,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
-  const isPage = request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html');
-  const networked = isPage ? new Request(request, { cache: 'reload' }) : request;
+  if (request.mode === 'navigate') return;
   event.respondWith(
-    fetch(networked).then((response) => {
-      if (response && response.ok && !isPage) {
+    fetch(request).then((response) => {
+      if (response && response.ok) {
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put(request, copy));
       }
