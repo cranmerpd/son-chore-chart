@@ -1258,51 +1258,60 @@ async function loadFamily() {
 
 let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
-  await auth.authStateReady();
-  user = auth.currentUser;
-  const key = user ? user.uid : 'out';
-  if (seenAuth === key) return;
-  seenAuth = key;
-  if (user) {
-    const userSnap = await getDoc(doc(db, 'users', user.uid));
-    if (userSnap.exists()) {
-      userData = userSnap.data();
-      applyTheme(userData.theme);
-      applyMetal(userData.metal);
-      applyAtelier(userData.ink);
-      applyMission(userData.glow);
-      applySignal(userData.signal);
-      const isParent = userData.role === 'parent';
-      const settingsLink = document.getElementById('settings-link');
-      if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
-      const mobileSettings = document.getElementById('mobile-settings');
-      if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
-      const resetBtn = document.getElementById('reset-btn');
-      if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
-      const testBtn = document.getElementById('gb-test');
-      if (testBtn) testBtn.hidden = (userData.username || '').toLowerCase() !== 'cranmerpd';
-      currentDate = new Date();
-      try { await loadFamily(); } catch (e) {}
-      loginScreen.style.display = 'none';
-      mainApp.style.display = 'block';
-      document.body.classList.add('ready');
-      dismissBoot();
-      if (new URLSearchParams(location.search).get('badges') === '1') {
-        openBadgeCase();
-        history.replaceState(null, '', 'index.html');
+  try {
+    await auth.authStateReady();
+    user = auth.currentUser;
+    const key = user ? user.uid : 'out';
+    if (seenAuth === key) return;
+    seenAuth = key;
+    if (user) {
+      const userSnap = await Promise.race([
+        getDoc(doc(db, 'users', user.uid)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+      ]);
+      if (userSnap.exists()) {
+        userData = userSnap.data();
+        applyTheme(userData.theme);
+        applyMetal(userData.metal);
+        applyAtelier(userData.ink);
+        applyMission(userData.glow);
+        applySignal(userData.signal);
+        const isParent = userData.role === 'parent';
+        const settingsLink = document.getElementById('settings-link');
+        if (settingsLink) settingsLink.style.display = isParent ? 'flex' : 'none';
+        const mobileSettings = document.getElementById('mobile-settings');
+        if (mobileSettings) mobileSettings.style.display = isParent ? 'flex' : 'none';
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) resetBtn.style.display = isParent ? 'inline-block' : 'none';
+        const testBtn = document.getElementById('gb-test');
+        if (testBtn) testBtn.hidden = (userData.username || '').toLowerCase() !== 'cranmerpd';
+        currentDate = new Date();
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (mainApp) mainApp.style.display = 'block';
+        document.body.classList.add('ready');
+        dismissBoot();
+        try { await loadFamily(); } catch (e) {}
+        if (new URLSearchParams(location.search).get('badges') === '1') {
+          openBadgeCase();
+          history.replaceState(null, '', 'index.html');
+        }
+      } else {
+        if (loginScreen) loginScreen.style.display = 'flex';
+        document.body.classList.add('ready');
+        dismissBoot();
       }
     } else {
-      loginScreen.style.display = 'flex';
+      if (loginScreen) loginScreen.style.display = 'flex';
+      if (mainApp) mainApp.style.display = 'none';
       document.body.classList.add('ready');
       dismissBoot();
+      if (unsubscribe) unsubscribe();
+      if (unsubscribeTasks) unsubscribeTasks();
     }
-  } else {
-    loginScreen.style.display = 'flex';
-    mainApp.style.display = 'none';
+  } catch (e) {
+    if (loginScreen) loginScreen.style.display = 'flex';
     document.body.classList.add('ready');
     dismissBoot();
-    if (unsubscribe) unsubscribe();
-    if (unsubscribeTasks) unsubscribeTasks();
   }
 });
 
