@@ -163,16 +163,18 @@ onAuthStateChanged(auth, async (user) => {
   if (familyLink) familyLink.style.display = userData.role === 'parent' ? 'flex' : 'none';
   const mobileSettings = document.getElementById('mobile-settings');
   if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
+  const rec = document.getElementById('mine-recurring');
+  if (rec) rec.hidden = userData.role === 'child';
   const anchor = document.getElementById('my-task-anchor');
   if (anchor && !anchor.value) {
     const n = new Date();
     anchor.value = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
   }
-  await loadMyRecurring();
   gate.style.display = 'none';
   content.style.display = 'block';
   document.body.classList.add('ready');
   dismissBoot();
+  if (userData.role !== 'child') loadMyRecurring().catch(() => {});
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
