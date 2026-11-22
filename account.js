@@ -127,54 +127,70 @@ function dismissBoot() {
 
 let seenAuth = null;
 onAuthStateChanged(auth, async (user) => {
-  await auth.authStateReady();
-  user = auth.currentUser;
-  const key = user ? user.uid : 'out';
-  if (seenAuth === key) return;
-  seenAuth = key;
   const content = document.getElementById('account-content');
   const gate = document.getElementById('login-required');
-  if (!user) {
-    content.style.display = 'none';
-    gate.style.display = 'block';
+  const showForm = () => {
+    if (gate) gate.style.display = 'none';
+    if (content) content.style.display = 'block';
     document.body.classList.add('ready');
     dismissBoot();
-    return;
+  };
+  try {
+    await Promise.race([
+      auth.authStateReady(),
+      new Promise((resolve) => setTimeout(resolve, 8000))
+    ]);
+    user = auth.currentUser;
+    const key = user ? user.uid : 'out';
+    if (seenAuth === key) { showForm(); return; }
+    seenAuth = key;
+    if (!user) {
+      if (content) content.style.display = 'none';
+      if (gate) gate.style.display = 'block';
+      document.body.classList.add('ready');
+      dismissBoot();
+      return;
+    }
+    showForm();
+    const snap = await Promise.race([
+      getDoc(doc(db, 'users', user.uid)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ]);
+    if (!snap.exists()) {
+      if (content) content.style.display = 'none';
+      if (gate) gate.style.display = 'block';
+      return;
+    }
+    userData = snap.data();
+    applyTheme(userData.theme);
+    applyMetal(userData.metal);
+    applyAtelier(userData.ink);
+    applyMission(userData.glow);
+    applySignal(userData.signal);
+    markTheme(userData.theme);
+    const nameInput = document.getElementById('display-name');
+    if (nameInput) nameInput.value = userData.displayName || '';
+    const loginName = document.getElementById('login-name');
+    if (loginName) loginName.textContent = 'Signs in as ' + (userData.username || '');
+    const tag = document.getElementById('account-tag');
+    if (tag) tag.textContent = (userData.role === 'child' ? 'Child' : 'Parent') + ' account';
+    const familyLink = document.getElementById('family-link');
+    if (familyLink) familyLink.style.display = userData.role === 'parent' ? 'flex' : 'none';
+    const mobileSettings = document.getElementById('mobile-settings');
+    if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
+    const rec = document.getElementById('mine-recurring');
+    if (rec) rec.hidden = userData.role === 'child';
+    const anchor = document.getElementById('my-task-anchor');
+    if (anchor && !anchor.value) {
+      const n = new Date();
+      anchor.value = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+    }
+    if (userData.role !== 'child') loadMyRecurring().catch(() => {});
+  } catch (e) {
+    showForm();
+    const tag = document.getElementById('account-tag');
+    if (tag && tag.textContent === 'Your settings') tag.textContent = 'Saved on this iPad. Sign-in details did not load.';
   }
-  const snap = await getDoc(doc(db, 'users', user.uid));
-  if (!snap.exists()) {
-    content.style.display = 'none';
-    gate.style.display = 'block';
-    document.body.classList.add('ready');
-    dismissBoot();
-    return;
-  }
-  userData = snap.data();
-  applyTheme(userData.theme);
-  applyMetal(userData.metal);
-  applyAtelier(userData.ink);
-  applyMission(userData.glow);
-  applySignal(userData.signal);
-  markTheme(userData.theme);
-  document.getElementById('display-name').value = userData.displayName || '';
-  document.getElementById('login-name').textContent = 'Signs in as ' + (userData.username || '');
-  document.getElementById('account-tag').textContent = (userData.role === 'child' ? 'Child' : 'Parent') + ' account';
-  const familyLink = document.getElementById('family-link');
-  if (familyLink) familyLink.style.display = userData.role === 'parent' ? 'flex' : 'none';
-  const mobileSettings = document.getElementById('mobile-settings');
-  if (mobileSettings) mobileSettings.style.display = userData.role === 'parent' ? 'flex' : 'none';
-  const rec = document.getElementById('mine-recurring');
-  if (rec) rec.hidden = userData.role === 'child';
-  const anchor = document.getElementById('my-task-anchor');
-  if (anchor && !anchor.value) {
-    const n = new Date();
-    anchor.value = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
-  }
-  gate.style.display = 'none';
-  content.style.display = 'block';
-  document.body.classList.add('ready');
-  dismissBoot();
-  if (userData.role !== 'child') loadMyRecurring().catch(() => {});
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => { window.location.href = 'index.html'; }));
